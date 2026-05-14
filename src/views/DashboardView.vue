@@ -1,23 +1,53 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { getSantri, getJilid, getGuru } from "../services/masterService";
-import type { Santri, Jilid, Guru } from "../types";
+import { getAttendanceByDateRange } from "../services/attendanceService";
+import type { Santri, Jilid, Guru, Attendance } from "../types";
+import StatisticCard from "../components/dashboard/StatisticCard.vue";
+import StatisticListCard from "../components/dashboard/StatisticListCard.vue";
+import Toast from "../components/master/Toast.vue";
 
 const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
+const attendanceList = ref<Attendance[]>([]);
 const isLoading = ref(true);
+const showToast = ref(false);
+const toastMessage = ref("");
+
+const triggerToast = (message: string) => {
+  toastMessage.value = message;
+  showToast.value = true;
+};
+
+const formatDateInput = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 onMounted(async () => {
   try {
-    const [resSantri, resJilid, resGuru] = await Promise.all([
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 29);
+
+    const [resSantri, resJilid, resGuru, resAttendance] = await Promise.all([
       getSantri(),
       getJilid(),
       getGuru(),
+      getAttendanceByDateRange(
+        formatDateInput(startDate),
+        formatDateInput(endDate),
+      ),
     ]);
     santriList.value = resSantri.filter((s) => s.isActive);
     jilidList.value = resJilid;
     guruList.value = resGuru;
+    attendanceList.value = resAttendance;
+  } catch (error) {
+    triggerToast("Koneksi bermasalah. Dashboard belum bisa dimuat.");
   } finally {
     isLoading.value = false;
   }
@@ -45,14 +75,50 @@ const guruStats = computed(() => {
     }))
     .sort((a, b) => b.count - a.count);
 });
+
+const attendanceStats = computed(() => {
+  const presentCountBySantri = attendanceList.value.reduce(
+    (acc, attendance) => {
+      if (attendance.isPresent) {
+        acc[attendance.santriId] = (acc[attendance.santriId] || 0) + 1;
+      }
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+
+  return santriList.value.map((santri) => ({
+    nama: santri.nama,
+    count: presentCountBySantri[santri.id] || 0,
+  }));
+});
+
+const santriJarangHadir = computed(() => {
+  return [...attendanceStats.value]
+    .sort((a, b) => a.count - b.count || a.nama.localeCompare(b.nama))
+    .slice(0, 5);
+});
+
+const santriPalingAktif = computed(() => {
+  return [...attendanceStats.value]
+    .sort((a, b) => b.count - a.count || a.nama.localeCompare(b.nama))
+    .slice(0, 5);
+});
 </script>
 
 <template>
   <div class="pb-24 font-sans bg-[#F6F6F7] min-h-screen">
+    <Toast
+      :show="showToast"
+      :message="toastMessage"
+      type="error"
+      @close="showToast = false"
+    />
+
     <header class="px-4 pt-6 pb-4 max-w-3xl mx-auto">
       <h1 class="text-[20px] font-bold text-[#202223]">Dashboard Rekap</h1>
       <p class="text-[14px] text-[#6D7175]">
-        Ringkasan data santri aktif saat ini
+        Ringkasan data santri aktif dan kehadiran 30 hari terakhir
       </p>
     </header>
 
@@ -64,22 +130,15 @@ const guruStats = computed(() => {
 
     <div v-else class="px-4 space-y-6 max-w-3xl mx-auto">
       <!-- Card: Total Utama -->
-      <div
-        class="bg-white p-6 rounded-xl shadow-[0_1px_3px_rgba(63,63,68,0.15)] border border-[#E1E3E5] flex items-center justify-between"
+      <StatisticCard
+        title="Total Seluruh Santri"
+        :value="totalSantri"
+        icon-bg-color="#E3F1DF"
+        icon-color="#008060"
       >
-        <div>
-          <p
-            class="text-[14px] font-medium text-[#6D7175] uppercase tracking-wider"
-          >
-            Total Seluruh Santri
-          </p>
-          <h2 class="text-[36px] font-bold text-[#202223] leading-tight">
-            {{ totalSantri }}
-          </h2>
-        </div>
-        <div class="bg-[#E3F1DF] p-3 rounded-full">
+        <template #icon>
           <svg
-            class="w-8 h-8 text-[#008060]"
+            class="w-8 h-8"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -91,61 +150,35 @@ const guruStats = computed(() => {
               d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
             />
           </svg>
-        </div>
-      </div>
+        </template>
+      </StatisticCard>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Seksi Jilid -->
-        <div
-          class="bg-white rounded-xl shadow-[0_1px_3px_rgba(63,63,68,0.15)] border border-[#E1E3E5] overflow-hidden"
-        >
-          <div class="px-4 py-3 border-b border-[#F1F2F3] bg-[#FAFAFA]">
-            <h3 class="text-[14px] font-bold text-[#202223]">
-              Berdasarkan Jilid
-            </h3>
-          </div>
-          <div class="divide-y divide-[#F1F2F3]">
-            <div
-              v-for="stat in jilidStats"
-              :key="stat.nama"
-              class="px-4 py-3 flex justify-between items-center hover:bg-[#F9FAFB]"
-            >
-              <span class="text-[14px] text-[#454749]">{{ stat.nama }}</span>
-              <span
-                class="text-[14px] font-bold text-[#202223] bg-[#F4F6F8] px-2.5 py-0.5 rounded-full border border-[#E1E3E5]"
-              >
-                {{ stat.count }}
-                <span class="text-[12px] font-normal text-[#6D7175]">Anak</span>
-              </span>
-            </div>
-          </div>
-        </div>
+        <StatisticListCard title="Berdasarkan Jilid" :items="jilidStats" />
 
         <!-- Seksi Guru -->
-        <div
-          class="bg-white rounded-xl shadow-[0_1px_3px_rgba(63,63,68,0.15)] border border-[#E1E3E5] overflow-hidden"
-        >
-          <div class="px-4 py-3 border-b border-[#F1F2F3] bg-[#FAFAFA]">
-            <h3 class="text-[14px] font-bold text-[#202223]">
-              Berdasarkan Guru
-            </h3>
-          </div>
-          <div class="divide-y divide-[#F1F2F3]">
-            <div
-              v-for="stat in guruStats"
-              :key="stat.nama"
-              class="px-4 py-3 flex justify-between items-center hover:bg-[#F9FAFB]"
-            >
-              <span class="text-[14px] text-[#454749]">{{ stat.nama }}</span>
-              <span
-                class="text-[14px] font-bold text-[#008060] bg-[#E3F1DF] px-2.5 py-0.5 rounded-full"
-              >
-                {{ stat.count }}
-                <span class="text-[12px] font-normal text-[#008060]">Anak</span>
-              </span>
-            </div>
-          </div>
-        </div>
+        <StatisticListCard
+          title="Berdasarkan Guru"
+          :items="guruStats"
+          badge-color="green"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <StatisticListCard
+          title="Santri Jarang Hadir"
+          :items="santriJarangHadir"
+          badge-color="red"
+          unit="Kali"
+        />
+
+        <StatisticListCard
+          title="Santri Paling Aktif"
+          :items="santriPalingAktif"
+          badge-color="green"
+          unit="Kali"
+        />
       </div>
     </div>
   </div>

@@ -14,27 +14,45 @@ import DailyRecapButton from "../components/absensi/DailyRecapButton.vue";
 import Toast from "../components/master/Toast.vue"; // Import Toast
 
 const currentDate = ref(new Date().toISOString().split("T")[0]);
+const todayDate = new Date().toISOString().split("T")[0];
 const selectedJilid = ref("Semua");
 const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const attendanceData = ref<Attendance[]>([]);
+const savingSantriIds = ref<Set<string>>(new Set());
 
 onMounted(async () => {
-  santriList.value = await getSantri();
-  jilidList.value = await getJilid();
-  await loadAttendance();
+  try {
+    santriList.value = await getSantri();
+    jilidList.value = await getJilid();
+    await loadAttendance();
+  } catch (error) {
+    triggerToast("Koneksi bermasalah. Data belum bisa dimuat.", "error");
+  }
 });
 
 const loadAttendance = async () => {
-  attendanceData.value = await getAttendanceByDate(currentDate.value);
+  if (currentDate.value > todayDate) {
+    currentDate.value = todayDate;
+    triggerToast("Tanggal tidak boleh melebihi hari ini.", "error");
+    return;
+  }
+
+  try {
+    attendanceData.value = await getAttendanceByDate(currentDate.value);
+  } catch (error) {
+    triggerToast("Koneksi bermasalah. Absensi gagal dimuat.", "error");
+  }
 };
 
 // State untuk Toast
 const showToast = ref(false);
 const toastMessage = ref("");
+const toastType = ref<"success" | "error">("success");
 
-const triggerToast = (msg: string) => {
+const triggerToast = (msg: string, type: "success" | "error" = "success") => {
   toastMessage.value = msg;
+  toastType.value = type;
   showToast.value = true;
 };
 
@@ -48,7 +66,25 @@ const filteredSantri = computed(() => {
   return list.sort((a, b) => a.nama.localeCompare(b.nama));
 });
 
+const attendanceSummary = computed(() => {
+  const total = filteredSantri.value.length;
+  let present = 0;
+
+  filteredSantri.value.forEach((santri) => {
+    const record = attendanceData.value.find((a) => a.santriId === santri.id);
+    if (!record) return;
+    if (record.isPresent) present += 1;
+  });
+
+  return {
+    total,
+    present,
+    unmarked: total - present,
+  };
+});
+
 const handleToggle = async (santri: Santri, status: boolean) => {
+  const previousData = attendanceData.value.map((item) => ({ ...item }));
   let record = attendanceData.value.find((a) => a.santriId === santri.id);
   if (record) record.isPresent = status;
   else {
@@ -62,13 +98,24 @@ const handleToggle = async (santri: Santri, status: boolean) => {
     });
   }
 
-  await saveAttendance({
-    date: currentDate.value,
-    santriId: santri.id,
-    jilidId: santri.jilidId,
-    guruId: santri.guruId,
-    isPresent: status,
-  });
+  savingSantriIds.value = new Set([...savingSantriIds.value, santri.id]);
+
+  try {
+    await saveAttendance({
+      date: currentDate.value,
+      santriId: santri.id,
+      jilidId: santri.jilidId,
+      guruId: santri.guruId,
+      isPresent: status,
+    });
+  } catch (error) {
+    attendanceData.value = previousData;
+    triggerToast("Koneksi bermasalah. Absensi gagal disimpan.", "error");
+  } finally {
+    const nextSavingIds = new Set(savingSantriIds.value);
+    nextSavingIds.delete(santri.id);
+    savingSantriIds.value = nextSavingIds;
+  }
 };
 </script>
 
@@ -82,6 +129,7 @@ const handleToggle = async (santri: Santri, status: boolean) => {
         type="date"
         v-model="currentDate"
         @change="loadAttendance"
+        :max="todayDate"
         class="rounded-md border border-[#C9CCCF] bg-white px-3 py-1.5 text-[14px] font-medium text-[#202223] outline-none cursor-pointer"
       />
     </header>
@@ -98,14 +146,33 @@ const handleToggle = async (santri: Santri, status: boolean) => {
           :filteredSantri="filteredSantri"
           :attendanceData="attendanceData"
           @success="triggerToast"
-          @error="(msg) => triggerToast(msg)"
+          @error="(msg) => triggerToast(msg, 'error')"
         />
+      </div>
+
+      <div
+        class="grid grid-cols-2 gap-2 sm:gap-3"
+        aria-label="Ringkasan absensi"
+      >
+        <div class="rounded-lg border border-[#D0E4C9] bg-[#F1F8EF] p-2.5 sm:p-3">
+          <p class="text-[12px] text-[#008060]">Hadir</p>
+          <p class="text-[20px] font-bold text-[#008060]">
+            {{ attendanceSummary.present }}
+          </p>
+        </div>
+        <div class="rounded-lg border border-[#E1E3E5] bg-[#F9FAFB] p-2.5 sm:p-3">
+          <p class="text-[12px] text-[#6D7175]">Belum diabsen</p>
+          <p class="text-[20px] font-bold text-[#454749]">
+            {{ attendanceSummary.unmarked }}
+          </p>
+        </div>
       </div>
 
       <AbsensiList
         :filteredSantri="filteredSantri"
         :jilidList="jilidList"
         :attendanceData="attendanceData"
+        :savingSantriIds="savingSantriIds"
         @toggle="handleToggle"
       />
     </div>
@@ -113,6 +180,7 @@ const handleToggle = async (santri: Santri, status: boolean) => {
     <Toast
       :show="showToast"
       :message="toastMessage"
+      :type="toastType"
       @close="showToast = false"
     />
   </div>

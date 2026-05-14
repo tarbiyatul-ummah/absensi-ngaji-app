@@ -23,3 +23,16 @@ export const getAttendanceByDate = async (date: string) => {
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => doc.data() as Attendance);
 };
+
+export const getAttendanceByDateRange = async (
+  startDate: string,
+  endDate: string,
+) => {
+  const q = query(
+    collection(db, "attendances"),
+    where("date", ">=", startDate),
+    where("date", "<=", endDate),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => doc.data() as Attendance);
+};

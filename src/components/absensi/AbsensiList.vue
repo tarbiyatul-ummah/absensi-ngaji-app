@@ -5,6 +5,7 @@ const props = defineProps<{
   filteredSantri: Santri[];
   jilidList: Jilid[];
   attendanceData: Attendance[];
+  savingSantriIds?: Set<string>;
 }>();
 
 const emit = defineEmits<{
@@ -15,6 +16,10 @@ const emit = defineEmits<{
 const isPresent = (santriId: string) => {
   const record = props.attendanceData.find((a) => a.santriId === santriId);
   return record ? record.isPresent : false;
+};
+
+const isSaving = (santriId: string) => {
+  return props.savingSantriIds?.has(santriId) ?? false;
 };
 </script>
 
@@ -48,11 +53,15 @@ const isPresent = (santriId: string) => {
         </div>
 
         <!-- Toggle Switch ala Polaris -->
-        <label class="relative inline-flex items-center cursor-pointer">
+        <label
+          class="relative inline-flex items-center"
+          :class="isSaving(santri.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'"
+        >
           <input
             type="checkbox"
             class="sr-only peer"
             :checked="isPresent(santri.id)"
+            :disabled="isSaving(santri.id)"
             @change="
               emit(
                 'toggle',
