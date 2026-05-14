@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    /* Background abu-abu khas dashboard Shopify */
+    @apply bg-[#F4F6F8] text-[#202223] antialiased;
+    /* Menggunakan System Fonts khas Polaris */
+    font-family:
+      -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto,
+      "Helvetica Neue", sans-serif;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
