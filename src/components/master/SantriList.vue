@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Santri, Jilid, Guru } from "../../types";
+import PaginationControls from "../common/PaginationControls.vue";
 
 const props = defineProps<{
   santriList: Santri[];
@@ -21,6 +22,72 @@ const emit = defineEmits<{
 // State untuk fitur edit
 const editingId = ref<string | null>(null);
 const editForm = ref({ nama: "", jilidId: "", guruId: "" });
+const searchQuery = ref("");
+const statusFilter = ref<"aktif" | "nonaktif">("aktif");
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
+const getGuruName = (guruId: string) =>
+  props.guruList.find((g) => g.id === guruId)?.nama || "N/A";
+
+const getJilidName = (jilidId: string) =>
+  props.jilidList.find((j) => j.id === jilidId)?.nama || "N/A";
+
+const activeSantriCount = computed(
+  () => props.santriList.filter((santri) => santri.isActive !== false).length,
+);
+
+const inactiveSantriCount = computed(
+  () => props.santriList.filter((santri) => santri.isActive === false).length,
+);
+
+const filteredSantriList = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase();
+  const shouldShowActive = statusFilter.value === "aktif";
+
+  return props.santriList.filter((santri) => {
+    const isActive = santri.isActive !== false;
+    const matchesStatus = shouldShowActive ? isActive : !isActive;
+    const searchableText = [
+      santri.nama,
+      getGuruName(santri.guruId),
+      getJilidName(santri.jilidId),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return matchesStatus && (!keyword || searchableText.includes(keyword));
+  });
+});
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredSantriList.value.length / itemsPerPage)),
+);
+
+const paginatedSantriList = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return filteredSantriList.value.slice(start, start + itemsPerPage);
+});
+
+const visibleStart = computed(() => {
+  if (filteredSantriList.value.length === 0) return 0;
+  return (currentPage.value - 1) * itemsPerPage + 1;
+});
+
+const visibleEnd = computed(() =>
+  Math.min(currentPage.value * itemsPerPage, filteredSantriList.value.length),
+);
+
+watch([searchQuery, statusFilter], () => {
+  currentPage.value = 1;
+  editingId.value = null;
+});
+
+watch(totalPages, (pageCount) => {
+  if (currentPage.value > pageCount) {
+    currentPage.value = pageCount;
+  }
+});
 
 // Mengubah baris menjadi form
 const startEdit = (santri: Santri) => {
@@ -56,19 +123,55 @@ const saveEdit = (id: string) => {
     class="bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden"
   >
     <div
-      class="p-4 border-b border-[#E1E3E5] flex justify-between items-center bg-[#FAFAFA]"
+      class="p-4 border-b border-[#E1E3E5] flex justify-between items-center gap-3 bg-[#FAFAFA]"
     >
       <h2 class="text-[14px] font-semibold text-[#202223]">Daftar Santri</h2>
       <span
         class="bg-[#E4E5E7] text-[#454749] text-[12px] font-medium px-2 py-0.5 rounded-full"
       >
-        {{ santriList.length }} orang
+        {{ filteredSantriList.length }} orang
       </span>
+    </div>
+
+    <div class="p-4 border-b border-[#E1E3E5] space-y-3">
+      <div class="flex gap-2 rounded-md bg-[#F4F6F8] p-1">
+        <button
+          type="button"
+          @click="statusFilter = 'aktif'"
+          class="flex-1 rounded px-3 py-2 text-[13px] font-medium transition-colors"
+          :class="
+            statusFilter === 'aktif'
+              ? 'bg-white text-[#202223] shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+              : 'text-[#6D7175] hover:text-[#202223]'
+          "
+        >
+          Aktif ({{ activeSantriCount }})
+        </button>
+        <button
+          type="button"
+          @click="statusFilter = 'nonaktif'"
+          class="flex-1 rounded px-3 py-2 text-[13px] font-medium transition-colors"
+          :class="
+            statusFilter === 'nonaktif'
+              ? 'bg-white text-[#202223] shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+              : 'text-[#6D7175] hover:text-[#202223]'
+          "
+        >
+          Non Aktif ({{ inactiveSantriCount }})
+        </button>
+      </div>
+
+      <input
+        v-model="searchQuery"
+        type="search"
+        placeholder="Cari nama santri, guru, atau jilid..."
+        class="w-full rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-[14px] text-[#202223] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] placeholder:text-[#8C9196] focus:border-[#008060]"
+      />
     </div>
 
     <div class="divide-y divide-[#E1E3E5]">
       <div
-        v-for="santri in santriList"
+        v-for="santri in paginatedSantriList"
         :key="santri.id"
         class="p-4 hover:bg-[#F9FAFB] transition-colors"
       >
@@ -137,18 +240,13 @@ const saveEdit = (id: string) => {
                 >
               </div>
               <span class="text-[12px] text-[#6D7175]">
-                Guru:
-                {{
-                  guruList.find((g) => g.id === santri.guruId)?.nama || "N/A"
-                }}
+                Guru: {{ getGuruName(santri.guruId) }}
               </span>
             </div>
             <span
               class="text-[12px] px-2 py-1 bg-[#F4F6F8] rounded text-[#6D7175] border border-[#E1E3E5]"
             >
-              {{
-                jilidList.find((j) => j.id === santri.jilidId)?.nama || "N/A"
-              }}
+              {{ getJilidName(santri.jilidId) }}
             </span>
           </div>
 
@@ -180,11 +278,20 @@ const saveEdit = (id: string) => {
       </div>
 
       <div
-        v-if="santriList.length === 0"
+        v-if="filteredSantriList.length === 0"
         class="p-8 text-center text-[#6D7175] text-[14px]"
       >
-        Belum ada data santri yang diinputkan.
+        Tidak ada santri yang sesuai dengan filter ini.
       </div>
     </div>
+
+    <PaginationControls
+      v-model:currentPage="currentPage"
+      :totalPages="totalPages"
+      :totalItems="filteredSantriList.length"
+      :visibleStart="visibleStart"
+      :visibleEnd="visibleEnd"
+      itemLabel="santri"
+    />
   </div>
 </template>
