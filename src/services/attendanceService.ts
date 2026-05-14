@@ -2,9 +2,11 @@ import {
   doc,
   setDoc,
   getDocs,
+  onSnapshot,
   collection,
   query,
   where,
+  type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Attendance } from "../types";
@@ -22,6 +24,24 @@ export const getAttendanceByDate = async (date: string) => {
   const q = query(collection(db, "attendances"), where("date", "==", date));
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => doc.data() as Attendance);
+};
+
+export const listenAttendanceByDate = (
+  date: string,
+  onData: (data: Attendance[]) => void,
+  onError: () => void,
+): Unsubscribe => {
+  const q = query(collection(db, "attendances"), where("date", "==", date));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      onData(snapshot.docs.map((doc) => doc.data() as Attendance));
+    },
+    () => {
+      onError();
+    },
+  );
 };
 
 export const getAttendanceByDateRange = async (

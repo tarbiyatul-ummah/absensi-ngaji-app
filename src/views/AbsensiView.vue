@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { getSantri, getJilid } from "../services/masterService";
 import {
   saveAttendance,
-  getAttendanceByDate,
+  listenAttendanceByDate,
 } from "../services/attendanceService";
 import type { Santri, Jilid, Attendance } from "../types";
+import type { Unsubscribe } from "firebase/firestore";
 
 // Import komponen-komponen kecil
 import AbsensiFilter from "../components/absensi/AbsensiFilter.vue";
@@ -20,29 +21,42 @@ const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const attendanceData = ref<Attendance[]>([]);
 const savingSantriIds = ref<Set<string>>(new Set());
+let unsubscribeAttendance: Unsubscribe | null = null;
 
 onMounted(async () => {
   try {
     santriList.value = await getSantri();
     jilidList.value = await getJilid();
-    await loadAttendance();
   } catch (error) {
     triggerToast("Koneksi bermasalah. Data belum bisa dimuat.", "error");
   }
 });
 
-const loadAttendance = async () => {
+const resetAttendanceListener = () => {
+  if (unsubscribeAttendance) {
+    unsubscribeAttendance();
+    unsubscribeAttendance = null;
+  }
+};
+
+const listenCurrentDateAttendance = () => {
+  resetAttendanceListener();
+
   if (currentDate.value > todayDate) {
     currentDate.value = todayDate;
     triggerToast("Tanggal tidak boleh melebihi hari ini.", "error");
     return;
   }
 
-  try {
-    attendanceData.value = await getAttendanceByDate(currentDate.value);
-  } catch (error) {
-    triggerToast("Koneksi bermasalah. Absensi gagal dimuat.", "error");
-  }
+  unsubscribeAttendance = listenAttendanceByDate(
+    currentDate.value,
+    (data) => {
+      attendanceData.value = data;
+    },
+    () => {
+      triggerToast("Koneksi bermasalah. Absensi gagal dimuat.", "error");
+    },
+  );
 };
 
 // State untuk Toast
@@ -55,6 +69,12 @@ const triggerToast = (msg: string, type: "success" | "error" = "success") => {
   toastType.value = type;
   showToast.value = true;
 };
+
+watch(currentDate, listenCurrentDateAttendance, { immediate: true });
+
+onUnmounted(() => {
+  resetAttendanceListener();
+});
 
 // Logika Filter dan Sorting (Fitur 1: By Alphabet)
 const filteredSantri = computed(() => {
@@ -128,7 +148,6 @@ const handleToggle = async (santri: Santri, status: boolean) => {
       <input
         type="date"
         v-model="currentDate"
-        @change="loadAttendance"
         :max="todayDate"
         class="rounded-md border border-[#C9CCCF] bg-white px-3 py-1.5 text-[14px] font-medium text-[#202223] outline-none cursor-pointer"
       />
