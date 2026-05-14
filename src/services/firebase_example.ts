@@ -5,13 +5,13 @@ import { getAnalytics } from "firebase/analytics";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBb13os-x7PiBtyPv9ximA4xhNbk0ZUoZI",
-  authDomain: "absensi-ngaji-fc52b.firebaseapp.com",
-  projectId: "absensi-ngaji-fc52b",
-  storageBucket: "absensi-ngaji-fc52b.firebasestorage.app",
-  messagingSenderId: "61290308479",
-  appId: "1:61290308479:web:8c22fbd2fe7ba6b8bc304a",
-  measurementId: "G-SE3FHLMYGM",
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
+  measurementId: "",
 };
 
 export const app = initializeApp(firebaseConfig);
