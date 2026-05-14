@@ -18,11 +18,9 @@ const resultText = ref("");
 // Toast state
 const showToast = ref(false);
 const toastMessage = ref("");
-const toastType = ref<"success" | "error">("success");
 
-const triggerToast = (message: string, type: "success" | "error" = "success") => {
+const triggerToast = (message: string) => {
   toastMessage.value = message;
-  toastType.value = type;
   showToast.value = true;
 };
 
@@ -77,9 +75,9 @@ const handlePeriodTypeChange = (type: string) => {
 
 const generateExport = async () => {
   if (!startDate.value || !endDate.value)
-    return triggerToast("Pilih periode terlebih dahulu.", "error");
+    return triggerToast("Pilih periode terlebih dahulu.");
   if (filterType.value !== "semua" && !filterId.value)
-    return triggerToast("Pilih spesifik Jilid/Guru terlebih dahulu.", "error");
+    return triggerToast("Pilih spesifik Jilid/Guru terlebih dahulu.");
 
   isGenerating.value = true;
 
@@ -162,7 +160,7 @@ const generateExport = async () => {
     resultText.value = text;
   } catch (error) {
     console.error(error);
-    triggerToast("Terjadi kesalahan saat menarik data.", "error");
+    triggerToast("Terjadi kesalahan saat menarik data.");
   } finally {
     isGenerating.value = false;
   }
@@ -173,7 +171,6 @@ const copyText = () => {
   navigator.clipboard.writeText(resultText.value);
   triggerToast(
     "Teks berhasil disalin ke Clipboard! Silakan Paste di WhatsApp.",
-    "success",
   );
 };
 </script>
@@ -191,7 +188,6 @@ const copyText = () => {
     <Toast
       :show="showToast"
       :message="toastMessage"
-      :type="toastType"
       @close="showToast = false"
     />
 
