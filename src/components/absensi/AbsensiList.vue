@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import type { Santri, Jilid, Attendance } from "../../types";
+import type {
+  Santri,
+  Jilid,
+  Attendance,
+  AttendanceStatus,
+} from "../../types";
 
 const props = defineProps<{
   filteredSantri: Santri[];
@@ -9,17 +14,33 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "toggle", santri: Santri, status: boolean): void;
+  (e: "status-change", santri: Santri, status: AttendanceStatus): void;
 }>();
 
-// Fungsi untuk mengecek status kehadiran berdasarkan attendanceData dari Parent
-const isPresent = (santriId: string) => {
+const getAttendanceStatus = (santriId: string): AttendanceStatus => {
   const record = props.attendanceData.find((a) => a.santriId === santriId);
-  return record ? record.isPresent : false;
+  if (!record) return "absent";
+  if (record.status) return record.status;
+  return record.isPresent ? "present" : "absent";
 };
 
 const isSaving = (santriId: string) => {
   return props.savingSantriIds?.has(santriId) ?? false;
+};
+
+const getButtonClass = (santriId: string, status: AttendanceStatus) => {
+  const activeStatus = getAttendanceStatus(santriId);
+  const isActive = activeStatus === status;
+
+  if (status === "present") {
+    return isActive
+      ? "border-[#008060] bg-[#E3F1DF] text-[#008060]"
+      : "border-[#C9CCCF] bg-white text-[#454749] hover:bg-[#F9FAFB]";
+  }
+
+  return isActive
+    ? "border-[#B98900] bg-[#FFF4D6] text-[#8A6116]"
+    : "border-[#C9CCCF] bg-white text-[#454749] hover:bg-[#F9FAFB]";
 };
 </script>
 
@@ -40,7 +61,7 @@ const isSaving = (santriId: string) => {
       <div
         v-for="santri in filteredSantri"
         :key="santri.id"
-        class="flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors"
+        class="flex flex-col gap-3 p-4 hover:bg-[#F9FAFB] transition-colors sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="flex flex-col">
           <span class="text-[14px] font-medium text-[#202223]">{{
@@ -52,28 +73,33 @@ const isSaving = (santriId: string) => {
           </span>
         </div>
 
-        <!-- Toggle Switch ala Polaris -->
-        <label
-          class="relative inline-flex items-center"
-          :class="isSaving(santri.id) ? 'cursor-wait opacity-70' : 'cursor-pointer'"
+        <div
+          class="grid grid-cols-2 gap-2 sm:w-[176px]"
+          :class="isSaving(santri.id) ? 'cursor-wait opacity-70' : ''"
+          role="group"
+          :aria-label="`Status absensi ${santri.nama}`"
         >
-          <input
-            type="checkbox"
-            class="sr-only peer"
-            :checked="isPresent(santri.id)"
+          <button
+            type="button"
+            class="h-9 rounded-md border px-3 text-[13px] font-semibold transition-colors disabled:cursor-wait"
+            :class="getButtonClass(santri.id, 'present')"
             :disabled="isSaving(santri.id)"
-            @change="
-              emit(
-                'toggle',
-                santri,
-                ($event.target as HTMLInputElement).checked,
-              )
-            "
-          />
-          <div
-            class="w-11 h-6 bg-[#C9CCCF] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#C9CCCF] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#008060] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"
-          ></div>
-        </label>
+            :aria-pressed="getAttendanceStatus(santri.id) === 'present'"
+            @click="emit('status-change', santri, 'present')"
+          >
+            Hadir
+          </button>
+          <button
+            type="button"
+            class="h-9 rounded-md border px-3 text-[13px] font-semibold transition-colors disabled:cursor-wait"
+            :class="getButtonClass(santri.id, 'permission')"
+            :disabled="isSaving(santri.id)"
+            :aria-pressed="getAttendanceStatus(santri.id) === 'permission'"
+            @click="emit('status-change', santri, 'permission')"
+          >
+            Izin
+          </button>
+        </div>
       </div>
 
       <!-- Empty State -->

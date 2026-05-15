@@ -18,6 +18,8 @@ export interface Santri {
   createdAt: number;
 }
 
+export type AttendanceStatus = "present" | "permission" | "absent";
+
 export interface Attendance {
   id: string; // Format: YYYY-MM-DD_santriId
   date: string;
@@ -25,4 +27,5 @@ export interface Attendance {
   jilidId: string;
   guruId: string;
   isPresent: boolean;
+  status?: AttendanceStatus;
 }

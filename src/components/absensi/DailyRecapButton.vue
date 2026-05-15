@@ -11,14 +11,17 @@ const emit = defineEmits(["success", "error"]);
 const generateDailyRecap = async () => {
   try {
     // Logika filter: Cari santri yang tidak ada di attendanceData (belum diabsen)
-    // ATAU yang isPresent-nya false
+    // ATAU yang belum hadir. Santri berstatus izin tidak ikut pesan WA.
     const absentSantri = props.filteredSantri.filter((santri) => {
       const record = props.attendanceData.find((a) => a.santriId === santri.id);
-      return !record || record.isPresent === false;
+      if (!record) return true;
+
+      const status = record.status ?? (record.isPresent ? "present" : "absent");
+      return status === "absent";
     });
 
     if (absentSantri.length === 0) {
-      alert("Semua santri pada filter ini sudah hadir!");
+      alert("Semua santri pada filter ini sudah hadir atau izin!");
       return;
     }
 
