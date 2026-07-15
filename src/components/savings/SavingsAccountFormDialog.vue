@@ -146,6 +146,15 @@ const handleSubmit = () => {
   });
 };
 
+const handlePrimaryAction = () => {
+  if (currentStep.value === 1) {
+    goToStudentStep();
+    return;
+  }
+
+  handleSubmit();
+};
+
 watch(
   () => props.open,
   (open) => {
@@ -345,9 +354,9 @@ watch(activeSantriList, () => {
             {{ currentStep === 1 ? "Batal" : "Sebelumnya" }}
           </Button>
           <Button
-            :type="currentStep === 1 ? 'button' : 'submit'"
+            type="button"
             :disabled="saving"
-            @click="currentStep === 1 ? goToStudentStep() : undefined"
+            @click="handlePrimaryAction"
           >
             {{
               currentStep === 1
