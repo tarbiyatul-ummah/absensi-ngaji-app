@@ -14,6 +14,8 @@ import AbsensiFilter from "../components/absensi/AbsensiFilter.vue";
 import AbsensiList from "../components/absensi/AbsensiList.vue";
 import DailyRecapButton from "../components/absensi/DailyRecapButton.vue";
 import Toast from "../components/master/Toast.vue";
+import { Input } from "@/components/ui/input";
+import { terms } from "../config/organization";
 
 // 🛠️ HELPER: Dapatkan tanggal sesuai Local Timezone Device (Format: YYYY-MM-DD)
 const getLocalDateString = () => {
@@ -195,25 +197,25 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
 </script>
 
 <template>
-  <div class="pb-24 font-sans">
-    <header
-      class="px-4 pt-5 pb-4 max-w-3xl mx-auto flex items-center justify-between"
-    >
+  <div class="app-page">
+    <header class="app-container app-header pb-4">
       <div>
-        <h1 class="text-[20px] font-bold text-[#202223]">Absensi Harian</h1>
-        <p class="text-[14px] text-[#6D7175] mt-1">{{ formattedDate }}</p>
+        <h1 class="app-title">Absensi Harian</h1>
+        <p class="app-subtitle">
+          {{ terms.studentSingularTitle }} - {{ formattedDate }}
+        </p>
       </div>
       <!-- Cukup gunakan v-model, vue otomatis urus event @change -->
-      <input
+      <Input
         type="date"
         v-model="currentDate"
         :max="todayDate"
         autocomplete="off"
-        class="rounded-md border border-[#C9CCCF] bg-white px-3 py-1.5 text-[14px] font-medium text-[#202223] outline-none cursor-pointer"
+        class="w-auto cursor-pointer font-medium"
       />
     </header>
 
-    <div class="px-4 space-y-5 max-w-3xl mx-auto">
+    <div class="app-container space-y-5">
       <div class="space-y-3">
         <AbsensiFilter
           :jilidList="jilidList"
@@ -234,26 +236,26 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
         aria-label="Ringkasan absensi"
       >
         <div
-          class="rounded-lg border border-[#D0E4C9] bg-[#F1F8EF] p-2.5 sm:p-3"
+          class="rounded-lg border border-[hsl(142_42%_82%)] bg-[hsl(142_76%_97%)] p-2.5 sm:p-3"
         >
-          <p class="text-[12px] text-[#008060]">Hadir</p>
-          <p class="text-[20px] font-bold text-[#008060]">
+          <p class="text-xs text-[hsl(142_72%_29%)]">Hadir</p>
+          <p class="text-xl font-bold text-[hsl(142_72%_29%)]">
             {{ attendanceSummary.present }}
           </p>
         </div>
         <div
-          class="rounded-lg border border-[#F1D28A] bg-[#FFF8E6] p-2.5 sm:p-3"
+          class="rounded-lg border border-[hsl(48_76%_78%)] bg-[hsl(48_96%_97%)] p-2.5 sm:p-3"
         >
-          <p class="text-[12px] text-[#8A6116]">Izin</p>
-          <p class="text-[20px] font-bold text-[#8A6116]">
+          <p class="text-xs text-[hsl(32_95%_35%)]">Izin</p>
+          <p class="text-xl font-bold text-[hsl(32_95%_35%)]">
             {{ attendanceSummary.permission }}
           </p>
         </div>
         <div
-          class="rounded-lg border border-[#E1E3E5] bg-[#F9FAFB] p-2.5 sm:p-3"
+          class="rounded-lg border bg-[var(--muted)] p-2.5 sm:p-3"
         >
-          <p class="text-[12px] text-[#6D7175]">Belum diabsen</p>
-          <p class="text-[20px] font-bold text-[#454749]">
+          <p class="text-xs text-[var(--muted-foreground)]">Belum diabsen</p>
+          <p class="text-xl font-bold text-[var(--foreground)]">
             {{ attendanceSummary.unmarked }}
           </p>
         </div>

@@ -2,7 +2,12 @@
 import { ref } from "vue";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { PlusSignIcon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { Jilid, Guru } from "../../types";
+import { terms } from "../../config/organization";
 
 const props = defineProps<{
   jilidList: Jilid[];
@@ -35,41 +40,39 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <form
-    :class="
-      props.variant === 'plain'
-        ? 'space-y-4'
-        : 'bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden'
-    "
+  <component
+    :is="props.variant === 'plain' ? 'form' : Card"
+    :class="props.variant === 'plain' ? 'space-y-4' : 'gap-0 py-0'"
     @submit.prevent="handleSubmit"
   >
-    <div
-      v-if="props.variant !== 'plain'"
-      class="p-4 border-b border-[#E1E3E5] bg-[#FAFAFA]"
-    >
-      <h2 class="text-[14px] font-semibold text-[#202223]">
-        Tambah Santri Baru
-      </h2>
-    </div>
-    <div :class="props.variant === 'plain' ? 'space-y-4' : 'p-4 space-y-4'">
+    <CardHeader v-if="props.variant !== 'plain'" class="border-b py-4">
+      <CardTitle>Tambah {{ terms.studentSingularTitle }} Baru</CardTitle>
+    </CardHeader>
+
+    <div :class="props.variant === 'plain' ? 'space-y-4' : 'space-y-4 p-4'">
       <div>
-        <label class="block text-[13px] text-[#202223] mb-1">Nama Santri</label>
-        <textarea
+        <Label>
+          Nama {{ terms.studentSingularTitle }}
+        </Label>
+        <Textarea
           v-model="inputNama"
           placeholder="Pisahkan dengan koma (contoh: Budi, Andi)"
-          class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-shadow"
           rows="2"
-        ></textarea>
+        />
       </div>
 
       <div class="flex gap-3">
         <div class="w-full">
-          <label class="block text-[13px] text-[#202223] mb-1">Jilid</label>
+          <Label>
+            {{ terms.levelSingularTitle }}
+          </Label>
           <select
             v-model="selectedJilid"
-            class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
+            class="ui-select"
           >
-            <option value="" disabled>Pilih Jilid</option>
+            <option value="" disabled>
+              Pilih {{ terms.levelSingularTitle }}
+            </option>
             <option
               v-for="jilid in jilidList"
               :key="jilid.id"
@@ -80,12 +83,16 @@ const handleSubmit = () => {
           </select>
         </div>
         <div class="w-full">
-          <label class="block text-[13px] text-[#202223] mb-1">Guru</label>
+          <Label>
+            {{ terms.mentorSingularTitle }}
+          </Label>
           <select
             v-model="selectedGuru"
-            class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
+            class="ui-select"
           >
-            <option value="" disabled>Pilih Guru</option>
+            <option value="" disabled>
+              Pilih {{ terms.mentorSingularTitle }}
+            </option>
             <option v-for="guru in guruList" :key="guru.id" :value="guru.id">
               {{ guru.nama }}
             </option>
@@ -94,9 +101,10 @@ const handleSubmit = () => {
       </div>
 
       <div class="pt-2">
-        <button
-          type="submit"
-          class="w-full rounded-md bg-[#008060] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#006E52] active:bg-[#005E46] transition-colors flex items-center justify-center gap-2 md:w-auto"
+        <Button
+          type="button"
+          class="w-full md:w-auto"
+          @click="handleSubmit"
         >
           <HugeiconsIcon
             :icon="PlusSignIcon"
@@ -105,8 +113,8 @@ const handleSubmit = () => {
             :stroke-width="2"
           />
           Simpan Data
-        </button>
+        </Button>
       </div>
     </div>
-  </form>
+  </component>
 </template>

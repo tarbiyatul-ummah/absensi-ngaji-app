@@ -8,6 +8,7 @@ import type {
   AcademicSemester,
   AcademicYearOption,
 } from "../../utils/academicPeriod";
+import { terms } from "../../config/organization";
 
 defineProps<{
   startDate: string;
@@ -250,9 +251,15 @@ const formatDate = (dateStr: string) => {
             "
             class="w-full rounded-md border border-[#C9CCCF] bg-white p-2.5 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] cursor-pointer"
           >
-            <option value="semua">Semua Santri</option>
-            <option value="jilid">Berdasarkan Jilid</option>
-            <option value="guru">Berdasarkan Guru</option>
+            <option value="semua">
+              Semua {{ terms.studentSingularTitle }}
+            </option>
+            <option value="jilid">
+              Berdasarkan {{ terms.levelSingularTitle }}
+            </option>
+            <option value="guru">
+              Berdasarkan {{ terms.mentorSingularTitle }}
+            </option>
           </select>
         </div>
 
@@ -262,7 +269,12 @@ const formatDate = (dateStr: string) => {
           class="w-full animate-in fade-in duration-200"
         >
           <label class="block text-[13px] text-[#202223] font-medium mb-1.5">
-            Pilih {{ filterType === "jilid" ? "Jilid" : "Guru" }}
+            Pilih
+            {{
+              filterType === "jilid"
+                ? terms.levelSingularTitle
+                : terms.mentorSingularTitle
+            }}
           </label>
           <select
             :value="filterId"

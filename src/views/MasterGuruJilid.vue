@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
 import {
   getJilid,
   addJilid,
@@ -18,6 +19,7 @@ import type { Jilid, Guru } from "../types";
 import MasterDataCard from "../components/master/MasterDataCard.vue";
 import ConfirmModal from "../components/master/ConfirmModal.vue";
 import InputModal from "../components/master/InputModal.vue";
+import { terms } from "../config/organization";
 
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
@@ -119,27 +121,25 @@ const executeEdit = async (namaBaru: string) => {
 </script>
 
 <template>
-  <div class="pb-24 font-sans">
-    <header class="px-4 pt-5 pb-4 max-w-3xl mx-auto flex items-center gap-3">
-      <RouterLink
-        to="/master"
-        class="p-1.5 rounded-md text-[#5C5F62] hover:bg-[#EDEEEF] transition-colors"
-      >
-        <HugeiconsIcon
-          :icon="ArrowLeft02Icon"
-          :size="20"
-          color="currentColor"
-          :stroke-width="2"
-        />
-      </RouterLink>
-      <h1 class="text-[20px] font-bold text-[#202223]">Kelola Master Data</h1>
+  <div class="app-page">
+    <header class="app-container flex items-center gap-3 pb-4">
+      <Button as-child variant="ghost" size="icon">
+        <RouterLink to="/master">
+          <HugeiconsIcon
+            :icon="ArrowLeft02Icon"
+            :size="20"
+            color="currentColor"
+            :stroke-width="2"
+          />
+        </RouterLink>
+      </Button>
+      <h1 class="app-title">Kelola Master Data</h1>
     </header>
 
-    <div class="px-4 space-y-6 max-w-3xl mx-auto">
-      <!-- Card Jilid -->
+    <div class="app-container space-y-6">
       <MasterDataCard
-        title="Data Jilid"
-        placeholder="Masukkan nama Jilid baru"
+        :title="`Data ${terms.levelSingularTitle}`"
+        :placeholder="`Masukkan nama ${terms.levelSingularLower} baru`"
         :items="jilidList"
         :isSortable="true"
         @add="handleAddJilid"
@@ -149,10 +149,9 @@ const executeEdit = async (namaBaru: string) => {
         @move-down="handleMoveDownJilid"
       />
 
-      <!-- Card Guru -->
       <MasterDataCard
-        title="Data Guru"
-        placeholder="Masukkan nama Guru baru"
+        :title="`Data ${terms.mentorSingularTitle}`"
+        :placeholder="`Masukkan nama ${terms.mentorSingularLower} baru`"
         :items="guruList"
         @add="handleAddGuru"
         @edit="openEditModal('guru', $event)"
@@ -163,7 +162,11 @@ const executeEdit = async (namaBaru: string) => {
     <!-- Panggil Modal Edit -->
     <InputModal
       :isOpen="isEditModalOpen"
-      :title="editPayload?.type === 'jilid' ? 'Edit Jilid' : 'Edit Guru'"
+      :title="
+        editPayload?.type === 'jilid'
+          ? `Edit ${terms.levelSingularTitle}`
+          : `Edit ${terms.mentorSingularTitle}`
+      "
       label="Nama Baru"
       :initialValue="editPayload?.namaLama || ''"
       @cancel="isEditModalOpen = false"
@@ -173,7 +176,11 @@ const executeEdit = async (namaBaru: string) => {
     <!-- Panggil Modal Hapus -->
     <ConfirmModal
       :isOpen="isDeleteModalOpen"
-      :title="deletePayload?.type === 'jilid' ? 'Hapus Jilid' : 'Hapus Guru'"
+      :title="
+        deletePayload?.type === 'jilid'
+          ? `Hapus ${terms.levelSingularTitle}`
+          : `Hapus ${terms.mentorSingularTitle}`
+      "
       message="Apakah Anda yakin ingin menghapus data ini secara permanen?"
       confirmText="Hapus"
       @cancel="isDeleteModalOpen = false"

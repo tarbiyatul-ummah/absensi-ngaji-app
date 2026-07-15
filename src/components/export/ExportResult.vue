@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { Download05Icon, PrinterIcon } from "@hugeicons/core-free-icons";
+import { terms } from "../../config/organization";
 
 defineProps<{
   report: {
@@ -53,7 +54,9 @@ const emit = defineEmits<{
         aria-label="Ringkasan laporan"
       >
         <div class="rounded-md border border-[#D0E4C9] bg-[#F1F8EF] p-3">
-          <p class="text-[12px] text-[#008060]">Total Santri</p>
+          <p class="text-[12px] text-[#008060]">
+            Total {{ terms.studentSingularTitle }}
+          </p>
           <p class="text-[20px] font-bold text-[#008060]">
             {{ report.rows.length }}
           </p>
@@ -86,8 +89,12 @@ const emit = defineEmits<{
             <tr>
               <th class="w-12 px-3 py-2 font-semibold">No</th>
               <th class="px-3 py-2 font-semibold">Nama</th>
-              <th class="px-3 py-2 font-semibold">Jilid</th>
-              <th class="px-3 py-2 font-semibold">Guru</th>
+              <th class="px-3 py-2 font-semibold">
+                {{ terms.levelSingularTitle }}
+              </th>
+              <th class="px-3 py-2 font-semibold">
+                {{ terms.mentorSingularTitle }}
+              </th>
               <th class="w-16 px-3 py-2 text-right font-semibold">Hadir</th>
               <th class="w-16 px-3 py-2 text-right font-semibold">Izin</th>
               <th class="w-16 px-3 py-2 text-right font-semibold">Alfa</th>

@@ -39,3 +39,17 @@ export interface SppPayment {
   paidAt?: number | null;
   updatedAt: number;
 }
+
+export type SavingsAccountMode = "monthly";
+export type SavingsAccountSemester = "ganjil" | "genap";
+
+export interface SavingsAccount {
+  id: string;
+  name: string;
+  academicYearStart: number;
+  semester: SavingsAccountSemester;
+  mode: SavingsAccountMode;
+  santriIds: string[];
+  createdAt: number;
+  updatedAt: number;
+}

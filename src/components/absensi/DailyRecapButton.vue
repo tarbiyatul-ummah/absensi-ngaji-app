@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { ClipboardCopyIcon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
 import type { Santri, Attendance } from "../../types";
+import { organizationConfig, terms } from "../../config/organization";
 
 const props = defineProps<{
   filteredSantri: Santri[];
@@ -23,12 +25,14 @@ const generateDailyRecap = async () => {
     });
 
     if (absentSantri.length === 0) {
-      alert("Semua santri pada filter ini sudah hadir atau izin!");
+      alert(
+        `Semua ${terms.studentSingularLower} pada filter ini sudah hadir atau izin!`,
+      );
       return;
     }
 
     const names = absentSantri.map((s) => s.nama).join(", ");
-    const message = `Bismillah bapak/ibu, izin menyampaikan rekap kehadiran hari ini setelah membaca do'a pembuka, kami melihat nama-nama siswa di bawah ini belum hadir, di antaranya\n\n${names}\n\nJika berhalangan untuk hadir mengaji, mohon diinformasikan kepada ustadz/ustadzahnya nggih. Terima kasih.`;
+    const message = `Izin menyampaikan rekap kehadiran ${organizationConfig.typeLabel} hari ini. Kami melihat nama-nama ${terms.studentSingularLower} di bawah ini belum hadir:\n\n${names}\n\nJika berhalangan hadir, mohon diinformasikan kepada ${terms.mentorSingularLower}. Terima kasih.`;
 
     // Gunakan Clipboard API dengan fallback untuk mobile
     if (navigator.clipboard && window.isSecureContext) {
@@ -51,16 +55,18 @@ const generateDailyRecap = async () => {
 </script>
 
 <template>
-  <button
+  <Button
+    type="button"
+    variant="outline"
     @click="generateDailyRecap"
-    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-[#C9CCCF] bg-white text-[13px] font-medium text-[#202223] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] active:bg-[#F4F6F8] transition-all"
+    class="w-full"
   >
     <HugeiconsIcon
       :icon="ClipboardCopyIcon"
       :size="17"
-      color="#6D7175"
+      color="currentColor"
       :stroke-width="2"
     />
     Salin Rekap Belum Hadir (WA)
-  </button>
+  </Button>
 </template>

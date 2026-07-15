@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { getCurrentUser } from "../services/firebase";
+import { terms } from "../config/organization";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -34,6 +35,31 @@ const router = createRouter({
     {
       path: "/keuangan",
       component: () => import("../views/FinanceView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/tabungan",
+      component: () => import("../views/SavingsView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/penilaian",
+      component: () => import("../views/FeaturePlaceholderView.vue"),
+      props: () => ({
+        title: "Penilaian",
+        description:
+          `Catat perkembangan ${terms.studentSingularLower} dengan format yang bisa disesuaikan untuk organisasi.`,
+      }),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/akun",
+      component: () => import("../views/AccountView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/akun/istilah",
+      component: () => import("../views/OrganizationTermsView.vue"),
       meta: { requiresAuth: true },
     },
   ],

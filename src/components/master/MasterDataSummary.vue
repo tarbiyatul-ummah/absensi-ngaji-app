@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { terms } from "../../config/organization";
+
 interface SummaryItem {
   nama: string;
   count: number;
@@ -18,7 +20,9 @@ defineProps<{
   >
     <div class="grid grid-cols-2 border-b border-[#F1F2F3]">
       <div class="p-4 border-r border-[#F1F2F3]">
-        <p class="text-[12px] text-[#6D7175]">Santri Aktif</p>
+        <p class="text-[12px] text-[#6D7175]">
+          {{ terms.studentSingularTitle }} Aktif
+        </p>
         <p class="text-[24px] font-bold leading-tight text-[#008060]">
           {{ totalActive }}
         </p>
@@ -34,9 +38,11 @@ defineProps<{
     <div class="grid grid-cols-1 gap-0 md:grid-cols-2">
       <div class="p-4 md:border-r md:border-[#F1F2F3]">
         <div class="mb-2 flex items-center justify-between">
-          <h2 class="text-[13px] font-semibold text-[#202223]">Per Jilid</h2>
+          <h2 class="text-[13px] font-semibold text-[#202223]">
+            Per {{ terms.levelSingularTitle }}
+          </h2>
           <span class="text-[11px] text-[#6D7175]">
-            {{ jilidStats.length }} jilid
+            {{ jilidStats.length }} {{ terms.levelSingularLower }}
           </span>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -50,16 +56,18 @@ defineProps<{
             <span class="font-bold text-[#008060]">{{ item.count }}</span>
           </span>
           <span v-if="jilidStats.length === 0" class="text-[12px] text-[#6D7175]">
-            Belum ada data jilid.
+            Belum ada data {{ terms.levelSingularLower }}.
           </span>
         </div>
       </div>
 
       <div class="border-t border-[#F1F2F3] p-4 md:border-t-0">
         <div class="mb-2 flex items-center justify-between">
-          <h2 class="text-[13px] font-semibold text-[#202223]">Per Guru</h2>
+          <h2 class="text-[13px] font-semibold text-[#202223]">
+            Per {{ terms.mentorSingularTitle }}
+          </h2>
           <span class="text-[11px] text-[#6D7175]">
-            {{ guruStats.length }} guru
+            {{ guruStats.length }} {{ terms.mentorSingularLower }}
           </span>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -73,7 +81,7 @@ defineProps<{
             <span class="font-bold text-[#454749]">{{ item.count }}</span>
           </span>
           <span v-if="guruStats.length === 0" class="text-[12px] text-[#6D7175]">
-            Belum ada data guru.
+            Belum ada data {{ terms.mentorSingularLower }}.
           </span>
         </div>
       </div>

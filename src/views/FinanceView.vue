@@ -7,8 +7,14 @@ import {
   ref,
   watch,
 } from "vue";
+import { RouterLink } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { Download05Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft02Icon, Download05Icon } from "@hugeicons/core-free-icons";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getGuru, getJilid, getSantri } from "../services/masterService";
 import {
   getSppPaymentId,
@@ -23,6 +29,7 @@ import {
   getCurrentAcademicYearStart,
 } from "../utils/academicPeriod";
 import Toast from "../components/master/Toast.vue";
+import { terms } from "../config/organization";
 
 const SANTRI_BATCH_SIZE = 15;
 
@@ -278,9 +285,9 @@ const csvValue = (value: string | number) => {
 
 const exportCsv = () => {
   const headers = [
-    "Nama Santri",
-    "Jilid",
-    "Guru",
+    `Nama ${terms.studentSingularTitle}`,
+    terms.levelSingularTitle,
+    terms.mentorSingularTitle,
     ...monthOptions.value.map((month) => month.label),
     "Total Lunas",
     "Belum Lunas",
@@ -308,17 +315,17 @@ const exportCsv = () => {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = `rekap-spp-${getAcademicYearLabel(
+  link.download = `rekap-${terms.paymentLabel.toLowerCase()}-${getAcademicYearLabel(
     selectedAcademicYearStart.value,
   ).replace("/", "-")}.csv`;
   link.click();
   URL.revokeObjectURL(url);
-  triggerToast("Data SPP berhasil diexport.");
+  triggerToast(`Data ${terms.paymentLabel} berhasil diexport.`);
 };
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F6F7] pb-44 font-sans">
+  <div class="app-page">
     <Toast
       :show="showToast"
       :message="toastMessage"
@@ -326,21 +333,32 @@ const exportCsv = () => {
       @close="showToast = false"
     />
 
-    <header class="mx-auto max-w-5xl px-4 pb-4 pt-6">
-      <div
-        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
+    <header class="app-container-wide space-y-4 pb-4">
+      <Button as-child variant="ghost" size="sm" class="w-fit px-2">
+        <RouterLink to="/dashboard">
+          <HugeiconsIcon
+            :icon="ArrowLeft02Icon"
+            :size="16"
+            color="currentColor"
+            :stroke-width="1.7"
+          />
+          Dashboard
+        </RouterLink>
+      </Button>
+
+      <div class="app-header">
         <div>
-          <h1 class="text-[20px] font-bold text-[#202223]">Keuangan SPP</h1>
-          <p class="mt-1 text-[14px] text-[#6D7175]">
+          <h1 class="app-title">
+            Keuangan {{ terms.paymentLabel }}
+          </h1>
+          <p class="app-subtitle">
             Pantau pembayaran per bulan dalam satu tahun ajaran.
           </p>
         </div>
-        <button
+        <Button
           type="button"
           @click="exportCsv"
           :disabled="isLoading || activeSantriList.length === 0"
-          class="inline-flex items-center justify-center gap-2 rounded-md bg-[#202223] px-3 py-2 text-[13px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#454749] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <HugeiconsIcon
             :icon="Download05Icon"
@@ -349,57 +367,53 @@ const exportCsv = () => {
             :stroke-width="2"
           />
           Export CSV
-        </button>
+        </Button>
       </div>
     </header>
 
     <div v-if="isLoading" class="flex h-64 items-center justify-center">
       <div
-        class="h-8 w-8 animate-spin rounded-full border-b-2 border-[#008060]"
+        class="h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--primary)]"
       ></div>
     </div>
 
-    <main v-else class="mx-auto max-w-5xl space-y-5 px-4 pb-28">
-      <section
-        class="grid grid-cols-2 overflow-hidden rounded-lg border border-[#E1E3E5] bg-white shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] md:grid-cols-4"
-      >
-        <div class="border-r border-[#F1F2F3] p-4">
-          <p class="text-[12px] text-[#6D7175]">Tahun Ajaran</p>
-          <p class="text-[20px] font-bold text-[#202223]">
+    <main v-else class="app-container-wide space-y-5 pb-28">
+      <Card class="grid grid-cols-2 md:grid-cols-4">
+        <div class="border-r p-4">
+          <p class="text-xs leading-snug text-muted-foreground">Tahun Ajaran</p>
+          <p class="mt-0.5 text-2xl font-bold leading-tight text-foreground">
             {{ getAcademicYearLabel(selectedAcademicYearStart) }}
           </p>
         </div>
-        <div class="border-r-0 border-[#F1F2F3] p-4 md:border-r">
-          <p class="text-[12px] text-[#6D7175]">Lunas</p>
-          <p class="text-[20px] font-bold text-[#008060]">{{ totalLunas }}</p>
+        <div class="border-r-0 p-4 md:border-r">
+          <p class="text-xs leading-snug text-muted-foreground">Lunas</p>
+          <p class="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]">{{ totalLunas }}</p>
         </div>
-        <div class="border-r border-t border-[#F1F2F3] p-4 md:border-t-0">
-          <p class="text-[12px] text-[#6D7175]">Belum Lunas</p>
-          <p class="text-[20px] font-bold text-[#D72C0D]">
+        <div class="border-r border-t p-4 md:border-t-0">
+          <p class="text-xs leading-snug text-muted-foreground">Belum Lunas</p>
+          <p class="mt-0.5 text-2xl font-bold leading-tight text-destructive">
             {{ totalBelumLunas }}
           </p>
         </div>
-        <div class="border-t border-[#F1F2F3] p-4 md:border-t-0">
-          <p class="text-[12px] text-[#6D7175]">Progress</p>
-          <p class="text-[20px] font-bold text-[#202223]">
+        <div class="border-t p-4 md:border-t-0">
+          <p class="text-xs leading-snug text-muted-foreground">Progress</p>
+          <p class="mt-0.5 text-2xl font-bold leading-tight text-foreground">
             {{ completionPercent }}%
           </p>
         </div>
-      </section>
+      </Card>
 
-      <section
-        class="rounded-lg border border-[#E1E3E5] bg-white shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)]"
-      >
+      <Card>
         <div
-          class="grid grid-cols-1 gap-3 border-b border-[#E1E3E5] p-4 md:grid-cols-[220px_1fr]"
+          class="grid grid-cols-1 gap-3 border-b p-4 md:grid-cols-[220px_1fr]"
         >
           <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-[#202223]">
+            <Label>
               Tahun Ajaran
-            </label>
+            </Label>
             <select
               v-model="selectedAcademicYearStart"
-              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2.5 text-[14px] text-[#202223] outline-none focus:border-[#008060] focus:ring-1 focus:ring-[#008060]"
+              class="ui-select"
             >
               <option
                 v-for="year in academicYearOptions"
@@ -411,21 +425,20 @@ const exportCsv = () => {
             </select>
           </div>
           <div>
-            <label class="mb-1.5 block text-[13px] font-medium text-[#202223]">
-              Cari Santri
-            </label>
-            <input
+            <Label>
+              Cari {{ terms.studentSingularTitle }}
+            </Label>
+            <Input
               v-model="searchQuery"
               type="search"
-              placeholder="Cari nama, jilid, atau guru..."
-              class="w-full rounded-md border border-[#C9CCCF] bg-white px-3 py-2.5 text-[14px] text-[#202223] outline-none placeholder:text-[#8C9196] focus:border-[#008060]"
+              :placeholder="`Cari nama, ${terms.levelSingularLower}, atau ${terms.mentorSingularLower}...`"
             />
           </div>
         </div>
 
         <div
           v-if="isPaymentLoading"
-          class="border-b border-[#E1E3E5] px-4 py-3 text-[13px] text-[#6D7175]"
+          class="border-b px-4 py-3 text-[13px] text-[var(--muted-foreground)]"
         >
           Memuat pembayaran tahun ajaran...
         </div>
@@ -434,23 +447,21 @@ const exportCsv = () => {
           <article
             v-for="santri in visibleSantriList"
             :key="santri.id"
-            class="rounded-lg border border-[#E1E3E5] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+            class="rounded-lg border bg-[var(--background)] p-3"
           >
             <div class="mb-3 flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <h2 class="truncate text-[14px] font-semibold text-[#202223]">
+                <h2 class="truncate text-sm font-semibold text-[var(--foreground)]">
                   {{ santri.nama }}
                 </h2>
-                <p class="mt-0.5 text-[12px] text-[#6D7175]">
+                <p class="mt-0.5 text-xs text-[var(--muted-foreground)]">
                   {{ getJilidName(santri.jilidId) }} -
                   {{ getGuruName(santri.guruId) }}
                 </p>
               </div>
-              <span
-                class="shrink-0 rounded-full border border-[#E1E3E5] bg-[#F4F6F8] px-2 py-0.5 text-[12px] font-semibold text-[#202223]"
-              >
+              <Badge variant="secondary" class="shrink-0">
                 {{ getPaidCount(santri.id) }}/{{ monthOptions.length }}
-              </span>
+              </Badge>
             </div>
 
             <div class="grid grid-cols-4 gap-2">
@@ -471,8 +482,8 @@ const exportCsv = () => {
                 class="flex h-12 flex-col items-center justify-center rounded-md border text-[11px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60"
                 :class="
                   isPaid(santri.id, month.value)
-                    ? 'border-[#D0E4C9] bg-[#E3F1DF] text-[#008060]'
-                    : 'border-[#D5D9DD] bg-white text-[#6D7175] active:bg-[#F4F6F8]'
+                    ? 'border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]'
+                    : 'border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] active:bg-[var(--accent)]'
                 "
               >
                 <span>{{ formatMonthShort(month.label) }}</span>
@@ -485,20 +496,20 @@ const exportCsv = () => {
 
           <div
             v-if="filteredSantriList.length === 0"
-            class="py-8 text-center text-[14px] text-[#6D7175]"
+            class="py-8 text-center text-sm text-[var(--muted-foreground)]"
           >
-            Tidak ada santri yang sesuai filter.
+            Tidak ada {{ terms.studentSingularLower }} yang sesuai filter.
           </div>
         </div>
 
         <div class="hidden overflow-x-auto pb-28 md:block">
-          <table class="min-w-245 w-full border-collapse text-left text-[13px]">
-            <thead class="bg-[#FAFAFA] text-[#454749]">
+          <table class="min-w-[980px] w-full border-collapse text-left text-[13px]">
+            <thead class="bg-[var(--muted)] text-[var(--muted-foreground)]">
               <tr>
                 <th
-                  class="sticky left-0 z-10 w-56 bg-[#FAFAFA] px-4 py-3 font-semibold"
+                  class="sticky left-0 z-10 w-56 bg-[var(--muted)] px-4 py-3 font-semibold"
                 >
-                  Santri
+                  {{ terms.studentSingularTitle }}
                 </th>
                 <th
                   v-for="month in monthOptions"
@@ -510,15 +521,15 @@ const exportCsv = () => {
                 <th class="w-24 px-3 py-3 text-right font-semibold">Lunas</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[#F1F2F3]">
+            <tbody class="divide-y">
               <tr
                 v-for="santri in visibleSantriList"
                 :key="santri.id"
-                class="hover:bg-[#F9FAFB]"
+                class="hover:bg-[var(--accent)]"
               >
-                <td class="sticky left-0 z-10 bg-white px-4 py-3">
-                  <p class="font-medium text-[#202223]">{{ santri.nama }}</p>
-                  <p class="mt-0.5 text-[12px] text-[#6D7175]">
+                <td class="sticky left-0 z-10 bg-[var(--background)] px-4 py-3">
+                  <p class="font-medium text-[var(--foreground)]">{{ santri.nama }}</p>
+                  <p class="mt-0.5 text-xs text-[var(--muted-foreground)]">
                     {{ getJilidName(santri.jilidId) }} -
                     {{ getGuruName(santri.guruId) }}
                   </p>
@@ -543,24 +554,24 @@ const exportCsv = () => {
                     class="mx-auto flex h-8 w-8 items-center justify-center rounded-md border text-[12px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60"
                     :class="
                       isPaid(santri.id, month.value)
-                        ? 'border-[#D0E4C9] bg-[#E3F1DF] text-[#008060]'
-                        : 'border-[#D5D9DD] bg-white text-[#8C9196] hover:bg-[#F4F6F8]'
+                        ? 'border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]'
+                        : 'border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] hover:bg-[var(--accent)]'
                     "
                     :aria-label="`${santri.nama} ${month.label}`"
                   >
                     {{ isPaid(santri.id, month.value) ? "L" : "-" }}
                   </button>
                 </td>
-                <td class="px-3 py-3 text-right font-semibold text-[#202223]">
+                <td class="px-3 py-3 text-right font-semibold text-[var(--foreground)]">
                   {{ getPaidCount(santri.id) }}/{{ monthOptions.length }}
                 </td>
               </tr>
               <tr v-if="filteredSantriList.length === 0">
                 <td
                   :colspan="monthOptions.length + 2"
-                  class="px-4 py-8 text-center text-[14px] text-[#6D7175]"
+                  class="px-4 py-8 text-center text-sm text-[var(--muted-foreground)]"
                 >
-                  Tidak ada santri yang sesuai filter.
+                  Tidak ada {{ terms.studentSingularLower }} yang sesuai filter.
                 </td>
               </tr>
             </tbody>
@@ -570,20 +581,20 @@ const exportCsv = () => {
         <div
           v-if="hasMoreSantri"
           ref="loadMoreTrigger"
-          class="flex items-center justify-center border-t border-[#E1E3E5] px-4 py-4"
+          class="flex items-center justify-center border-t px-4 py-4"
         >
-          <button
+          <Button
             type="button"
             @click="loadMoreSantri"
-            class="inline-flex items-center justify-center gap-2 rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-[13px] font-medium text-[#202223] hover:bg-[#F6F6F7]"
+            variant="outline"
           >
             <span
-              class="h-4 w-4 animate-spin rounded-full border-b-2 border-[#008060]"
+              class="h-4 w-4 animate-spin rounded-full border-b-2 border-[var(--primary)]"
             ></span>
             Muat lagi
-          </button>
+          </Button>
         </div>
-      </section>
+      </Card>
     </main>
   </div>
 </template>

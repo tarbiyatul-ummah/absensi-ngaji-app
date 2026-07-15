@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
 import type { Jilid } from "../../types";
 
 defineProps<{
@@ -13,18 +14,21 @@ defineEmits<{
 
 <template>
   <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-    <button
+    <Button
       v-for="jilid in [{ id: 'Semua', nama: 'Semua' }, ...jilidList]"
       :key="jilid.id"
+      type="button"
+      variant="ghost"
+      size="sm"
       @click="$emit('update:selectedJilid', jilid.id)"
       :class="[
-        'whitespace-nowrap px-4 py-1.5 text-[13px] font-medium transition-colors rounded-full',
+        'whitespace-nowrap rounded-full px-4 text-[13px]',
         selectedJilid === jilid.id
-          ? 'bg-[#E4E5E7] text-[#202223]'
-          : 'bg-transparent text-[#6D7175] hover:bg-[#F4F6F8]',
+          ? 'bg-secondary text-foreground'
+          : 'bg-transparent text-muted-foreground',
       ]"
     >
       {{ jilid.nama }}
-    </button>
+    </Button>
   </div>
 </template>

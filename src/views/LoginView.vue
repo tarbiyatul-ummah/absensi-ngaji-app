@@ -3,6 +3,12 @@ import { ref } from "vue";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { useRouter } from "vue-router";
+import { organizationConfig, terms } from "../config/organization";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const email = ref("");
 const password = ref("");
@@ -25,61 +31,54 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F4F6F8] flex items-center justify-center px-4">
-    <div
-      class="bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] w-full max-w-[400px] overflow-hidden"
-    >
-      <div class="p-6 space-y-6">
+  <div class="app-page flex items-center justify-center px-4">
+    <Card class="w-full max-w-[400px]">
+      <CardContent class="p-6 space-y-6">
         <div class="text-center space-y-2">
-          <h1 class="text-[24px] font-bold text-[#202223]">
-            LPQ Tarbiyatul Ummah
+          <h1 class="text-2xl font-bold text-foreground">
+            {{ organizationConfig.name }}
           </h1>
-          <p class="text-[14px] text-[#6D7175]">
-            Masuk untuk mengelola absensi santri
+          <p class="text-sm text-muted-foreground">
+            Masuk untuk mengelola absensi {{ terms.studentSingularLower }}
           </p>
         </div>
 
-        <div
+        <Alert
           v-if="errorMsg"
-          class="p-3 bg-[#FFF4F4] border border-[#D82C0D] rounded text-[#D82C0D] text-[13px]"
+          variant="destructive"
         >
           {{ errorMsg }}
-        </div>
+        </Alert>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-[13px] font-medium text-[#202223] mb-1.5"
-              >Email</label
-            >
-            <input
+            <Label>Email</Label>
+            <Input
               v-model="email"
               type="email"
-              class="w-full rounded-md border border-[#C9CCCF] p-2.5 text-[14px] focus:border-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
               placeholder="nama@email.com"
             />
           </div>
           <div>
-            <label class="block text-[13px] font-medium text-[#202223] mb-1.5"
-              >Password</label
-            >
-            <input
+            <Label>Password</Label>
+            <Input
               v-model="password"
               type="password"
               @keyup.enter="handleLogin"
-              class="w-full rounded-md border border-[#C9CCCF] p-2.5 text-[14px] focus:border-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
-              placeholder="••••••••"
+              placeholder="Password"
             />
           </div>
 
-          <button
+          <Button
+            type="button"
             @click="handleLogin"
             :disabled="isLoading"
-            class="w-full rounded-md bg-[#008060] py-2.5 text-[14px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#006E52] active:bg-[#005E46] transition-colors disabled:opacity-50"
+            class="w-full"
           >
             {{ isLoading ? "Memproses..." : "Masuk" }}
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   </div>
 </template>

@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type {
   Santri,
   Jilid,
   Attendance,
   AttendanceStatus,
 } from "../../types";
+import { terms } from "../../config/organization";
 
 const props = defineProps<{
   filteredSantri: Santri[];
@@ -34,41 +37,37 @@ const getButtonClass = (santriId: string, status: AttendanceStatus) => {
 
   if (status === "present") {
     return isActive
-      ? "border-[#008060] bg-[#E3F1DF] text-[#008060]"
-      : "border-[#C9CCCF] bg-white text-[#454749] hover:bg-[#F9FAFB]";
+      ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]"
+      : "border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--accent)]";
   }
 
   return isActive
-    ? "border-[#B98900] bg-[#FFF4D6] text-[#8A6116]"
-    : "border-[#C9CCCF] bg-white text-[#454749] hover:bg-[#F9FAFB]";
+    ? "border-[hsl(48_76%_78%)] bg-[hsl(48_96%_89%)] text-[hsl(32_95%_35%)]"
+    : "border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--accent)]";
 };
 </script>
 
 <template>
-  <div
-    class="bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden"
-  >
-    <div
-      class="p-4 border-b border-[#E1E3E5] flex justify-between items-center bg-[#FAFAFA]"
-    >
-      <h2 class="text-[14px] font-semibold text-[#202223]">Daftar Kehadiran</h2>
-      <span class="text-[12px] text-[#6D7175] font-medium"
-        >{{ filteredSantri.length }} Santri</span
+  <Card class="gap-0 py-0">
+    <CardHeader class="flex-row items-center justify-between border-b py-4">
+      <CardTitle>Daftar Kehadiran</CardTitle>
+      <span class="text-xs font-medium text-muted-foreground"
+        >{{ filteredSantri.length }} {{ terms.studentSingularTitle }}</span
       >
-    </div>
+    </CardHeader>
 
-    <div class="divide-y divide-[#E1E3E5]">
+    <div class="divide-y">
       <div
         v-for="santri in filteredSantri"
         :key="santri.id"
-        class="flex flex-col gap-3 p-4 hover:bg-[#F9FAFB] transition-colors sm:flex-row sm:items-center sm:justify-between"
+        class="flex flex-col gap-3 p-4 transition-colors hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="flex flex-col">
-          <span class="text-[14px] font-medium text-[#202223]">{{
+          <span class="text-sm font-medium text-foreground">{{
             santri.nama
           }}</span>
-          <!-- Keterangan Jilid kecil di bawah nama -->
-          <span class="text-[12px] text-[#6D7175]">
+          <span class="text-xs text-muted-foreground">
+            {{ terms.levelSingularTitle }}:
             {{ jilidList.find((j) => j.id === santri.jilidId)?.nama || "N/A" }}
           </span>
         </div>
@@ -79,36 +78,38 @@ const getButtonClass = (santriId: string, status: AttendanceStatus) => {
           role="group"
           :aria-label="`Status absensi ${santri.nama}`"
         >
-          <button
+          <Button
             type="button"
-            class="h-9 rounded-md border px-3 text-[13px] font-semibold transition-colors disabled:cursor-wait"
+            variant="outline"
+            class="h-9 px-3 text-[13px] font-semibold disabled:cursor-wait"
             :class="getButtonClass(santri.id, 'present')"
             :disabled="isSaving(santri.id)"
             :aria-pressed="getAttendanceStatus(santri.id) === 'present'"
             @click="emit('status-change', santri, 'present')"
           >
             Hadir
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            class="h-9 rounded-md border px-3 text-[13px] font-semibold transition-colors disabled:cursor-wait"
+            variant="outline"
+            class="h-9 px-3 text-[13px] font-semibold disabled:cursor-wait"
             :class="getButtonClass(santri.id, 'permission')"
             :disabled="isSaving(santri.id)"
             :aria-pressed="getAttendanceStatus(santri.id) === 'permission'"
             @click="emit('status-change', santri, 'permission')"
           >
             Izin
-          </button>
+          </Button>
         </div>
       </div>
 
       <!-- Empty State -->
       <div
         v-if="filteredSantri.length === 0"
-        class="p-8 text-center text-[#6D7175] text-[14px]"
+        class="p-8 text-center text-sm text-muted-foreground"
       >
-        Tidak ada data santri untuk filter ini.
+        Tidak ada data {{ terms.studentSingularLower }} untuk filter ini.
       </div>
     </div>
-  </div>
+  </Card>
 </template>

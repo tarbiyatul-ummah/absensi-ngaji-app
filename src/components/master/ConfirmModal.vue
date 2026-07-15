@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { HugeiconsIcon } from "@hugeicons/vue";
-import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 defineProps<{
   isOpen: boolean;
@@ -13,60 +20,38 @@ const emit = defineEmits<{
   (e: "confirm"): void;
   (e: "cancel"): void;
 }>();
+
+const handleOpenChange = (open: boolean) => {
+  if (!open) emit("cancel");
+};
 </script>
 
 <template>
-  <!-- Backdrop (Latar Gelap) -->
-  <div
-    v-if="isOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(32,34,35,0.8)] px-4 transition-opacity"
-  >
-    <!-- Modal Box -->
-    <div
-      class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-    >
-      <!-- Header -->
-      <div
-        class="px-5 py-4 border-b border-[#E1E3E5] flex justify-between items-center"
-      >
-        <h2 class="text-[16px] font-bold text-[#202223]">{{ title }}</h2>
-        <button
-          @click="emit('cancel')"
-          class="text-[#6D7175] hover:text-[#202223] transition-colors p-1 rounded-md hover:bg-[#F4F6F8]"
-        >
-          <HugeiconsIcon
-            :icon="Cancel01Icon"
-            :size="20"
-            color="currentColor"
-            :stroke-width="2"
-          />
-        </button>
-      </div>
-
-      <!-- Body -->
-      <div class="px-5 py-6">
-        <p class="text-[14px] text-[#454749] leading-relaxed">
+  <Dialog :open="isOpen" @update:open="handleOpenChange">
+    <DialogContent class="sm:max-w-sm">
+      <DialogHeader>
+        <DialogTitle>{{ title }}</DialogTitle>
+        <DialogDescription>
           {{ message }}
-        </p>
-      </div>
+        </DialogDescription>
+      </DialogHeader>
 
-      <!-- Footer -->
-      <div
-        class="px-5 py-4 border-t border-[#E1E3E5] bg-[#FAFAFA] flex justify-end gap-3"
-      >
-        <button
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
           @click="emit('cancel')"
-          class="px-4 py-2 rounded-md text-[13px] font-medium border border-[#C9CCCF] bg-white text-[#202223] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] active:bg-[#F4F6F8] transition-colors"
         >
           Batal
-        </button>
-        <button
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
           @click="emit('confirm')"
-          class="px-4 py-2 rounded-md text-[13px] font-medium text-white bg-[#D82C0D] shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#BC2200] active:bg-[#A11B00] transition-colors"
         >
           {{ confirmText || "Hapus" }}
-        </button>
-      </div>
-    </div>
-  </div>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

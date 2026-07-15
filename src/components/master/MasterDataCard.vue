@@ -5,6 +5,9 @@ import {
   ArrowDown01Icon,
   ArrowUp01Icon,
 } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface Item {
   id: string;
@@ -37,48 +40,49 @@ const handleAdd = () => {
 </script>
 
 <template>
-  <div
-    class="bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden"
-  >
-    <div class="p-4 border-b border-[#E1E3E5] bg-[#FAFAFA]">
-      <h2 class="text-[14px] font-semibold text-[#202223]">{{ title }}</h2>
-    </div>
+  <Card class="gap-0 py-0">
+    <CardHeader class="border-b py-4">
+      <CardTitle>{{ title }}</CardTitle>
+    </CardHeader>
 
-    <div class="p-4 border-b border-[#E1E3E5] bg-white">
+    <div class="border-b bg-background p-4">
       <div class="flex gap-2">
-        <input
+        <Input
           v-model="inputNama"
           type="text"
           :placeholder="placeholder"
           @keyup.enter="handleAdd"
-          class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-shadow"
         />
-        <button
+        <Button
+          type="button"
           @click="handleAdd"
-          class="rounded-md bg-[#008060] px-4 py-2 text-[14px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#006E52] active:bg-[#005E46] transition-colors whitespace-nowrap"
+          class="whitespace-nowrap"
         >
           Tambah
-        </button>
+        </Button>
       </div>
     </div>
 
-    <div class="divide-y divide-[#E1E3E5]">
+    <div class="divide-y">
       <!-- Tambahkan index di v-for -->
       <div
         v-for="(item, index) in items"
         :key="item.id"
-        class="flex justify-between items-center p-4 hover:bg-[#F9FAFB] transition-colors"
+        class="flex items-center justify-between p-4 transition-colors hover:bg-accent"
       >
         <div class="flex items-center gap-3">
           <!-- Tombol Panah (Hanya muncul jika isSortable = true) -->
           <div
             v-if="isSortable"
-            class="flex flex-col bg-[#F4F6F8] rounded border border-[#E1E3E5]"
+            class="flex flex-col rounded border bg-muted"
           >
-            <button
+            <Button
               v-if="index > 0"
+              type="button"
+              variant="ghost"
+              size="icon-xs"
               @click="emit('moveUp', index)"
-              class="p-1 text-[#8C9196] hover:text-[#202223] hover:bg-[#E4E5E7] transition-colors rounded-t"
+              class="rounded-b-none text-muted-foreground"
             >
               <HugeiconsIcon
                 :icon="ArrowUp01Icon"
@@ -86,14 +90,17 @@ const handleAdd = () => {
                 color="currentColor"
                 :stroke-width="2.5"
               />
-            </button>
+            </Button>
             <!-- Spacer kosong agar panah bawah selalu sejajar walau panah atas hilang -->
             <div v-else class="p-1 h-[22px]"></div>
 
-            <button
+            <Button
               v-if="index < items.length - 1"
+              type="button"
+              variant="ghost"
+              size="icon-xs"
               @click="emit('moveDown', index)"
-              class="p-1 text-[#8C9196] hover:text-[#202223] hover:bg-[#E4E5E7] transition-colors rounded-b"
+              class="rounded-t-none text-muted-foreground"
             >
               <HugeiconsIcon
                 :icon="ArrowDown01Icon"
@@ -101,36 +108,42 @@ const handleAdd = () => {
                 color="currentColor"
                 :stroke-width="2.5"
               />
-            </button>
+            </Button>
           </div>
 
-          <span class="text-[14px] font-medium text-[#202223]">{{
+          <span class="text-sm font-medium text-foreground">{{
             item.nama
           }}</span>
         </div>
 
         <div class="flex gap-2">
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             @click="emit('edit', item)"
-            class="px-3 py-1.5 rounded-md text-[13px] font-medium border border-[#C9CCCF] bg-white text-[#202223] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] active:bg-[#F4F6F8] transition-colors"
+            class="text-[13px]"
           >
             Edit
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             @click="emit('delete', item.id)"
-            class="px-3 py-1.5 rounded-md text-[13px] font-medium text-[#D82C0D] hover:bg-[#FFF4F4] active:bg-[#FCE8E8] transition-colors"
+            class="text-[13px] text-destructive hover:bg-red-50 hover:text-destructive"
           >
             Hapus
-          </button>
+          </Button>
         </div>
       </div>
 
       <div
         v-if="items.length === 0"
-        class="p-8 text-center text-[#6D7175] text-[14px]"
+        class="p-8 text-center text-sm text-muted-foreground"
       >
         Belum ada data.
       </div>
     </div>
-  </div>
+  </Card>
 </template>

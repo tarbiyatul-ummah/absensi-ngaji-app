@@ -1,100 +1,57 @@
 <script setup lang="ts">
-import { RouterView, RouterLink } from "vue-router";
+import { computed } from "vue";
+import { RouterView, RouterLink, useRoute } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
-import {
-  CheckListIcon,
-  DashboardSquare01Icon,
-  DatabaseIcon,
-  Share08Icon,
-  Wallet01Icon,
-} from "@hugeicons/core-free-icons";
+import { mainNavigationItems } from "./config/organization";
+
+const enabledNavigationItems = mainNavigationItems.filter((item) => item.enabled);
+const route = useRoute();
+const bottomNavHiddenPaths = new Set([
+  "/login",
+  "/keuangan",
+  "/tabungan",
+  "/penilaian",
+  "/akun/istilah",
+]);
+const shouldShowBottomNav = computed(
+  () => !bottomNavHiddenPaths.has(route.path),
+);
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 text-gray-800 pb-20">
+  <div class="min-h-screen text-[var(--foreground)]">
     <RouterView />
 
-    <!-- Mobile Bottom Navigation -->
-    <!-- Sisipkan di bagian bawah template App.vue -->
     <nav
-      v-if="$route.path !== '/login'"
-      class="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-[#EAEAEA] flex justify-around p-2 pb-safe"
+      v-if="shouldShowBottomNav"
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-background/90 px-3 py-2 shadow-[0_-10px_40px_hsl(222.2_84%_4.9%/0.06)] backdrop-blur-xl"
     >
-      <RouterLink
-        to="/"
-        class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-900 active-link"
-      >
-        <HugeiconsIcon
-          :icon="CheckListIcon"
-          :size="20"
-          color="currentColor"
-          :stroke-width="1.7"
-          class="mb-1"
-        />
-        <span class="text-[11px] font-medium">Absen</span>
-      </RouterLink>
-
-      <RouterLink
-        to="/master"
-        class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-900 active-link"
-      >
-        <HugeiconsIcon
-          :icon="DatabaseIcon"
-          :size="20"
-          color="currentColor"
-          :stroke-width="1.7"
-          class="mb-1"
-        />
-        <span class="text-[11px] font-medium">Data</span>
-      </RouterLink>
-      <RouterLink
-        to="/dashboard"
-        class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-900 active-link"
-      >
-        <HugeiconsIcon
-          :icon="DashboardSquare01Icon"
-          :size="21"
-          color="currentColor"
-          :stroke-width="1.7"
-          class="mb-1"
-        />
-        <span class="text-[11px] font-medium">Dashboard</span>
-      </RouterLink>
-
-      <RouterLink
-        to="/keuangan"
-        class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-900 active-link"
-      >
-        <HugeiconsIcon
-          :icon="Wallet01Icon"
-          :size="20"
-          color="currentColor"
-          :stroke-width="1.7"
-          class="mb-1"
-        />
-        <span class="text-[11px] font-medium">SPP</span>
-      </RouterLink>
-
-      <RouterLink
-        to="/export"
-        class="flex flex-col items-center p-2 text-gray-400 hover:text-gray-900 active-link"
-      >
-        <HugeiconsIcon
-          :icon="Share08Icon"
-          :size="20"
-          color="currentColor"
-          :stroke-width="1.7"
-          class="mb-1"
-        />
-        <span class="text-[11px] font-medium">Rekap</span>
-      </RouterLink>
+      <div class="mx-auto grid max-w-md grid-cols-4 gap-1 rounded-xl bg-[var(--muted)] p-1">
+        <RouterLink
+          v-for="item in enabledNavigationItems"
+          :key="item.key"
+          :to="item.to"
+          class="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg px-2 text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] active-link"
+        >
+          <HugeiconsIcon
+            :icon="item.icon"
+            :size="19"
+            color="currentColor"
+            :stroke-width="1.8"
+          />
+          <span class="max-w-full truncate text-[11px] font-semibold">
+            {{ item.label }}
+          </span>
+        </RouterLink>
+      </div>
     </nav>
   </div>
 </template>
 
 <style>
-/* Update warna aktif navigasi ala Linear (Hitam/Gelap) */
 .router-link-active.active-link {
-  color: #111827;
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px hsl(222.2 84% 4.9% / 0.08);
 }
 </style>

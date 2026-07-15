@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+
 interface StatItem {
   nama: string;
   count: number;
@@ -13,27 +16,26 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    class="bg-white rounded-xl shadow-[0_1px_3px_rgba(63,63,68,0.15)] border border-[#E1E3E5] overflow-hidden"
-  >
-    <div class="px-4 py-3 border-b border-[#F1F2F3] bg-[#FAFAFA]">
-      <h3 class="text-[14px] font-bold text-[#202223]">{{ title }}</h3>
-    </div>
-    <div class="divide-y divide-[#F1F2F3]">
+  <Card class="gap-0 py-0">
+    <CardHeader class="border-b py-4">
+      <CardTitle>{{ title }}</CardTitle>
+    </CardHeader>
+    <div class="divide-y">
       <div
         v-for="stat in items"
         :key="stat.nama"
-        class="px-4 py-3 flex justify-between items-center hover:bg-[#F9FAFB]"
+        class="flex items-center justify-between px-4 py-3 hover:bg-accent"
       >
-        <span class="text-[14px] text-[#454749]">{{ stat.nama }}</span>
-        <span
-          class="text-[14px] font-bold px-2.5 py-0.5 rounded-full border"
+        <span class="text-sm text-foreground">{{ stat.nama }}</span>
+        <Badge
+          variant="outline"
+          class="text-sm font-bold"
           :class="{
-            'bg-[#F4F6F8] text-[#202223] border-[#E1E3E5]':
+            'bg-secondary text-secondary-foreground':
               badgeColor !== 'green' && badgeColor !== 'red',
-            'bg-[#E3F1DF] text-[#008060] border-[#D0E4C9]':
+            'bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] border-[hsl(142_42%_82%)]':
               badgeColor === 'green',
-            'bg-[#FFF4F4] text-[#D72C0D] border-[#FED3D1]':
+            'bg-[hsl(0_86%_97%)] text-[var(--destructive)] border-[hsl(0_75%_88%)]':
               badgeColor === 'red',
           }"
         >
@@ -41,20 +43,21 @@ defineProps<{
           <span
             class="text-[12px] font-normal"
             :class="{
-              'text-[#6D7175]': badgeColor !== 'green' && badgeColor !== 'red',
-              'text-[#008060]': badgeColor === 'green',
-              'text-[#D72C0D]': badgeColor === 'red',
+              'text-[var(--muted-foreground)]':
+                badgeColor !== 'green' && badgeColor !== 'red',
+              'text-[hsl(142_72%_29%)]': badgeColor === 'green',
+              'text-[var(--destructive)]': badgeColor === 'red',
             }"
             >{{ unit || "Anak" }}</span
           >
-        </span>
+        </Badge>
       </div>
       <div
         v-if="items.length === 0"
-        class="px-4 py-6 text-center text-[#6D7175] text-[14px]"
+        class="px-4 py-6 text-center text-sm text-muted-foreground"
       >
         Tidak ada data
       </div>
     </div>
-  </div>
+  </Card>
 </template>

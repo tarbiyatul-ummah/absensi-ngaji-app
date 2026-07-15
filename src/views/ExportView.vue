@@ -19,6 +19,7 @@ import {
   getCurrentSemester,
   getPeriodLabel,
 } from "../utils/academicPeriod";
+import { organizationConfig, terms } from "../config/organization";
 
 interface ExportReportRow {
   no: number;
@@ -130,15 +131,15 @@ const getReportPeriodLabel = () => {
 const getFilterLabel = () => {
   if (filterType.value === "jilid") {
     const jilid = jilidList.value.find((item) => item.id === filterId.value);
-    return `Jilid: ${jilid?.nama ?? "-"}`;
+    return `${terms.levelSingularTitle}: ${jilid?.nama ?? "-"}`;
   }
 
   if (filterType.value === "guru") {
     const guru = guruList.value.find((item) => item.id === filterId.value);
-    return `Guru: ${guru?.nama ?? "-"}`;
+    return `${terms.mentorSingularTitle}: ${guru?.nama ?? "-"}`;
   }
 
-  return "Semua Santri";
+  return `Semua ${terms.studentSingularTitle}`;
 };
 
 const isAttendancePresent = (attendance: Attendance) => {
@@ -164,7 +165,9 @@ const generateExport = async () => {
   if (!startDate.value || !endDate.value)
     return triggerToast("Pilih periode terlebih dahulu.");
   if (filterType.value !== "semua" && !filterId.value)
-    return triggerToast("Pilih spesifik Jilid/Guru terlebih dahulu.");
+    return triggerToast(
+      `Pilih spesifik ${terms.levelSingularTitle}/${terms.mentorSingularTitle} terlebih dahulu.`,
+    );
 
   isGenerating.value = true;
 
@@ -210,7 +213,9 @@ const generateExport = async () => {
 
     if (filteredSantri.length === 0) {
       exportReport.value = null;
-      triggerToast("Tidak ada data santri untuk filter tersebut.");
+      triggerToast(
+        `Tidak ada data ${terms.studentSingularLower} untuk filter tersebut.`,
+      );
       isGenerating.value = false;
       return;
     }
@@ -252,7 +257,7 @@ const generateExport = async () => {
     });
 
     exportReport.value = {
-      title: "Rekap Kehadiran Santri",
+      title: `Rekap Kehadiran ${terms.studentSingularTitle}`,
       periodLabel: getReportPeriodLabel(),
       filterLabel: getFilterLabel(),
       generatedAt: new Date().toLocaleString("id-ID", {
@@ -409,7 +414,7 @@ const printPdf = () => {
         <header>
           <h1>${escapeHtml(report.title)}</h1>
           <div class="meta">
-            <div>LPQ Tarbiyatul Ummah</div>
+            <div>${escapeHtml(organizationConfig.name)}</div>
             <div>Periode: ${escapeHtml(report.periodLabel)}</div>
             <div>Filter: ${escapeHtml(report.filterLabel)}</div>
             <div>Dibuat: ${escapeHtml(report.generatedAt)}</div>
@@ -418,7 +423,7 @@ const printPdf = () => {
 
         <section class="summary" aria-label="Ringkasan laporan">
           <div class="summary-item">
-            <p class="summary-label">Total Santri</p>
+            <p class="summary-label">Total ${escapeHtml(terms.studentSingularTitle)}</p>
             <p class="summary-value">${escapeHtml(report.rows.length)}</p>
           </div>
           <div class="summary-item">
@@ -439,9 +444,9 @@ const printPdf = () => {
           <thead>
             <tr>
               <th class="number">No</th>
-              <th>Nama Santri</th>
-              <th>Jilid</th>
-              <th>Guru</th>
+              <th>Nama ${escapeHtml(terms.studentSingularTitle)}</th>
+              <th>${escapeHtml(terms.levelSingularTitle)}</th>
+              <th>${escapeHtml(terms.mentorSingularTitle)}</th>
               <th class="number">Hadir</th>
               <th class="number">Izin</th>
               <th class="number">Alfa</th>
@@ -451,7 +456,7 @@ const printPdf = () => {
         </table>
 
         <footer>
-          Dimohon untuk Ananda yang kehadirannya masih di bawah target setiap bulan, untuk ditingkatkan semangatnya untuk masuk.
+          Dimohon untuk ${escapeHtml(terms.studentSingularLower)} yang kehadirannya masih di bawah target, agar terus ditingkatkan kehadirannya.
         </footer>
       </body>
     </html>
@@ -472,9 +477,9 @@ const exportCsv = () => {
   const report = exportReport.value;
   const headers = [
     "No",
-    "Nama Santri",
-    "Jilid",
-    "Guru",
+    `Nama ${terms.studentSingularTitle}`,
+    terms.levelSingularTitle,
+    terms.mentorSingularTitle,
     "Hadir",
     "Izin",
     "Alfa",

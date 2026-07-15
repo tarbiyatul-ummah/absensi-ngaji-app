@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Card } from "@/components/ui/card";
+
 defineProps<{
   title: string;
   value: number;
@@ -9,19 +11,17 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    class="bg-white p-6 rounded-xl shadow-[0_1px_3px_rgba(63,63,68,0.15)] border border-[#E1E3E5] flex items-center justify-between"
-  >
+  <Card class="flex-row items-center justify-between p-6">
     <div>
       <p
-        class="text-[14px] font-medium text-[#6D7175] uppercase tracking-wider"
+        class="text-sm font-medium uppercase tracking-wider text-muted-foreground"
       >
         {{ title }}
       </p>
-      <h2 class="text-[36px] font-bold text-[#202223] leading-tight">
+      <h2 class="text-4xl font-bold leading-tight text-foreground">
         {{ value }}
       </h2>
-      <p v-if="subtitle" class="text-[12px] text-[#6D7175] mt-1">
+      <p v-if="subtitle" class="mt-1 text-xs text-muted-foreground">
         {{ subtitle }}
       </p>
     </div>
@@ -29,12 +29,12 @@ defineProps<{
       v-if="$slots.icon"
       class="p-3 rounded-full"
       :style="{
-        backgroundColor: iconBgColor || '#E3F1DF',
+        backgroundColor: iconBgColor || 'hsl(210 40% 96.1%)',
       }"
     >
-      <div :style="{ color: iconColor || '#008060' }">
+      <div :style="{ color: iconColor || 'hsl(222.2 47.4% 11.2%)' }">
         <slot name="icon"></slot>
       </div>
     </div>
-  </div>
+  </Card>
 </template>

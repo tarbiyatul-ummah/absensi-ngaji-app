@@ -2,10 +2,17 @@
 import { ref, onMounted, computed } from "vue";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import {
-  Cancel01Icon,
   Download05Icon,
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   addSantriBulk,
   getJilid,
@@ -21,6 +28,7 @@ import SantriForm from "../components/master/SantriForm.vue";
 import SantriList from "../components/master/SantriList.vue";
 import ConfirmModal from "../components/master/ConfirmModal.vue";
 import MasterDataSummary from "../components/master/MasterDataSummary.vue";
+import { terms } from "../config/organization";
 
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
@@ -91,9 +99,9 @@ const csvValue = (value: string | number) => {
 
 const exportSantriCsv = () => {
   const headers = [
-    "Nama Santri",
-    "Jilid",
-    "Guru",
+    `Nama ${terms.studentSingularTitle}`,
+    terms.levelSingularTitle,
+    terms.mentorSingularTitle,
     "Status",
     "Tanggal Ditambahkan",
   ];
@@ -116,7 +124,7 @@ const exportSantriCsv = () => {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "data-santri.csv";
+  link.download = `data-${terms.studentSingularLower}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 };
@@ -130,7 +138,7 @@ const handleAddSantri = async (payload: {
   await addSantriBulk(payload.nama, payload.jilidId, payload.guruId);
   await loadData();
   isAddModalOpen.value = false;
-  alert("Santri berhasil ditambahkan!");
+  alert(`${terms.studentSingularTitle} berhasil ditambahkan!`);
 };
 
 // Logika dari SantriList
@@ -183,18 +191,22 @@ const executeDelete = async () => {
 </script>
 
 <template>
-  <div class="pb-24 font-sans">
+  <div class="app-page">
     <!-- Header Shopify Style -->
-    <header class="px-4 pt-5 pb-4 max-w-3xl mx-auto">
-      <div class="flex items-center gap-3">
-        <h1 class="text-[20px] font-bold text-[#202223]">Data Santri</h1>
+    <header class="app-container pb-4">
+      <div class="app-header">
+        <div>
+        <h1 class="app-title">
+          Data {{ terms.studentSingularTitle }}
+        </h1>
+        </div>
       </div>
 
       <div class="mt-3 grid grid-cols-2 gap-2 sm:flex">
-        <button
+        <Button
           type="button"
           @click="isAddModalOpen = true"
-          class="inline-flex items-center justify-center gap-2 rounded-md bg-[#008060] px-3 py-2 text-[13px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#006E52] active:bg-[#005E46] sm:flex-none"
+          class="sm:flex-none"
         >
           <HugeiconsIcon
             :icon="PlusSignIcon"
@@ -202,14 +214,15 @@ const executeDelete = async () => {
             color="currentColor"
             :stroke-width="2"
           />
-          Tambah Santri
-        </button>
+          Tambah {{ terms.studentSingularTitle }}
+        </Button>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
           @click="exportSantriCsv"
           :disabled="santriList.length === 0"
-          class="inline-flex items-center justify-center gap-2 rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-[13px] font-medium text-[#202223] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+          class="sm:flex-none"
         >
           <HugeiconsIcon
             :icon="Download05Icon"
@@ -218,18 +231,17 @@ const executeDelete = async () => {
             :stroke-width="2"
           />
           Export CSV
-        </button>
+        </Button>
 
-        <RouterLink
-          to="/master-guru"
-          class="col-span-2 inline-flex items-center justify-center rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-[13px] font-medium text-[#202223] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] sm:col-span-1 sm:flex-none"
-        >
-          Kelola Guru/Jilid
-        </RouterLink>
+        <Button as-child variant="outline" class="col-span-2 sm:col-span-1 sm:flex-none">
+          <RouterLink to="/master-guru">
+            Kelola {{ terms.mentorSingularTitle }}/{{ terms.levelSingularTitle }}
+          </RouterLink>
+        </Button>
       </div>
     </header>
 
-    <div class="px-4 space-y-5 max-w-3xl mx-auto">
+    <div class="app-container space-y-5">
       <MasterDataSummary
         :total-active="activeSantriList.length"
         :total-inactive="inactiveSantriCount"
@@ -248,55 +260,28 @@ const executeDelete = async () => {
       />
     </div>
 
-    <div
-      v-if="isAddModalOpen"
-      class="fixed inset-0 z-40 flex items-end bg-[rgba(32,34,35,0.65)] px-0 sm:items-center sm:justify-center sm:px-4"
-      @click.self="isAddModalOpen = false"
-    >
-      <div
-        class="w-full rounded-t-xl bg-white shadow-2xl sm:max-w-lg sm:rounded-lg"
-      >
-        <div
-          class="flex items-center justify-between border-b border-[#E1E3E5] px-5 py-4"
-        >
-          <div>
-            <h2 class="text-[16px] font-bold text-[#202223]">
-              Tambah Santri
-            </h2>
-            <p class="mt-0.5 text-[12px] text-[#6D7175]">
-              Bisa tambah satu nama atau beberapa nama dipisahkan koma.
-            </p>
-          </div>
-          <button
-            type="button"
-            @click="isAddModalOpen = false"
-            class="rounded-md p-1 text-[#6D7175] hover:bg-[#F4F6F8] hover:text-[#202223]"
-            aria-label="Tutup"
-          >
-            <HugeiconsIcon
-              :icon="Cancel01Icon"
-              :size="20"
-              color="currentColor"
-              :stroke-width="2"
-            />
-          </button>
-        </div>
+    <Dialog v-model:open="isAddModalOpen">
+      <DialogContent class="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Tambah {{ terms.studentSingularTitle }}</DialogTitle>
+          <DialogDescription>
+            Bisa tambah satu nama atau beberapa nama dipisahkan koma.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div class="px-5 py-5">
-          <SantriForm
-            variant="plain"
-            :jilidList="jilidList"
-            :guruList="guruList"
-            @submit="handleAddSantri"
-          />
-        </div>
-      </div>
-    </div>
+        <SantriForm
+          variant="plain"
+          :jilidList="jilidList"
+          :guruList="guruList"
+          @submit="handleAddSantri"
+        />
+      </DialogContent>
+    </Dialog>
 
     <ConfirmModal
       :isOpen="isDeleteModalOpen"
-      title="Hapus Santri"
-      message="Apakah Anda yakin ingin menghapus data santri ini secara permanen? Data yang sudah dihapus tidak dapat dikembalikan."
+      :title="`Hapus ${terms.studentSingularTitle}`"
+      :message="`Apakah Anda yakin ingin menghapus data ${terms.studentSingularLower} ini secara permanen? Data yang sudah dihapus tidak dapat dikembalikan.`"
       confirmText="Hapus Permanen"
       @cancel="cancelDelete"
       @confirm="executeDelete"

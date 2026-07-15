@@ -1,10 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
+import { RouterLink } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { UserMultipleIcon } from "@hugeicons/core-free-icons";
 import { getSantri } from "../services/masterService";
 import { getAttendanceByDateRange } from "../services/attendanceService";
 import type { Santri, Attendance } from "../types";
+import {
+  dashboardMenuItems,
+  organizationConfig,
+  terms,
+} from "../config/organization";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import StatisticCard from "../components/dashboard/StatisticCard.vue";
 import StatisticListCard from "../components/dashboard/StatisticListCard.vue";
 import DailyAttendanceChart from "../components/dashboard/DailyAttendanceChart.vue";
@@ -44,6 +57,14 @@ const trackedDayOptions = [
   { value: 0, label: "Minggu", shortLabel: "Min" },
 ];
 const selectedTrackedWeekdays = ref([1, 2, 3, 4, 5]);
+const activeDashboardMenuItems = dashboardMenuItems.filter(
+  (item) => item.enabled,
+);
+const menuToneClasses: Record<string, string> = {
+  green: "bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]",
+  blue: "bg-[hsl(214_100%_96%)] text-[hsl(221_83%_53%)]",
+  amber: "bg-[hsl(48_96%_89%)] text-[hsl(32_95%_35%)]",
+};
 
 const triggerToast = (message: string) => {
   toastMessage.value = message;
@@ -332,7 +353,7 @@ const weeklyAttendanceChart = computed(() => {
 </script>
 
 <template>
-  <div class="pb-24 font-sans bg-[#F6F6F7] min-h-screen">
+  <div class="app-page">
     <Toast
       :show="showToast"
       :message="toastMessage"
@@ -340,23 +361,64 @@ const weeklyAttendanceChart = computed(() => {
       @close="showToast = false"
     />
 
-    <header class="px-4 pt-6 pb-4 max-w-3xl mx-auto">
-      <h1 class="text-[20px] font-bold text-[#202223]">Dashboard Rekap</h1>
-      <p class="text-[14px] text-[#6D7175]">
-        Ringkasan data santri aktif dan kehadiran per periode
+    <header class="app-container app-header pb-4">
+      <div>
+      <h1 class="app-title">Dashboard Rekap</h1>
+      <p class="app-subtitle">
+        Ringkasan data {{ terms.studentSingularLower }} aktif dan kehadiran per
+        periode
       </p>
+      </div>
     </header>
 
     <div v-if="isLoading" class="flex justify-center items-center h-64">
       <div
-        class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#008060]"
+        class="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"
       ></div>
     </div>
 
-    <div v-else class="px-4 space-y-6 max-w-3xl mx-auto">
+    <div v-else class="app-container space-y-6">
       <!-- Card: Total Utama -->
+      <Card class="gap-0 py-0">
+        <CardHeader class="border-b py-4">
+          <CardTitle>
+            Menu {{ organizationConfig.typeLabel }}
+          </CardTitle>
+          <CardDescription>
+            Fitur aktif sesuai kebutuhan organisasi
+          </CardDescription>
+        </CardHeader>
+
+        <div class="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+          <RouterLink
+            v-for="item in activeDashboardMenuItems"
+            :key="item.key"
+            :to="item.to"
+            class="flex min-h-[104px] flex-col rounded-lg border bg-background p-4 transition hover:bg-accent"
+          >
+            <div
+              class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg"
+              :class="menuToneClasses[item.tone]"
+            >
+              <HugeiconsIcon
+                :icon="item.icon"
+                :size="22"
+                color="currentColor"
+                :stroke-width="1.7"
+              />
+            </div>
+            <h3 class="text-sm font-semibold text-foreground">
+              {{ item.label }}
+            </h3>
+            <p class="mt-1 text-xs leading-5 text-muted-foreground">
+              {{ item.description }}
+            </p>
+          </RouterLink>
+        </div>
+      </Card>
+
       <StatisticCard
-        title="Total Seluruh Santri"
+        :title="`Total Seluruh ${terms.studentSingularTitle}`"
         :value="totalSantri"
         icon-bg-color="#E3F1DF"
         icon-color="#008060"
@@ -379,23 +441,21 @@ const weeklyAttendanceChart = computed(() => {
         @toggle-tracked-weekday="toggleTrackedWeekday"
       />
 
-      <section
-        class="bg-white rounded-xl shadow-[0_1px_3px_rgba(63,63,68,0.15)] border border-[#E1E3E5] overflow-hidden"
-      >
-        <div class="px-4 py-3 border-b border-[#F1F2F3] bg-[#FAFAFA]">
-          <h3 class="text-[14px] font-bold text-[#202223]">
+      <Card class="gap-0 py-0">
+        <CardHeader class="border-b py-4">
+          <CardTitle>
             Filter Periode Ranking
-          </h3>
-          <p class="mt-0.5 text-[12px] text-[#6D7175]">
+          </CardTitle>
+          <CardDescription>
             {{ selectedPeriodLabel }} - {{ selectedDateRangeLabel }}
-          </p>
-        </div>
+          </CardDescription>
+        </CardHeader>
 
         <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
           <div>
-            <label class="block text-[13px] text-[#202223] font-medium mb-1.5">
+            <Label>
               Tahun Ajaran
-            </label>
+            </Label>
             <select
               :value="selectedAcademicYearStart"
               @change="
@@ -403,7 +463,7 @@ const weeklyAttendanceChart = computed(() => {
                   ($event.target as HTMLSelectElement).value,
                 )
               "
-              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2.5 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+              class="ui-select"
             >
               <option
                 v-for="year in academicYearOptions"
@@ -416,12 +476,12 @@ const weeklyAttendanceChart = computed(() => {
           </div>
 
           <div>
-            <label class="block text-[13px] text-[#202223] font-medium mb-1.5">
+            <Label>
               Jenis Periode
-            </label>
+            </Label>
             <select
               v-model="selectedPeriodType"
-              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2.5 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+              class="ui-select"
             >
               <option value="semester">Semester</option>
               <option value="month">Bulanan</option>
@@ -430,12 +490,12 @@ const weeklyAttendanceChart = computed(() => {
           </div>
 
           <div v-if="selectedPeriodType === 'semester'">
-            <label class="block text-[13px] text-[#202223] font-medium mb-1.5">
+            <Label>
               Semester
-            </label>
+            </Label>
             <select
               v-model="selectedSemester"
-              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2.5 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+              class="ui-select"
             >
               <option value="ganjil">Ganjil</option>
               <option value="genap">Genap</option>
@@ -443,12 +503,12 @@ const weeklyAttendanceChart = computed(() => {
           </div>
 
           <div v-if="selectedPeriodType === 'month'">
-            <label class="block text-[13px] text-[#202223] font-medium mb-1.5">
+            <Label>
               Bulan
-            </label>
+            </Label>
             <select
               v-model="selectedMonth"
-              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2.5 text-[14px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+              class="ui-select"
             >
               <option
                 v-for="month in academicMonthOptions"
@@ -460,11 +520,11 @@ const weeklyAttendanceChart = computed(() => {
             </select>
           </div>
         </div>
-      </section>
+      </Card>
 
       <div
         v-if="isAttendanceLoading"
-        class="rounded-md border border-[#E1E3E5] bg-white px-4 py-3 text-center text-[13px] text-[#6D7175]"
+        class="rounded-xl border bg-card px-4 py-3 text-center text-[13px] text-muted-foreground shadow-sm"
       >
         Memuat data ranking periode...
       </div>
@@ -478,7 +538,7 @@ const weeklyAttendanceChart = computed(() => {
         />
 
         <StatisticListCard
-          title="Santri Paling Aktif"
+          :title="`${terms.studentSingularTitle} Paling Aktif`"
           :items="santriPalingAktif"
           badge-color="green"
           unit="Kali"

@@ -123,6 +123,40 @@ service cloud.firestore {
         );
     }
 
+    function validStringList(values, maxLength) {
+      return values is list
+        && values.size() > 0
+        && values.size() <= maxLength;
+    }
+
+    function validSavingsAccount(data) {
+      return data.keys().hasOnly([
+          "name",
+          "academicYearStart",
+          "semester",
+          "mode",
+          "santriIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.keys().hasAll([
+          "name",
+          "academicYearStart",
+          "semester",
+          "mode",
+          "santriIds",
+          "createdAt",
+          "updatedAt"
+        ])
+        && validName(data.name, 120)
+        && data.academicYearStart is number
+        && data.semester in ["ganjil", "genap"]
+        && data.mode == "monthly"
+        && validStringList(data.santriIds, 1000)
+        && data.createdAt is number
+        && data.updatedAt is number;
+    }
+
     match /attendances/{attendanceId} {
       allow read: if signedIn();
       allow create, update: if signedIn()
@@ -159,6 +193,13 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && validSppPayment(request.resource.data, paymentId);
       allow delete: if false;
+    }
+
+    match /savingsAccounts/{accountId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && validSavingsAccount(request.resource.data);
+      allow update, delete: if false;
     }
 
     match /users/{userId} {

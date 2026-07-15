@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import type { Santri, Jilid, Guru } from "../../types";
 import PaginationControls from "../common/PaginationControls.vue";
+import { terms } from "../../config/organization";
 
 const props = defineProps<{
   santriList: Santri[];
@@ -125,7 +126,9 @@ const saveEdit = (id: string) => {
     <div
       class="p-4 border-b border-[#E1E3E5] flex justify-between items-center gap-3 bg-[#FAFAFA]"
     >
-      <h2 class="text-[14px] font-semibold text-[#202223]">Daftar Santri</h2>
+      <h2 class="text-[14px] font-semibold text-[#202223]">
+        Daftar {{ terms.studentSingularTitle }}
+      </h2>
       <span
         class="bg-[#E4E5E7] text-[#454749] text-[12px] font-medium px-2 py-0.5 rounded-full"
       >
@@ -164,7 +167,7 @@ const saveEdit = (id: string) => {
       <input
         v-model="searchQuery"
         type="search"
-        placeholder="Cari nama santri, guru, atau jilid..."
+        :placeholder="`Cari nama ${terms.studentSingularLower}, ${terms.mentorSingularLower}, atau ${terms.levelSingularLower}...`"
         class="w-full rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-[14px] text-[#202223] outline-none shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] placeholder:text-[#8C9196] focus:border-[#008060]"
       />
     </div>
@@ -240,7 +243,8 @@ const saveEdit = (id: string) => {
                 >
               </div>
               <span class="text-[12px] text-[#6D7175]">
-                Guru: {{ getGuruName(santri.guruId) }}
+                {{ terms.mentorSingularTitle }}:
+                {{ getGuruName(santri.guruId) }}
               </span>
             </div>
             <span
@@ -281,7 +285,8 @@ const saveEdit = (id: string) => {
         v-if="filteredSantriList.length === 0"
         class="p-8 text-center text-[#6D7175] text-[14px]"
       >
-        Tidak ada santri yang sesuai dengan filter ini.
+        Tidak ada {{ terms.studentSingularLower }} yang sesuai dengan filter
+        ini.
       </div>
     </div>
 
@@ -291,7 +296,7 @@ const saveEdit = (id: string) => {
       :totalItems="filteredSantriList.length"
       :visibleStart="visibleStart"
       :visibleEnd="visibleEnd"
-      itemLabel="santri"
+      :itemLabel="terms.studentSingularLower"
     />
   </div>
 </template>
