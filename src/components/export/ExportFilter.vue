@@ -1,10 +1,23 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { FileDownloadIcon } from "@hugeicons/core-free-icons";
 import type { Jilid, Guru } from "../../types";
+import type {
+  AcademicMonthOption,
+  AcademicPeriodType,
+  AcademicSemester,
+  AcademicYearOption,
+} from "../../utils/academicPeriod";
 
 defineProps<{
   startDate: string;
   endDate: string;
-  periodType: string; // 'month', '3months', 'semester', 'custom'
+  periodType: AcademicPeriodType;
+  academicYearStart: number;
+  semester: AcademicSemester;
+  selectedMonth: string;
+  academicYearOptions: AcademicYearOption[];
+  academicMonthOptions: AcademicMonthOption[];
   filterType: string; // 'semua', 'jilid', 'guru'
   filterId: string;
   jilidList: Jilid[];
@@ -15,13 +28,16 @@ defineProps<{
 const emit = defineEmits<{
   (e: "update:startDate", value: string): void;
   (e: "update:endDate", value: string): void;
-  (e: "update:periodType", value: string): void;
+  (e: "update:periodType", value: AcademicPeriodType): void;
+  (e: "update:academicYearStart", value: number): void;
+  (e: "update:semester", value: AcademicSemester): void;
+  (e: "update:selectedMonth", value: string): void;
   (e: "update:filterType", value: string): void;
   (e: "update:filterId", value: string): void;
   (e: "generate"): void;
 }>();
 
-const handlePeriodSelect = (type: string) => {
+const handlePeriodSelect = (type: AcademicPeriodType) => {
   emit("update:periodType", type);
 };
 
@@ -56,26 +72,15 @@ const formatDate = (dateStr: string) => {
         >
         <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
           <button
-            @click="handlePeriodSelect('month')"
+            @click="handlePeriodSelect('academicYear')"
             :class="{
-              'bg-[#008060] text-white': periodType === 'month',
+              'bg-[#008060] text-white': periodType === 'academicYear',
               'bg-[#F4F6F8] text-[#202223] hover:bg-[#E1E3E5]':
-                periodType !== 'month',
+                periodType !== 'academicYear',
             }"
             class="px-3 py-2 rounded-md text-[12px] font-medium transition-colors border border-[#C9CCCF]"
           >
-            1 Bulan
-          </button>
-          <button
-            @click="handlePeriodSelect('3months')"
-            :class="{
-              'bg-[#008060] text-white': periodType === '3months',
-              'bg-[#F4F6F8] text-[#202223] hover:bg-[#E1E3E5]':
-                periodType !== '3months',
-            }"
-            class="px-3 py-2 rounded-md text-[12px] font-medium transition-colors border border-[#C9CCCF]"
-          >
-            3 Bulan
+            Tahun Ajaran
           </button>
           <button
             @click="handlePeriodSelect('semester')"
@@ -89,6 +94,17 @@ const formatDate = (dateStr: string) => {
             Semester
           </button>
           <button
+            @click="handlePeriodSelect('month')"
+            :class="{
+              'bg-[#008060] text-white': periodType === 'month',
+              'bg-[#F4F6F8] text-[#202223] hover:bg-[#E1E3E5]':
+                periodType !== 'month',
+            }"
+            class="px-3 py-2 rounded-md text-[12px] font-medium transition-colors border border-[#C9CCCF]"
+          >
+            Bulanan
+          </button>
+          <button
             @click="handlePeriodSelect('custom')"
             :class="{
               'bg-[#008060] text-white': periodType === 'custom',
@@ -99,6 +115,76 @@ const formatDate = (dateStr: string) => {
           >
             Kustom
           </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <div v-if="periodType !== 'custom'">
+            <label class="block text-[11px] text-[#6D7175] font-medium mb-1"
+              >Tahun Ajaran</label
+            >
+            <select
+              :value="academicYearStart"
+              @change="
+                emit(
+                  'update:academicYearStart',
+                  Number(($event.target as HTMLSelectElement).value),
+                )
+              "
+              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[13px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+            >
+              <option
+                v-for="year in academicYearOptions"
+                :key="year.startYear"
+                :value="year.startYear"
+              >
+                {{ year.label }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="periodType === 'semester'">
+            <label class="block text-[11px] text-[#6D7175] font-medium mb-1"
+              >Semester</label
+            >
+            <select
+              :value="semester"
+              @change="
+                emit(
+                  'update:semester',
+                  ($event.target as HTMLSelectElement)
+                    .value as AcademicSemester,
+                )
+              "
+              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[13px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+            >
+              <option value="ganjil">Ganjil</option>
+              <option value="genap">Genap</option>
+            </select>
+          </div>
+
+          <div v-if="periodType === 'month'">
+            <label class="block text-[11px] text-[#6D7175] font-medium mb-1"
+              >Bulan</label
+            >
+            <select
+              :value="selectedMonth"
+              @change="
+                emit(
+                  'update:selectedMonth',
+                  ($event.target as HTMLSelectElement).value,
+                )
+              "
+              class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[13px] text-[#202223] focus:border-[#008060] focus:ring-1 focus:ring-[#008060] outline-none"
+            >
+              <option
+                v-for="month in academicMonthOptions"
+                :key="month.value"
+                :value="month.value"
+              >
+                {{ month.label }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <!-- Date Range Display/Input -->
@@ -155,7 +241,7 @@ const formatDate = (dateStr: string) => {
       <div class="flex flex-col md:flex-row gap-3">
         <div class="w-full">
           <label class="block text-[13px] text-[#202223] font-medium mb-1.5"
-            >Target Penerima</label
+            >Filter Laporan</label
           >
           <select
             :value="filterType"
@@ -213,20 +299,13 @@ const formatDate = (dateStr: string) => {
           :disabled="isGenerating"
           class="w-full rounded-md bg-[#202223] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#454749] active:bg-[#111213] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <svg
+          <HugeiconsIcon
             v-if="!isGenerating"
-            class="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-            />
-          </svg>
+            :icon="FileDownloadIcon"
+            :size="17"
+            color="currentColor"
+            :stroke-width="2"
+          />
           <svg
             v-else
             class="w-4 h-4 animate-spin"

@@ -2,9 +2,172 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    function signedIn() {
+      return request.auth != null;
+    }
 
+    function validName(value, maxLength) {
+      return value is string
+        && value.size() > 0
+        && value.size() <= maxLength;
+    }
+
+    function validDate(value) {
+      return value is string
+        && value.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function validAttendance(data, attendanceId) {
+      return data.keys().hasOnly([
+          "id",
+          "date",
+          "santriId",
+          "jilidId",
+          "guruId",
+          "isPresent",
+          "status"
+        ])
+        && data.keys().hasAll([
+          "id",
+          "date",
+          "santriId",
+          "jilidId",
+          "guruId",
+          "isPresent"
+        ])
+        && data.id == attendanceId
+        && validDate(data.date)
+        && data.santriId is string
+        && data.jilidId is string
+        && data.guruId is string
+        && data.isPresent is bool
+        && (
+          !data.keys().hasAny(["status"])
+          || data.status in ["present", "permission", "absent"]
+        );
+    }
+
+    function validSantri(data) {
+      return data.keys().hasOnly([
+          "nama",
+          "jilidId",
+          "guruId",
+          "isActive",
+          "createdAt"
+        ])
+        && data.keys().hasAll([
+          "nama",
+          "jilidId",
+          "guruId",
+          "isActive"
+        ])
+        && validName(data.nama, 120)
+        && data.jilidId is string
+        && data.guruId is string
+        && data.isActive is bool
+        && (
+          !data.keys().hasAny(["createdAt"])
+          || data.createdAt is number
+        );
+    }
+
+    function validGuru(data) {
+      return data.keys().hasOnly(["nama"])
+        && data.keys().hasAll(["nama"])
+        && validName(data.nama, 120);
+    }
+
+    function validJilid(data) {
+      return data.keys().hasOnly(["nama", "urutan"])
+        && data.keys().hasAll(["nama"])
+        && validName(data.nama, 80)
+        && (
+          !data.keys().hasAny(["urutan"])
+          || data.urutan is number
+        );
+    }
+
+    function validMonth(value) {
+      return value is string
+        && value.matches("^\\d{4}-\\d{2}$");
+    }
+
+    function validSppPayment(data, paymentId) {
+      return data.keys().hasOnly([
+          "id",
+          "santriId",
+          "academicYearStart",
+          "month",
+          "isPaid",
+          "paidAt",
+          "updatedAt"
+        ])
+        && data.keys().hasAll([
+          "id",
+          "santriId",
+          "academicYearStart",
+          "month",
+          "isPaid",
+          "updatedAt"
+        ])
+        && data.id == paymentId
+        && data.santriId is string
+        && data.academicYearStart is number
+        && validMonth(data.month)
+        && data.isPaid is bool
+        && data.updatedAt is number
+        && (
+          !data.keys().hasAny(["paidAt"])
+          || data.paidAt == null
+          || data.paidAt is number
+        );
+    }
+
+    match /attendances/{attendanceId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && validAttendance(request.resource.data, attendanceId);
+      allow delete: if false;
+    }
+
+    match /santri/{santriId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && validSantri(request.resource.data)
+        && request.resource.data.keys().hasAll(["createdAt"]);
+      allow update: if signedIn()
+        && validSantri(request.resource.data);
+      allow delete: if signedIn();
+    }
+
+    match /guru/{guruId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && validGuru(request.resource.data);
+      allow delete: if signedIn();
+    }
+
+    match /jilid/{jilidId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && validJilid(request.resource.data);
+      allow delete: if signedIn();
+    }
+
+    match /sppPayments/{paymentId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && validSppPayment(request.resource.data, paymentId);
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

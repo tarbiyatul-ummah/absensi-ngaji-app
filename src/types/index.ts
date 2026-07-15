@@ -29,3 +29,13 @@ export interface Attendance {
   isPresent: boolean;
   status?: AttendanceStatus;
 }
+
+export interface SppPayment {
+  id: string; // Format: academicYearStart_month_santriId
+  santriId: string;
+  academicYearStart: number;
+  month: string; // Format: YYYY-MM
+  isPaid: boolean;
+  paidAt?: number | null;
+  updatedAt: number;
+}

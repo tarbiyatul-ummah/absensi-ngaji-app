@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+} from "@hugeicons/core-free-icons";
 
 interface Item {
   id: string;
@@ -75,19 +80,12 @@ const handleAdd = () => {
               @click="emit('moveUp', index)"
               class="p-1 text-[#8C9196] hover:text-[#202223] hover:bg-[#E4E5E7] transition-colors rounded-t"
             >
-              <svg
-                class="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M4.5 15.75l7.5-7.5 7.5 7.5"
-                />
-              </svg>
+              <HugeiconsIcon
+                :icon="ArrowUp01Icon"
+                :size="14"
+                color="currentColor"
+                :stroke-width="2.5"
+              />
             </button>
             <!-- Spacer kosong agar panah bawah selalu sejajar walau panah atas hilang -->
             <div v-else class="p-1 h-[22px]"></div>
@@ -97,19 +95,12 @@ const handleAdd = () => {
               @click="emit('moveDown', index)"
               class="p-1 text-[#8C9196] hover:text-[#202223] hover:bg-[#E4E5E7] transition-colors rounded-b"
             >
-              <svg
-                class="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                />
-              </svg>
+              <HugeiconsIcon
+                :icon="ArrowDown01Icon"
+                :size="14"
+                color="currentColor"
+                :stroke-width="2.5"
+              />
             </button>
           </div>
 

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import type { Jilid, Guru } from "../../types";
 
 const props = defineProps<{
   jilidList: Jilid[];
   guruList: Guru[];
+  variant?: "card" | "plain";
 }>();
 
 const emit = defineEmits<{
   (e: "submit", data: { nama: string; jilidId: string; guruId: string }): void;
+  (e: "cancel"): void;
 }>();
 
 const inputNama = ref("");
@@ -31,15 +35,23 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <div
-    class="bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden"
+  <form
+    :class="
+      props.variant === 'plain'
+        ? 'space-y-4'
+        : 'bg-white rounded-lg shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden'
+    "
+    @submit.prevent="handleSubmit"
   >
-    <div class="p-4 border-b border-[#E1E3E5] bg-[#FAFAFA]">
+    <div
+      v-if="props.variant !== 'plain'"
+      class="p-4 border-b border-[#E1E3E5] bg-[#FAFAFA]"
+    >
       <h2 class="text-[14px] font-semibold text-[#202223]">
         Tambah Santri Baru
       </h2>
     </div>
-    <div class="p-4 space-y-4">
+    <div :class="props.variant === 'plain' ? 'space-y-4' : 'p-4 space-y-4'">
       <div>
         <label class="block text-[13px] text-[#202223] mb-1">Nama Santri</label>
         <textarea
@@ -83,25 +95,18 @@ const handleSubmit = () => {
 
       <div class="pt-2">
         <button
-          @click="handleSubmit"
-          class="w-full md:w-auto rounded-md bg-[#008060] px-4 py-2 text-[14px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#006E52] active:bg-[#005E46] transition-colors flex items-center justify-center gap-2"
+          type="submit"
+          class="w-full rounded-md bg-[#008060] px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_1px_0_rgba(0,0,0,0.15)] hover:bg-[#006E52] active:bg-[#005E46] transition-colors flex items-center justify-center gap-2 md:w-auto"
         >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
+          <HugeiconsIcon
+            :icon="PlusSignIcon"
+            :size="17"
+            color="currentColor"
+            :stroke-width="2"
+          />
           Simpan Data
         </button>
       </div>
     </div>
-  </div>
+  </form>
 </template>

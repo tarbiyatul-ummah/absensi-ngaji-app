@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hugeicons/core-free-icons": "^4.2.2",
+    "@hugeicons/vue": "^1.0.7",
     "@tailwindcss/vite": "^4.3.0",
     "firebase": "^12.13.0",
     "pinia": "^3.0.4",

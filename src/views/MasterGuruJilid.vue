@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import {
   getJilid,
   addJilid,
@@ -123,19 +125,12 @@ const executeEdit = async (namaBaru: string) => {
         to="/master"
         class="p-1.5 rounded-md text-[#5C5F62] hover:bg-[#EDEEEF] transition-colors"
       >
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-          />
-        </svg>
+        <HugeiconsIcon
+          :icon="ArrowLeft02Icon"
+          :size="20"
+          color="currentColor"
+          :stroke-width="2"
+        />
       </RouterLink>
       <h1 class="text-[20px] font-bold text-[#202223]">Kelola Master Data</h1>
     </header>

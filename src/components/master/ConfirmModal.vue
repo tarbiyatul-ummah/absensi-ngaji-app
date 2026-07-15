@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { HugeiconsIcon } from "@hugeicons/vue";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
+
 defineProps<{
   isOpen: boolean;
   title: string;
@@ -31,19 +34,12 @@ const emit = defineEmits<{
           @click="emit('cancel')"
           class="text-[#6D7175] hover:text-[#202223] transition-colors p-1 rounded-md hover:bg-[#F4F6F8]"
         >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <HugeiconsIcon
+            :icon="Cancel01Icon"
+            :size="20"
+            color="currentColor"
+            :stroke-width="2"
+          />
         </button>
       </div>
 
