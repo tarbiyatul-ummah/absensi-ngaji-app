@@ -43,6 +43,11 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: "/tabungan/:id",
+      component: () => import("../views/SavingsDetailView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/penilaian",
       component: () => import("../views/FeaturePlaceholderView.vue"),
       props: () => ({

@@ -9,12 +9,14 @@ const route = useRoute();
 const bottomNavHiddenPaths = new Set([
   "/login",
   "/keuangan",
-  "/tabungan",
   "/penilaian",
   "/akun/istilah",
 ]);
+const bottomNavHiddenPrefixes = ["/tabungan"];
 const shouldShowBottomNav = computed(
-  () => !bottomNavHiddenPaths.has(route.path),
+  () =>
+    !bottomNavHiddenPaths.has(route.path) &&
+    !bottomNavHiddenPrefixes.some((path) => route.path.startsWith(path)),
 );
 </script>
 

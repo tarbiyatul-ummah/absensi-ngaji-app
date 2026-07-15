@@ -54,6 +54,11 @@ export interface SavingsAccount {
   updatedAt: number;
 }
 
+export type SavingsAccountFormData = Omit<
+  SavingsAccount,
+  "id" | "createdAt" | "updatedAt"
+>;
+
 export interface SavingsPayment {
   id: string; // Format: savingsAccountId_month_santriId
   savingsAccountId: string;

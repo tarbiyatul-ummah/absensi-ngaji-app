@@ -236,14 +236,17 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn()
         && validSavingsAccount(request.resource.data);
-      allow update, delete: if false;
+      allow update: if signedIn()
+        && validSavingsAccount(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if signedIn();
     }
 
     match /savingsPayments/{paymentId} {
       allow read: if signedIn();
       allow create, update: if signedIn()
         && validSavingsPayment(request.resource.data, paymentId);
-      allow delete: if false;
+      allow delete: if signedIn();
     }
 
     match /users/{userId} {
