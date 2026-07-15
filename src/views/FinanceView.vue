@@ -373,7 +373,7 @@ const exportCsv = () => {
 
     <div v-if="isLoading" class="flex h-64 items-center justify-center">
       <div
-        class="h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--primary)]"
+        class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"
       ></div>
     </div>
 
@@ -438,7 +438,7 @@ const exportCsv = () => {
 
         <div
           v-if="isPaymentLoading"
-          class="border-b px-4 py-3 text-[13px] text-[var(--muted-foreground)]"
+          class="border-b px-4 py-3 text-[13px] text-muted-foreground"
         >
           Memuat pembayaran tahun ajaran...
         </div>
@@ -447,14 +447,14 @@ const exportCsv = () => {
           <article
             v-for="santri in visibleSantriList"
             :key="santri.id"
-            class="rounded-lg border bg-[var(--background)] p-3"
+            class="rounded-lg border bg-background p-3"
           >
             <div class="mb-3 flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <h2 class="truncate text-sm font-semibold text-[var(--foreground)]">
+                <h2 class="truncate text-sm font-semibold text-foreground">
                   {{ santri.nama }}
                 </h2>
-                <p class="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <p class="mt-0.5 text-xs text-muted-foreground">
                   {{ getJilidName(santri.jilidId) }} -
                   {{ getGuruName(santri.guruId) }}
                 </p>
@@ -483,7 +483,7 @@ const exportCsv = () => {
                 :class="
                   isPaid(santri.id, month.value)
                     ? 'border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]'
-                    : 'border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] active:bg-[var(--accent)]'
+                    : 'border-border bg-background text-muted-foreground active:bg-accent'
                 "
               >
                 <span>{{ formatMonthShort(month.label) }}</span>
@@ -496,7 +496,7 @@ const exportCsv = () => {
 
           <div
             v-if="filteredSantriList.length === 0"
-            class="py-8 text-center text-sm text-[var(--muted-foreground)]"
+            class="py-8 text-center text-sm text-muted-foreground"
           >
             Tidak ada {{ terms.studentSingularLower }} yang sesuai filter.
           </div>
@@ -504,10 +504,10 @@ const exportCsv = () => {
 
         <div class="hidden overflow-x-auto pb-28 md:block">
           <table class="min-w-[980px] w-full border-collapse text-left text-[13px]">
-            <thead class="bg-[var(--muted)] text-[var(--muted-foreground)]">
+            <thead class="bg-muted text-muted-foreground">
               <tr>
                 <th
-                  class="sticky left-0 z-10 w-56 bg-[var(--muted)] px-4 py-3 font-semibold"
+                  class="sticky left-0 z-10 w-56 bg-muted px-4 py-3 font-semibold"
                 >
                   {{ terms.studentSingularTitle }}
                 </th>
@@ -525,11 +525,11 @@ const exportCsv = () => {
               <tr
                 v-for="santri in visibleSantriList"
                 :key="santri.id"
-                class="hover:bg-[var(--accent)]"
+                class="hover:bg-accent"
               >
-                <td class="sticky left-0 z-10 bg-[var(--background)] px-4 py-3">
-                  <p class="font-medium text-[var(--foreground)]">{{ santri.nama }}</p>
-                  <p class="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                <td class="sticky left-0 z-10 bg-background px-4 py-3">
+                  <p class="font-medium text-foreground">{{ santri.nama }}</p>
+                  <p class="mt-0.5 text-xs text-muted-foreground">
                     {{ getJilidName(santri.jilidId) }} -
                     {{ getGuruName(santri.guruId) }}
                   </p>
@@ -555,21 +555,21 @@ const exportCsv = () => {
                     :class="
                       isPaid(santri.id, month.value)
                         ? 'border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]'
-                        : 'border-[var(--border)] bg-[var(--background)] text-[var(--muted-foreground)] hover:bg-[var(--accent)]'
+                        : 'border-border bg-background text-muted-foreground hover:bg-accent'
                     "
                     :aria-label="`${santri.nama} ${month.label}`"
                   >
                     {{ isPaid(santri.id, month.value) ? "L" : "-" }}
                   </button>
                 </td>
-                <td class="px-3 py-3 text-right font-semibold text-[var(--foreground)]">
+                <td class="px-3 py-3 text-right font-semibold text-foreground">
                   {{ getPaidCount(santri.id) }}/{{ monthOptions.length }}
                 </td>
               </tr>
               <tr v-if="filteredSantriList.length === 0">
                 <td
                   :colspan="monthOptions.length + 2"
-                  class="px-4 py-8 text-center text-sm text-[var(--muted-foreground)]"
+                  class="px-4 py-8 text-center text-sm text-muted-foreground"
                 >
                   Tidak ada {{ terms.studentSingularLower }} yang sesuai filter.
                 </td>
@@ -589,7 +589,7 @@ const exportCsv = () => {
             variant="outline"
           >
             <span
-              class="h-4 w-4 animate-spin rounded-full border-b-2 border-[var(--primary)]"
+              class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary"
             ></span>
             Muat lagi
           </Button>

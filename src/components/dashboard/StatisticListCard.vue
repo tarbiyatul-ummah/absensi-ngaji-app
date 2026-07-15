@@ -35,7 +35,7 @@ defineProps<{
               badgeColor !== 'green' && badgeColor !== 'red',
             'bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] border-[hsl(142_42%_82%)]':
               badgeColor === 'green',
-            'bg-[hsl(0_86%_97%)] text-[var(--destructive)] border-[hsl(0_75%_88%)]':
+            'bg-[hsl(0_86%_97%)] text-destructive border-[hsl(0_75%_88%)]':
               badgeColor === 'red',
           }"
         >
@@ -43,10 +43,10 @@ defineProps<{
           <span
             class="text-[12px] font-normal"
             :class="{
-              'text-[var(--muted-foreground)]':
+              'text-muted-foreground':
                 badgeColor !== 'green' && badgeColor !== 'red',
               'text-[hsl(142_72%_29%)]': badgeColor === 'green',
-              'text-[var(--destructive)]': badgeColor === 'red',
+              'text-destructive': badgeColor === 'red',
             }"
             >{{ unit || "Anak" }}</span
           >

@@ -252,10 +252,10 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
           </p>
         </div>
         <div
-          class="rounded-lg border bg-[var(--muted)] p-2.5 sm:p-3"
+          class="rounded-lg border bg-muted p-2.5 sm:p-3"
         >
-          <p class="text-xs text-[var(--muted-foreground)]">Belum diabsen</p>
-          <p class="text-xl font-bold text-[var(--foreground)]">
+          <p class="text-xs text-muted-foreground">Belum diabsen</p>
+          <p class="text-xl font-bold text-foreground">
             {{ attendanceSummary.unmarked }}
           </p>
         </div>

@@ -1,12 +1,14 @@
 import {
   addDoc,
   collection,
+  doc,
   getDocs,
   query,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { SavingsAccount } from "../types";
+import type { SavingsAccount, SavingsPayment } from "../types";
 
 export const getSavingsAccounts = async () => {
   const snapshot = await getDocs(collection(db, "savingsAccounts"));
@@ -39,4 +41,42 @@ export const addSavingsAccount = async (
   });
 
   return docRef.id;
+};
+
+export const getSavingsPaymentId = (
+  savingsAccountId: string,
+  month: string,
+  santriId: string,
+) => `${savingsAccountId}_${month}_${santriId}`;
+
+export const getSavingsPaymentsByAccount = async (
+  savingsAccountId: string,
+) => {
+  const q = query(
+    collection(db, "savingsPayments"),
+    where("savingsAccountId", "==", savingsAccountId),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => doc.data() as SavingsPayment);
+};
+
+export const saveSavingsPayment = async (
+  data: Omit<SavingsPayment, "id" | "updatedAt">,
+) => {
+  const id = getSavingsPaymentId(
+    data.savingsAccountId,
+    data.month,
+    data.santriId,
+  );
+  const docRef = doc(db, "savingsPayments", id);
+
+  await setDoc(
+    docRef,
+    {
+      ...data,
+      id,
+      updatedAt: Date.now(),
+    },
+    { merge: true },
+  );
 };

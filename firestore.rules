@@ -157,6 +157,43 @@ service cloud.firestore {
         && data.updatedAt is number;
     }
 
+    function validSavingsPayment(data, paymentId) {
+      return data.keys().hasOnly([
+          "id",
+          "savingsAccountId",
+          "santriId",
+          "academicYearStart",
+          "semester",
+          "month",
+          "isPaid",
+          "paidAt",
+          "updatedAt"
+        ])
+        && data.keys().hasAll([
+          "id",
+          "savingsAccountId",
+          "santriId",
+          "academicYearStart",
+          "semester",
+          "month",
+          "isPaid",
+          "updatedAt"
+        ])
+        && data.id == paymentId
+        && data.savingsAccountId is string
+        && data.santriId is string
+        && data.academicYearStart is number
+        && data.semester in ["ganjil", "genap"]
+        && validMonth(data.month)
+        && data.isPaid is bool
+        && data.updatedAt is number
+        && (
+          !data.keys().hasAny(["paidAt"])
+          || data.paidAt == null
+          || data.paidAt is number
+        );
+    }
+
     match /attendances/{attendanceId} {
       allow read: if signedIn();
       allow create, update: if signedIn()
@@ -200,6 +237,13 @@ service cloud.firestore {
       allow create: if signedIn()
         && validSavingsAccount(request.resource.data);
       allow update, delete: if false;
+    }
+
+    match /savingsPayments/{paymentId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && validSavingsPayment(request.resource.data, paymentId);
+      allow delete: if false;
     }
 
     match /users/{userId} {

@@ -38,12 +38,12 @@ const getButtonClass = (santriId: string, status: AttendanceStatus) => {
   if (status === "present") {
     return isActive
       ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]"
-      : "border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--accent)]";
+      : "border-border bg-background text-foreground hover:bg-accent";
   }
 
   return isActive
     ? "border-[hsl(48_76%_78%)] bg-[hsl(48_96%_89%)] text-[hsl(32_95%_35%)]"
-    : "border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--accent)]";
+    : "border-border bg-background text-foreground hover:bg-accent";
 };
 </script>
 

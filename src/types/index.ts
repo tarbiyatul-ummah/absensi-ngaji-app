@@ -53,3 +53,15 @@ export interface SavingsAccount {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface SavingsPayment {
+  id: string; // Format: savingsAccountId_month_santriId
+  savingsAccountId: string;
+  santriId: string;
+  academicYearStart: number;
+  semester: SavingsAccountSemester;
+  month: string; // Format: YYYY-MM
+  isPaid: boolean;
+  paidAt?: number | null;
+  updatedAt: number;
+}
