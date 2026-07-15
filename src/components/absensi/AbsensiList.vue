@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import type {
-  Santri,
-  Jilid,
-  Attendance,
-  AttendanceStatus,
-} from "../../types";
+import type { Santri, Jilid, Attendance, AttendanceStatus } from "../../types";
 import { terms } from "../../config/organization";
 
 const props = defineProps<{
@@ -73,7 +68,7 @@ const getButtonClass = (santriId: string, status: AttendanceStatus) => {
         </div>
 
         <div
-          class="grid grid-cols-2 gap-2 sm:w-[176px]"
+          class="grid grid-cols-2 gap-2 sm:w-44"
           :class="isSaving(santri.id) ? 'cursor-wait opacity-70' : ''"
           role="group"
           :aria-label="`Status absensi ${santri.nama}`"

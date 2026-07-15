@@ -348,9 +348,7 @@ const exportCsv = () => {
 
       <div class="app-header">
         <div>
-          <h1 class="app-title">
-            Keuangan {{ terms.paymentLabel }}
-          </h1>
+          <h1 class="app-title">Keuangan {{ terms.paymentLabel }}</h1>
           <p class="app-subtitle">
             Pantau pembayaran per bulan dalam satu tahun ajaran.
           </p>
@@ -387,7 +385,11 @@ const exportCsv = () => {
         </div>
         <div class="border-r-0 p-4 md:border-r">
           <p class="text-xs leading-snug text-muted-foreground">Lunas</p>
-          <p class="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]">{{ totalLunas }}</p>
+          <p
+            class="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]"
+          >
+            {{ totalLunas }}
+          </p>
         </div>
         <div class="border-r border-t p-4 md:border-t-0">
           <p class="text-xs leading-snug text-muted-foreground">Belum Lunas</p>
@@ -408,13 +410,8 @@ const exportCsv = () => {
           class="grid grid-cols-1 gap-3 border-b p-4 md:grid-cols-[220px_1fr]"
         >
           <div>
-            <Label>
-              Tahun Ajaran
-            </Label>
-            <select
-              v-model="selectedAcademicYearStart"
-              class="ui-select"
-            >
+            <Label> Tahun Ajaran </Label>
+            <select v-model="selectedAcademicYearStart" class="ui-select">
               <option
                 v-for="year in academicYearOptions"
                 :key="year.startYear"
@@ -425,9 +422,7 @@ const exportCsv = () => {
             </select>
           </div>
           <div>
-            <Label>
-              Cari {{ terms.studentSingularTitle }}
-            </Label>
+            <Label> Cari {{ terms.studentSingularTitle }} </Label>
             <Input
               v-model="searchQuery"
               type="search"
@@ -503,7 +498,7 @@ const exportCsv = () => {
         </div>
 
         <div class="hidden overflow-x-auto pb-28 md:block">
-          <table class="min-w-[980px] w-full border-collapse text-left text-[13px]">
+          <table class="min-w-245 w-full border-collapse text-left text-[13px]">
             <thead class="bg-muted text-muted-foreground">
               <tr>
                 <th
@@ -583,11 +578,7 @@ const exportCsv = () => {
           ref="loadMoreTrigger"
           class="flex items-center justify-center border-t px-4 py-4"
         >
-          <Button
-            type="button"
-            @click="loadMoreSantri"
-            variant="outline"
-          >
+          <Button type="button" @click="loadMoreSantri" variant="outline">
             <span
               class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary"
             ></span>

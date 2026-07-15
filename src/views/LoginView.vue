@@ -32,7 +32,7 @@ const handleLogin = async () => {
 
 <template>
   <div class="app-page flex items-center justify-center px-4">
-    <Card class="w-full max-w-[400px]">
+    <Card class="w-full max-w-100">
       <CardContent class="p-6 space-y-6">
         <div class="text-center space-y-2">
           <h1 class="text-2xl font-bold text-foreground">
@@ -43,21 +43,14 @@ const handleLogin = async () => {
           </p>
         </div>
 
-        <Alert
-          v-if="errorMsg"
-          variant="destructive"
-        >
+        <Alert v-if="errorMsg" variant="destructive">
           {{ errorMsg }}
         </Alert>
 
         <div class="space-y-4">
           <div>
             <Label>Email</Label>
-            <Input
-              v-model="email"
-              type="email"
-              placeholder="nama@email.com"
-            />
+            <Input v-model="email" type="email" placeholder="nama@email.com" />
           </div>
           <div>
             <Label>Password</Label>
