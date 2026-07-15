@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { Download05Icon } from "@hugeicons/core-free-icons";
 import { getGuru, getJilid, getSantri } from "../services/masterService";
@@ -17,18 +24,23 @@ import {
 } from "../utils/academicPeriod";
 import Toast from "../components/master/Toast.vue";
 
+const SANTRI_BATCH_SIZE = 15;
+
 const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
 const paymentList = ref<SppPayment[]>([]);
 const selectedAcademicYearStart = ref(getCurrentAcademicYearStart());
 const searchQuery = ref("");
+const renderedSantriCount = ref(SANTRI_BATCH_SIZE);
+const loadMoreTrigger = ref<HTMLElement | null>(null);
 const isLoading = ref(true);
 const isPaymentLoading = ref(false);
 const savingIds = ref<Set<string>>(new Set());
 const showToast = ref(false);
 const toastMessage = ref("");
 const toastType = ref<"success" | "error">("success");
+let loadMoreObserver: IntersectionObserver | null = null;
 
 const triggerToast = (
   message: string,
@@ -79,6 +91,14 @@ const filteredSantriList = computed(() => {
     return searchableText.includes(keyword);
   });
 });
+
+const visibleSantriList = computed(() =>
+  filteredSantriList.value.slice(0, renderedSantriCount.value),
+);
+
+const hasMoreSantri = computed(
+  () => visibleSantriList.value.length < filteredSantriList.value.length,
+);
 
 const totalTagihan = computed(
   () => activeSantriList.value.length * monthOptions.value.length,
@@ -135,7 +155,43 @@ const loadPayments = async () => {
   }
 };
 
+const loadMoreSantri = () => {
+  if (!hasMoreSantri.value) return;
+
+  renderedSantriCount.value = Math.min(
+    renderedSantriCount.value + SANTRI_BATCH_SIZE,
+    filteredSantriList.value.length,
+  );
+  void observeLoadMoreTrigger();
+};
+
+const observeLoadMoreTrigger = async () => {
+  await nextTick();
+
+  loadMoreObserver?.disconnect();
+  if (!loadMoreObserver || !loadMoreTrigger.value || !hasMoreSantri.value) {
+    return;
+  }
+
+  loadMoreObserver.observe(loadMoreTrigger.value);
+};
+
+const setupLazyLoadObserver = () => {
+  if (typeof IntersectionObserver === "undefined") return;
+
+  loadMoreObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        loadMoreSantri();
+      }
+    },
+    { rootMargin: "320px 0px" },
+  );
+};
+
 onMounted(async () => {
+  setupLazyLoadObserver();
+
   try {
     const [santriRes, jilidRes, guruRes] = await Promise.all([
       getSantri(),
@@ -147,14 +203,31 @@ onMounted(async () => {
     guruList.value = guruRes;
     await loadPayments();
   } catch (error) {
-    triggerToast("Koneksi bermasalah. Data keuangan belum bisa dimuat.", "error");
+    triggerToast(
+      "Koneksi bermasalah. Data keuangan belum bisa dimuat.",
+      "error",
+    );
   } finally {
     isLoading.value = false;
+    await observeLoadMoreTrigger();
   }
+});
+
+onBeforeUnmount(() => {
+  loadMoreObserver?.disconnect();
 });
 
 watch(selectedAcademicYearStart, () => {
   if (!isLoading.value) loadPayments();
+});
+
+watch(filteredSantriList, () => {
+  renderedSantriCount.value = SANTRI_BATCH_SIZE;
+  void observeLoadMoreTrigger();
+});
+
+watch(hasMoreSantri, () => {
+  void observeLoadMoreTrigger();
 });
 
 const togglePayment = async (santri: Santri, month: string) => {
@@ -254,7 +327,9 @@ const exportCsv = () => {
     />
 
     <header class="mx-auto max-w-5xl px-4 pb-4 pt-6">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
           <h1 class="text-[20px] font-bold text-[#202223]">Keuangan SPP</h1>
           <p class="mt-1 text-[14px] text-[#6D7175]">
@@ -315,7 +390,9 @@ const exportCsv = () => {
       <section
         class="rounded-lg border border-[#E1E3E5] bg-white shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)]"
       >
-        <div class="grid grid-cols-1 gap-3 border-b border-[#E1E3E5] p-4 md:grid-cols-[220px_1fr]">
+        <div
+          class="grid grid-cols-1 gap-3 border-b border-[#E1E3E5] p-4 md:grid-cols-[220px_1fr]"
+        >
           <div>
             <label class="mb-1.5 block text-[13px] font-medium text-[#202223]">
               Tahun Ajaran
@@ -355,7 +432,7 @@ const exportCsv = () => {
 
         <div class="space-y-3 p-4 md:hidden">
           <article
-            v-for="santri in filteredSantriList"
+            v-for="santri in visibleSantriList"
             :key="santri.id"
             class="rounded-lg border border-[#E1E3E5] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
           >
@@ -415,10 +492,12 @@ const exportCsv = () => {
         </div>
 
         <div class="hidden overflow-x-auto pb-28 md:block">
-          <table class="min-w-[980px] w-full border-collapse text-left text-[13px]">
+          <table class="min-w-245 w-full border-collapse text-left text-[13px]">
             <thead class="bg-[#FAFAFA] text-[#454749]">
               <tr>
-                <th class="sticky left-0 z-10 w-56 bg-[#FAFAFA] px-4 py-3 font-semibold">
+                <th
+                  class="sticky left-0 z-10 w-56 bg-[#FAFAFA] px-4 py-3 font-semibold"
+                >
                   Santri
                 </th>
                 <th
@@ -433,7 +512,7 @@ const exportCsv = () => {
             </thead>
             <tbody class="divide-y divide-[#F1F2F3]">
               <tr
-                v-for="santri in filteredSantriList"
+                v-for="santri in visibleSantriList"
                 :key="santri.id"
                 class="hover:bg-[#F9FAFB]"
               >
@@ -486,6 +565,23 @@ const exportCsv = () => {
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div
+          v-if="hasMoreSantri"
+          ref="loadMoreTrigger"
+          class="flex items-center justify-center border-t border-[#E1E3E5] px-4 py-4"
+        >
+          <button
+            type="button"
+            @click="loadMoreSantri"
+            class="inline-flex items-center justify-center gap-2 rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-[13px] font-medium text-[#202223] hover:bg-[#F6F6F7]"
+          >
+            <span
+              class="h-4 w-4 animate-spin rounded-full border-b-2 border-[#008060]"
+            ></span>
+            Muat lagi
+          </button>
         </div>
       </section>
     </main>
