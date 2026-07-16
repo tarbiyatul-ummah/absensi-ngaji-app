@@ -9,11 +9,19 @@ export interface Guru {
   nama: string;
 }
 
+export interface SantriType {
+  id: string;
+  nama: string;
+  createdAt?: number;
+}
+
 export interface Santri {
   id: string;
   nama: string;
   jilidId: string;
   guruId: string;
+  tipeId?: string;
+  tanggalLahir?: string; // Format: YYYY-MM-DD
   isActive: boolean;
   createdAt: number;
 }

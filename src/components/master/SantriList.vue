@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Santri, Jilid, Guru } from "../../types";
+import type { Santri, Jilid, Guru, SantriType } from "../../types";
 import PaginationControls from "../common/PaginationControls.vue";
 import { terms } from "../../config/organization";
 
@@ -8,6 +8,7 @@ const props = defineProps<{
   santriList: Santri[];
   jilidList: Jilid[];
   guruList: Guru[]; // Tambahan prop untuk dropdown edit
+  tipeList: SantriType[];
 }>();
 
 const emit = defineEmits<{
@@ -16,13 +17,25 @@ const emit = defineEmits<{
   (
     e: "editSantri",
     id: string,
-    data: { nama: string; jilidId: string; guruId: string },
+    data: {
+      nama: string;
+      jilidId: string;
+      guruId: string;
+      tipeId?: string;
+      tanggalLahir?: string;
+    },
   ): void;
 }>();
 
 // State untuk fitur edit
 const editingId = ref<string | null>(null);
-const editForm = ref({ nama: "", jilidId: "", guruId: "" });
+const editForm = ref({
+  nama: "",
+  jilidId: "",
+  guruId: "",
+  tipeId: "",
+  tanggalLahir: "",
+});
 const searchQuery = ref("");
 const statusFilter = ref<"aktif" | "nonaktif">("aktif");
 const currentPage = ref(1);
@@ -33,6 +46,25 @@ const getGuruName = (guruId: string) =>
 
 const getJilidName = (jilidId: string) =>
   props.jilidList.find((j) => j.id === jilidId)?.nama || "N/A";
+
+const getTipeName = (tipeId?: string) => {
+  if (!tipeId) return "Tanpa tipe";
+
+  return props.tipeList.find((tipe) => tipe.id === tipeId)?.nama || "N/A";
+};
+
+const formatTanggalLahir = (tanggalLahir?: string) => {
+  if (!tanggalLahir) return "-";
+
+  const date = new Date(`${tanggalLahir}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return tanggalLahir;
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+};
 
 const activeSantriCount = computed(
   () => props.santriList.filter((santri) => santri.isActive !== false).length,
@@ -53,6 +85,8 @@ const filteredSantriList = computed(() => {
       santri.nama,
       getGuruName(santri.guruId),
       getJilidName(santri.jilidId),
+      getTipeName(santri.tipeId),
+      santri.tanggalLahir ?? "",
     ]
       .join(" ")
       .toLowerCase();
@@ -97,6 +131,8 @@ const startEdit = (santri: Santri) => {
     nama: santri.nama,
     jilidId: santri.jilidId,
     guruId: santri.guruId,
+    tipeId: santri.tipeId ?? "",
+    tanggalLahir: santri.tanggalLahir ?? "",
   };
 };
 
@@ -114,7 +150,13 @@ const saveEdit = (id: string) => {
   ) {
     return alert("Lengkapi semua data!");
   }
-  emit("editSantri", id, editForm.value);
+  emit("editSantri", id, {
+    nama: editForm.value.nama,
+    jilidId: editForm.value.jilidId,
+    guruId: editForm.value.guruId,
+    tipeId: editForm.value.tipeId || undefined,
+    tanggalLahir: editForm.value.tanggalLahir || undefined,
+  });
   editingId.value = null; // Tutup mode edit setelah simpan
 };
 </script>
@@ -209,6 +251,24 @@ const saveEdit = (id: string) => {
               </option>
             </select>
           </div>
+          <select
+            v-model="editForm.tipeId"
+            class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] focus:border-[#008060] outline-none"
+          >
+            <option value="">Tanpa tipe</option>
+            <option
+              v-for="tipe in tipeList"
+              :key="tipe.id"
+              :value="tipe.id"
+            >
+              {{ tipe.nama }}
+            </option>
+          </select>
+          <input
+            v-model="editForm.tanggalLahir"
+            type="date"
+            class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] focus:border-[#008060] outline-none"
+          />
           <div class="flex gap-2 pt-2">
             <button
               @click="saveEdit(santri.id)"
@@ -245,6 +305,12 @@ const saveEdit = (id: string) => {
               <span class="text-[12px] text-[#6D7175]">
                 {{ terms.mentorSingularTitle }}:
                 {{ getGuruName(santri.guruId) }}
+              </span>
+              <span class="text-[12px] text-[#6D7175]">
+                Tipe: {{ getTipeName(santri.tipeId) }}
+              </span>
+              <span class="text-[12px] text-[#6D7175]">
+                Tanggal lahir: {{ formatTanggalLahir(santri.tanggalLahir) }}
               </span>
             </div>
             <span

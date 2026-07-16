@@ -11,6 +11,7 @@ defineProps<{
   totalInactive: number;
   jilidStats: SummaryItem[];
   guruStats: SummaryItem[];
+  tipeStats: SummaryItem[];
 }>();
 </script>
 
@@ -35,7 +36,7 @@ defineProps<{
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-0 md:grid-cols-2">
+    <div class="grid grid-cols-1 gap-0 md:grid-cols-3">
       <div class="p-4 md:border-r md:border-[#F1F2F3]">
         <div class="mb-2 flex items-center justify-between">
           <h2 class="text-[13px] font-semibold text-[#202223]">
@@ -61,7 +62,7 @@ defineProps<{
         </div>
       </div>
 
-      <div class="border-t border-[#F1F2F3] p-4 md:border-t-0">
+      <div class="border-t border-[#F1F2F3] p-4 md:border-t-0 md:border-r">
         <div class="mb-2 flex items-center justify-between">
           <h2 class="text-[13px] font-semibold text-[#202223]">
             Per {{ terms.mentorSingularTitle }}
@@ -82,6 +83,31 @@ defineProps<{
           </span>
           <span v-if="guruStats.length === 0" class="text-[12px] text-[#6D7175]">
             Belum ada data {{ terms.mentorSingularLower }}.
+          </span>
+        </div>
+      </div>
+
+      <div class="border-t border-[#F1F2F3] p-4 md:border-t-0">
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-[13px] font-semibold text-[#202223]">
+            Per Tipe
+          </h2>
+          <span class="text-[11px] text-[#6D7175]">
+            {{ tipeStats.length }} tipe
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span
+            v-for="item in tipeStats"
+            :key="item.nama"
+            class="inline-flex items-center gap-1 rounded-md border border-[#D6E2F4] bg-[#F3F7FC] px-2 py-1 text-[12px] text-[#202223]"
+          >
+            <span class="font-medium">{{ item.nama }}</span>
+            <span class="text-[#6D7175]">:</span>
+            <span class="font-bold text-[#2C6ECB]">{{ item.count }}</span>
+          </span>
+          <span v-if="tipeStats.length === 0" class="text-[12px] text-[#6D7175]">
+            Belum ada data tipe.
           </span>
         </div>
       </div>

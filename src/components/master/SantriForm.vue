@@ -6,23 +6,35 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Jilid, Guru } from "../../types";
+import type { Jilid, Guru, SantriType } from "../../types";
 import { terms } from "../../config/organization";
 
 const props = defineProps<{
   jilidList: Jilid[];
   guruList: Guru[];
+  tipeList: SantriType[];
   variant?: "card" | "plain";
 }>();
 
 const emit = defineEmits<{
-  (e: "submit", data: { nama: string; jilidId: string; guruId: string }): void;
+  (
+    e: "submit",
+    data: {
+      nama: string;
+      jilidId: string;
+      guruId: string;
+      tipeId?: string;
+      tanggalLahir?: string;
+    },
+  ): void;
   (e: "cancel"): void;
 }>();
 
 const inputNama = ref("");
 const selectedJilid = ref("");
 const selectedGuru = ref("");
+const selectedTipe = ref("");
+const selectedTanggalLahir = ref("");
 
 const handleSubmit = () => {
   if (!inputNama.value || !selectedJilid.value || !selectedGuru.value) {
@@ -33,9 +45,12 @@ const handleSubmit = () => {
     nama: inputNama.value,
     jilidId: selectedJilid.value,
     guruId: selectedGuru.value,
+    tipeId: selectedTipe.value || undefined,
+    tanggalLahir: selectedTanggalLahir.value || undefined,
   });
 
   inputNama.value = ""; // Reset form setelah submit
+  selectedTanggalLahir.value = "";
 };
 </script>
 
@@ -98,6 +113,32 @@ const handleSubmit = () => {
             </option>
           </select>
         </div>
+      </div>
+
+      <div>
+        <Label>Tipe {{ terms.studentSingularTitle }}</Label>
+        <select
+          v-model="selectedTipe"
+          class="ui-select"
+        >
+          <option value="">Tanpa tipe</option>
+          <option
+            v-for="tipe in tipeList"
+            :key="tipe.id"
+            :value="tipe.id"
+          >
+            {{ tipe.nama }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <Label>Tanggal Lahir</Label>
+        <input
+          v-model="selectedTanggalLahir"
+          type="date"
+          class="ui-input"
+        />
       </div>
 
       <div class="pt-2">

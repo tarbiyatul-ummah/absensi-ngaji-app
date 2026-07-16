@@ -6,6 +6,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function ownsUserData(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
     function validName(value, maxLength) {
       return value is string
         && value.size() > 0
@@ -52,6 +56,8 @@ service cloud.firestore {
           "nama",
           "jilidId",
           "guruId",
+          "tipeId",
+          "tanggalLahir",
           "isActive",
           "createdAt"
         ])
@@ -64,6 +70,14 @@ service cloud.firestore {
         && validName(data.nama, 120)
         && data.jilidId is string
         && data.guruId is string
+        && (
+          !data.keys().hasAny(["tipeId"])
+          || data.tipeId is string
+        )
+        && (
+          !data.keys().hasAny(["tanggalLahir"])
+          || validDate(data.tanggalLahir)
+        )
         && data.isActive is bool
         && (
           !data.keys().hasAny(["createdAt"])
@@ -84,6 +98,16 @@ service cloud.firestore {
         && (
           !data.keys().hasAny(["urutan"])
           || data.urutan is number
+        );
+    }
+
+    function validSantriType(data) {
+      return data.keys().hasOnly(["nama", "createdAt"])
+        && data.keys().hasAll(["nama"])
+        && validName(data.nama, 80)
+        && (
+          !data.keys().hasAny(["createdAt"])
+          || data.createdAt is number
         );
     }
 
@@ -194,59 +218,66 @@ service cloud.firestore {
         );
     }
 
-    match /attendances/{attendanceId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+    match /users/{userId}/attendances/{attendanceId} {
+      allow read: if ownsUserData(userId);
+      allow create, update: if ownsUserData(userId)
         && validAttendance(request.resource.data, attendanceId);
       allow delete: if false;
     }
 
-    match /santri/{santriId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+    match /users/{userId}/santri/{santriId} {
+      allow read: if ownsUserData(userId);
+      allow create: if ownsUserData(userId)
         && validSantri(request.resource.data)
         && request.resource.data.keys().hasAll(["createdAt"]);
-      allow update: if signedIn()
+      allow update: if ownsUserData(userId)
         && validSantri(request.resource.data);
-      allow delete: if signedIn();
+      allow delete: if ownsUserData(userId);
     }
 
-    match /guru/{guruId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+    match /users/{userId}/guru/{guruId} {
+      allow read: if ownsUserData(userId);
+      allow create, update: if ownsUserData(userId)
         && validGuru(request.resource.data);
-      allow delete: if signedIn();
+      allow delete: if ownsUserData(userId);
     }
 
-    match /jilid/{jilidId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+    match /users/{userId}/jilid/{jilidId} {
+      allow read: if ownsUserData(userId);
+      allow create, update: if ownsUserData(userId)
         && validJilid(request.resource.data);
-      allow delete: if signedIn();
+      allow delete: if ownsUserData(userId);
     }
 
-    match /sppPayments/{paymentId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+    match /users/{userId}/santriTypes/{typeId} {
+      allow read: if ownsUserData(userId);
+      allow create, update: if ownsUserData(userId)
+        && validSantriType(request.resource.data);
+      allow delete: if ownsUserData(userId);
+    }
+
+    match /users/{userId}/sppPayments/{paymentId} {
+      allow read: if ownsUserData(userId);
+      allow create, update: if ownsUserData(userId)
         && validSppPayment(request.resource.data, paymentId);
       allow delete: if false;
     }
 
-    match /savingsAccounts/{accountId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
+    match /users/{userId}/savingsAccounts/{accountId} {
+      allow read: if ownsUserData(userId);
+      allow create: if ownsUserData(userId)
         && validSavingsAccount(request.resource.data);
-      allow update: if signedIn()
+      allow update: if ownsUserData(userId)
         && validSavingsAccount(request.resource.data)
         && request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if signedIn();
+      allow delete: if ownsUserData(userId);
     }
 
-    match /savingsPayments/{paymentId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+    match /users/{userId}/savingsPayments/{paymentId} {
+      allow read: if ownsUserData(userId);
+      allow create, update: if ownsUserData(userId)
         && validSavingsPayment(request.resource.data, paymentId);
-      allow delete: if signedIn();
+      allow delete: if ownsUserData(userId);
     }
 
     match /users/{userId} {

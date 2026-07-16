@@ -15,16 +15,19 @@ import {
 } from "@/components/ui/dialog";
 import {
   addSantriBulk,
+  addSantriItems,
   getJilid,
   getGuru,
   getSantri,
+  getSantriTypes,
   updateSantri,
   deleteSantri,
 } from "../services/masterService";
-import type { Jilid, Guru, Santri } from "../types";
+import type { Jilid, Guru, Santri, SantriType } from "../types";
 
 // Import komponen yang sudah dipisah
 import SantriForm from "../components/master/SantriForm.vue";
+import SantriImportDialog from "../components/master/SantriImportDialog.vue";
 import SantriList from "../components/master/SantriList.vue";
 import ConfirmModal from "../components/master/ConfirmModal.vue";
 import MasterDataSummary from "../components/master/MasterDataSummary.vue";
@@ -32,12 +35,15 @@ import { terms } from "../config/organization";
 
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
+const tipeList = ref<SantriType[]>([]);
 const santriList = ref<Santri[]>([]);
 const isAddModalOpen = ref(false);
+const isImportModalOpen = ref(false);
 
 const loadData = async () => {
   jilidList.value = await getJilid();
   guruList.value = await getGuru();
+  tipeList.value = await getSantriTypes();
   santriList.value = await getSantri();
 };
 
@@ -73,17 +79,53 @@ const guruStats = computed(() =>
     .sort((a, b) => b.count - a.count || a.nama.localeCompare(b.nama)),
 );
 
+const tipeStats = computed(() => {
+  const stats = tipeList.value.map((tipe) => ({
+    nama: tipe.nama,
+    count: activeSantriList.value.filter((santri) => santri.tipeId === tipe.id)
+      .length,
+  }));
+  const untypedCount = activeSantriList.value.filter(
+    (santri) => !santri.tipeId,
+  ).length;
+
+  if (untypedCount > 0) {
+    stats.push({ nama: "Tanpa tipe", count: untypedCount });
+  }
+
+  return stats.sort((a, b) => b.count - a.count || a.nama.localeCompare(b.nama));
+});
+
 const getJilidName = (jilidId: string) =>
   jilidList.value.find((jilid) => jilid.id === jilidId)?.nama ?? "-";
 
 const getGuruName = (guruId: string) =>
   guruList.value.find((guru) => guru.id === guruId)?.nama ?? "-";
 
+const getTipeName = (tipeId?: string) => {
+  if (!tipeId) return "Tanpa tipe";
+
+  return tipeList.value.find((tipe) => tipe.id === tipeId)?.nama ?? "-";
+};
+
 const formatCreatedAt = (createdAt?: number) => {
   if (!createdAt) return "";
 
   const date = new Date(createdAt);
   if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const formatDateValue = (dateValue?: string) => {
+  if (!dateValue) return "";
+
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateValue;
 
   return date.toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -102,6 +144,8 @@ const exportSantriCsv = () => {
     `Nama ${terms.studentSingularTitle}`,
     terms.levelSingularTitle,
     terms.mentorSingularTitle,
+    "Tipe Santri",
+    "Tanggal Lahir",
     "Status",
     "Tanggal Ditambahkan",
   ];
@@ -111,6 +155,8 @@ const exportSantriCsv = () => {
       santri.nama,
       getJilidName(santri.jilidId),
       getGuruName(santri.guruId),
+      getTipeName(santri.tipeId),
+      formatDateValue(santri.tanggalLahir),
       santri.isActive !== false ? "Aktif" : "Nonaktif",
       formatCreatedAt(santri.createdAt),
     ]);
@@ -134,11 +180,34 @@ const handleAddSantri = async (payload: {
   nama: string;
   jilidId: string;
   guruId: string;
+  tipeId?: string;
+  tanggalLahir?: string;
 }) => {
-  await addSantriBulk(payload.nama, payload.jilidId, payload.guruId);
+  await addSantriBulk(
+    payload.nama,
+    payload.jilidId,
+    payload.guruId,
+    payload.tipeId,
+    payload.tanggalLahir,
+  );
   await loadData();
   isAddModalOpen.value = false;
   alert(`${terms.studentSingularTitle} berhasil ditambahkan!`);
+};
+
+const handleImportSantri = async (
+  rows: {
+    nama: string;
+    jilidId: string;
+    guruId: string;
+    tipeId?: string;
+    tanggalLahir?: string;
+  }[],
+) => {
+  await addSantriItems(rows);
+  await loadData();
+  isImportModalOpen.value = false;
+  alert(`${rows.length} ${terms.studentSingularLower} berhasil diimport!`);
 };
 
 // Logika dari SantriList
@@ -156,7 +225,13 @@ const handleToggleStatus = async (santri: Santri) => {
 
 const handleEditSantri = async (
   id: string,
-  payload: { nama: string; jilidId: string; guruId: string },
+  payload: {
+    nama: string;
+    jilidId: string;
+    guruId: string;
+    tipeId?: string;
+    tanggalLahir?: string;
+  },
 ) => {
   await updateSantri(id, payload);
   await loadData();
@@ -233,9 +308,18 @@ const executeDelete = async () => {
           Export CSV
         </Button>
 
+        <Button
+          type="button"
+          variant="outline"
+          @click="isImportModalOpen = true"
+          class="col-span-2 sm:col-span-1 sm:flex-none"
+        >
+          Import Excel/CSV
+        </Button>
+
         <Button as-child variant="outline" class="col-span-2 sm:col-span-1 sm:flex-none">
           <RouterLink to="/master-guru">
-            Kelola {{ terms.mentorSingularTitle }}/{{ terms.levelSingularTitle }}
+            Kelola Master Data
           </RouterLink>
         </Button>
       </div>
@@ -247,6 +331,7 @@ const executeDelete = async () => {
         :total-inactive="inactiveSantriCount"
         :jilid-stats="jilidStats"
         :guru-stats="guruStats"
+        :tipe-stats="tipeStats"
       />
 
       <!-- UBAH @deleteSantri agar memanggil promptDeleteSantri -->
@@ -254,6 +339,7 @@ const executeDelete = async () => {
         :santriList="santriList"
         :jilidList="jilidList"
         :guruList="guruList"
+        :tipeList="tipeList"
         @toggleStatus="handleToggleStatus"
         @deleteSantri="promptDeleteSantri"
         @editSantri="handleEditSantri"
@@ -273,10 +359,19 @@ const executeDelete = async () => {
           variant="plain"
           :jilidList="jilidList"
           :guruList="guruList"
+          :tipeList="tipeList"
           @submit="handleAddSantri"
         />
       </DialogContent>
     </Dialog>
+
+    <SantriImportDialog
+      v-model:open="isImportModalOpen"
+      :jilidList="jilidList"
+      :guruList="guruList"
+      :tipeList="tipeList"
+      @import="handleImportSantri"
+    />
 
     <ConfirmModal
       :isOpen="isDeleteModalOpen"

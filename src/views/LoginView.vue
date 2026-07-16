@@ -35,11 +35,9 @@ const handleLogin = async () => {
     <Card class="w-full max-w-100">
       <CardContent class="p-6 space-y-6">
         <div class="text-center space-y-2">
-          <h1 class="text-2xl font-bold text-foreground">
-            {{ organizationConfig.name }}
-          </h1>
+          <h1 class="text-2xl font-bold text-foreground">Sistem Absensi</h1>
           <p class="text-sm text-muted-foreground">
-            Masuk untuk mengelola absensi {{ terms.studentSingularLower }}
+            Masuk untuk mengelola absensi lembaga anda.
           </p>
         </div>
 

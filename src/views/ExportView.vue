@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../services/firebase";
+import { query, where, getDocs } from "firebase/firestore";
 import { getSantri, getJilid, getGuru } from "../services/masterService";
+import { userCollection } from "../services/dataScope";
 import type { Attendance, Santri, Jilid, Guru } from "../types";
 import ExportFilter from "../components/export/ExportFilter.vue";
 import ExportResult from "../components/export/ExportResult.vue";
@@ -175,7 +175,7 @@ const generateExport = async () => {
     // 1. Ambil semua absensi di periode tersebut.
     // Filter hadir dilakukan di client supaya tidak perlu composite index Firestore.
     const q = query(
-      collection(db, "attendances"),
+      userCollection("attendances"),
       where("date", ">=", startDate.value),
       where("date", "<=", endDate.value),
     );

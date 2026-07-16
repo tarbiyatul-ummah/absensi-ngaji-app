@@ -1,13 +1,11 @@
 import {
-  collection,
-  doc,
   getDocs,
   query,
   setDoc,
   where,
 } from "firebase/firestore";
-import { db } from "./firebase";
 import type { SppPayment } from "../types";
+import { userCollection, userDoc } from "./dataScope";
 
 export const getSppPaymentId = (
   academicYearStart: number,
@@ -19,7 +17,7 @@ export const getSppPaymentsByAcademicYear = async (
   academicYearStart: number,
 ) => {
   const q = query(
-    collection(db, "sppPayments"),
+    userCollection("sppPayments"),
     where("academicYearStart", "==", academicYearStart),
   );
   const snapshot = await getDocs(q);
@@ -34,7 +32,7 @@ export const saveSppPayment = async (
     data.month,
     data.santriId,
   );
-  const docRef = doc(db, "sppPayments", id);
+  const docRef = userDoc("sppPayments", id);
 
   await setDoc(
     docRef,

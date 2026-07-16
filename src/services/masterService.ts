@@ -1,17 +1,16 @@
 import {
-  collection,
   addDoc,
   updateDoc,
   deleteDoc,
-  doc,
+  deleteField,
   getDocs,
 } from "firebase/firestore";
-import { db } from "./firebase";
-import type { Santri, Guru, Jilid } from "../types";
+import type { Santri, Guru, Jilid, SantriType } from "../types";
+import { userCollection, userDoc } from "./dataScope";
 
 // --- Jilid & Guru (Contoh fungsi GET) ---
 export const getJilid = async () => {
-  const snapshot = await getDocs(collection(db, "jilid"));
+  const snapshot = await getDocs(userCollection("jilid"));
   const data = snapshot.docs.map((doc) => {
     const d = doc.data();
     // Jika data lama belum punya urutan, kita set default 0
@@ -23,31 +22,51 @@ export const getJilid = async () => {
 };
 
 export const getGuru = async () => {
-  const snapshot = await getDocs(collection(db, "guru"));
+  const snapshot = await getDocs(userCollection("guru"));
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Guru);
+};
+
+// --- Tipe Santri ---
+export const getSantriTypes = async () => {
+  const snapshot = await getDocs(userCollection("santriTypes"));
+  return snapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }) as SantriType)
+    .sort((a, b) => a.nama.localeCompare(b.nama));
 };
 
 // --- Santri ---
 export const getSantri = async () => {
-  const snapshot = await getDocs(collection(db, "santri"));
+  const snapshot = await getDocs(userCollection("santri"));
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Santri);
 };
+
+export interface SantriBulkItem {
+  nama: string;
+  jilidId: string;
+  guruId: string;
+  tipeId?: string;
+  tanggalLahir?: string;
+}
 
 // Fitur 1: Bulk/Single Input Santri
 export const addSantriBulk = async (
   namaInput: string,
   jilidId: string,
   guruId: string,
+  tipeId?: string,
+  tanggalLahir?: string,
 ) => {
   const names = namaInput
     .split(",")
     .map((n) => n.trim())
     .filter((n) => n !== "");
   const promises = names.map((nama) => {
-    return addDoc(collection(db, "santri"), {
+    return addDoc(userCollection("santri"), {
       nama,
       jilidId,
       guruId,
+      ...(tipeId ? { tipeId } : {}),
+      ...(tanggalLahir ? { tanggalLahir } : {}),
       isActive: true,
       createdAt: Date.now(),
     });
@@ -55,13 +74,38 @@ export const addSantriBulk = async (
   await Promise.all(promises);
 };
 
+export const addSantriItems = async (items: SantriBulkItem[]) => {
+  const timestamp = Date.now();
+  const promises = items.map((item) =>
+    addDoc(userCollection("santri"), {
+      nama: item.nama,
+      jilidId: item.jilidId,
+      guruId: item.guruId,
+      ...(item.tipeId ? { tipeId: item.tipeId } : {}),
+      ...(item.tanggalLahir ? { tanggalLahir: item.tanggalLahir } : {}),
+      isActive: true,
+      createdAt: timestamp,
+    }),
+  );
+
+  await Promise.all(promises);
+};
+
 // Fitur 2 & 3: Edit dan Delete Santri
 export const updateSantri = async (id: string, data: Partial<Santri>) => {
-  await updateDoc(doc(db, "santri", id), data);
+  const payload: Record<string, unknown> = { ...data };
+
+  for (const field of ["tipeId", "tanggalLahir"]) {
+    if (field in payload && !payload[field]) {
+      payload[field] = deleteField();
+    }
+  }
+
+  await updateDoc(userDoc("santri", id), payload);
 };
 
 export const deleteSantri = async (id: string) => {
-  await deleteDoc(doc(db, "santri", id));
+  await deleteDoc(userDoc("santri", id));
 };
 
 // --- CRUD Jilid ---
@@ -71,7 +115,7 @@ export const addJilid = async (nama: string) => {
   const maxUrutan =
     currentList.length > 0 ? Math.max(...currentList.map((j) => j.urutan)) : 0;
 
-  await addDoc(collection(db, "jilid"), { nama, urutan: maxUrutan + 1 });
+  await addDoc(userCollection("jilid"), { nama, urutan: maxUrutan + 1 });
 };
 
 export const swapUrutanJilid = async (
@@ -80,27 +124,43 @@ export const swapUrutanJilid = async (
   id2: string,
   urutan2: number,
 ) => {
-  await updateDoc(doc(db, "jilid", id1), { urutan: urutan2 });
-  await updateDoc(doc(db, "jilid", id2), { urutan: urutan1 });
+  await updateDoc(userDoc("jilid", id1), { urutan: urutan2 });
+  await updateDoc(userDoc("jilid", id2), { urutan: urutan1 });
 };
 
 export const updateJilid = async (id: string, nama: string) => {
-  await updateDoc(doc(db, "jilid", id), { nama });
+  await updateDoc(userDoc("jilid", id), { nama });
 };
 
 export const deleteJilid = async (id: string) => {
-  await deleteDoc(doc(db, "jilid", id));
+  await deleteDoc(userDoc("jilid", id));
 };
 
 // --- CRUD Guru ---
 export const addGuru = async (nama: string) => {
-  await addDoc(collection(db, "guru"), { nama });
+  await addDoc(userCollection("guru"), { nama });
 };
 
 export const updateGuru = async (id: string, nama: string) => {
-  await updateDoc(doc(db, "guru", id), { nama });
+  await updateDoc(userDoc("guru", id), { nama });
 };
 
 export const deleteGuru = async (id: string) => {
-  await deleteDoc(doc(db, "guru", id));
+  await deleteDoc(userDoc("guru", id));
+};
+
+// --- CRUD Tipe Santri ---
+export const addSantriType = async (nama: string) => {
+  await addDoc(userCollection("santriTypes"), {
+    nama,
+    createdAt: Date.now(),
+  });
+};
+
+export const updateSantriType = async (id: string, nama: string) => {
+  await updateDoc(userDoc("santriTypes", id), { nama });
+};
+
+export const deleteSantriType = async (id: string) => {
+  await deleteDoc(userDoc("santriTypes", id));
 };

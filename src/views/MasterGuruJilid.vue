@@ -13,8 +13,12 @@ import {
   addGuru,
   updateGuru,
   deleteGuru,
+  getSantriTypes,
+  addSantriType,
+  updateSantriType,
+  deleteSantriType,
 } from "../services/masterService";
-import type { Jilid, Guru } from "../types";
+import type { Jilid, Guru, SantriType } from "../types";
 
 import MasterDataCard from "../components/master/MasterDataCard.vue";
 import ConfirmModal from "../components/master/ConfirmModal.vue";
@@ -23,10 +27,12 @@ import { terms } from "../config/organization";
 
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
+const santriTypeList = ref<SantriType[]>([]);
 
 const loadData = async () => {
   jilidList.value = await getJilid();
   guruList.value = await getGuru();
+  santriTypeList.value = await getSantriTypes();
 };
 
 onMounted(loadData);
@@ -38,6 +44,10 @@ const handleAddJilid = async (nama: string) => {
 };
 const handleAddGuru = async (nama: string) => {
   await addGuru(nama);
+  await loadData();
+};
+const handleAddSantriType = async (nama: string) => {
+  await addSantriType(nama);
   await loadData();
 };
 
@@ -70,9 +80,15 @@ const handleMoveDownJilid = async (index: number) => {
 
 // === STATE & LOGIKA MODAL HAPUS ===
 const isDeleteModalOpen = ref(false);
-const deletePayload = ref<{ type: "jilid" | "guru"; id: string } | null>(null);
+const deletePayload = ref<{
+  type: "jilid" | "guru" | "santriType";
+  id: string;
+} | null>(null);
 
-const openDeleteModal = (type: "jilid" | "guru", id: string) => {
+const openDeleteModal = (
+  type: "jilid" | "guru" | "santriType",
+  id: string,
+) => {
   deletePayload.value = { type, id };
   isDeleteModalOpen.value = true;
 };
@@ -82,7 +98,8 @@ const executeDelete = async () => {
   const { type, id } = deletePayload.value;
 
   if (type === "jilid") await deleteJilid(id);
-  else await deleteGuru(id);
+  else if (type === "guru") await deleteGuru(id);
+  else await deleteSantriType(id);
 
   await loadData();
   isDeleteModalOpen.value = false;
@@ -92,13 +109,13 @@ const executeDelete = async () => {
 // === STATE & LOGIKA MODAL EDIT ===
 const isEditModalOpen = ref(false);
 const editPayload = ref<{
-  type: "jilid" | "guru";
+  type: "jilid" | "guru" | "santriType";
   id: string;
   namaLama: string;
 } | null>(null);
 
 const openEditModal = (
-  type: "jilid" | "guru",
+  type: "jilid" | "guru" | "santriType",
   item: { id: string; nama: string },
 ) => {
   editPayload.value = { type, id: item.id, namaLama: item.nama };
@@ -111,7 +128,8 @@ const executeEdit = async (namaBaru: string) => {
 
   if (namaBaru !== namaLama) {
     if (type === "jilid") await updateJilid(id, namaBaru);
-    else await updateGuru(id, namaBaru);
+    else if (type === "guru") await updateGuru(id, namaBaru);
+    else await updateSantriType(id, namaBaru);
     await loadData();
   }
 
@@ -157,6 +175,15 @@ const executeEdit = async (namaBaru: string) => {
         @edit="openEditModal('guru', $event)"
         @delete="openDeleteModal('guru', $event)"
       />
+
+      <MasterDataCard
+        title="Data Tipe Santri"
+        placeholder="Contoh: Reguler, Akselerasi, Tahfidz"
+        :items="santriTypeList"
+        @add="handleAddSantriType"
+        @edit="openEditModal('santriType', $event)"
+        @delete="openDeleteModal('santriType', $event)"
+      />
     </div>
 
     <!-- Panggil Modal Edit -->
@@ -165,7 +192,9 @@ const executeEdit = async (namaBaru: string) => {
       :title="
         editPayload?.type === 'jilid'
           ? `Edit ${terms.levelSingularTitle}`
-          : `Edit ${terms.mentorSingularTitle}`
+          : editPayload?.type === 'guru'
+            ? `Edit ${terms.mentorSingularTitle}`
+            : 'Edit Tipe Santri'
       "
       label="Nama Baru"
       :initialValue="editPayload?.namaLama || ''"
@@ -179,7 +208,9 @@ const executeEdit = async (namaBaru: string) => {
       :title="
         deletePayload?.type === 'jilid'
           ? `Hapus ${terms.levelSingularTitle}`
-          : `Hapus ${terms.mentorSingularTitle}`
+          : deletePayload?.type === 'guru'
+            ? `Hapus ${terms.mentorSingularTitle}`
+            : 'Hapus Tipe Santri'
       "
       message="Apakah Anda yakin ingin menghapus data ini secara permanen?"
       confirmText="Hapus"
