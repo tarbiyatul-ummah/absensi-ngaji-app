@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { getCurrentUser } from "../services/firebase";
+import { getCurrentUser } from "../services/supabase";
 import { terms } from "../config/organization";
 
 const router = createRouter({

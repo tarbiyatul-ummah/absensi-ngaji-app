@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { query, where, getDocs } from "firebase/firestore";
 import { getSantri, getJilid, getGuru } from "../services/masterService";
-import { userCollection } from "../services/dataScope";
+import { getAttendanceByDateRange } from "../services/attendanceService";
 import type { Attendance, Santri, Jilid, Guru } from "../types";
 import ExportFilter from "../components/export/ExportFilter.vue";
 import ExportResult from "../components/export/ExportResult.vue";
@@ -173,20 +172,16 @@ const generateExport = async () => {
 
   try {
     // 1. Ambil semua absensi di periode tersebut.
-    // Filter hadir dilakukan di client supaya tidak perlu composite index Firestore.
-    const q = query(
-      userCollection("attendances"),
-      where("date", ">=", startDate.value),
-      where("date", "<=", endDate.value),
+    const attendanceRows = await getAttendanceByDateRange(
+      startDate.value,
+      endDate.value,
     );
-    const attendanceSnapshot = await getDocs(q);
 
     const attendanceBySantriAndDate: Record<string, Record<string, Attendance>> =
       {};
     const attendanceDates = new Set<string>();
 
-    attendanceSnapshot.forEach((doc) => {
-      const data = doc.data() as Attendance;
+    attendanceRows.forEach((data) => {
       if (!data.santriId || !data.date) return;
 
       attendanceDates.add(data.date);

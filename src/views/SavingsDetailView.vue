@@ -36,6 +36,7 @@ import {
   type AcademicSemester,
   getAcademicMonthOptions,
   getAcademicYearLabel,
+  getCurrentAcademicMonth,
 } from "../utils/academicPeriod";
 
 const route = useRoute();
@@ -99,32 +100,43 @@ const selectedSavingsSantriList = computed(() => {
   return activeSantriList.value.filter((santri) => selectedIds.has(santri.id));
 });
 
-const totalSavingsBills = computed(
-  () =>
-    selectedSavingsSantriList.value.length *
-    selectedSavingsMonthOptions.value.length,
-);
+const currentSavingsMonthValue = computed(() => getCurrentAcademicMonth());
 
-const totalSavingsPaid = computed(() => {
-  return selectedSavingsSantriList.value.reduce((total, santri) => {
-    return (
-      total +
-      selectedSavingsMonthOptions.value.filter((month) =>
-        isSavingsPaid(santri.id, month.value),
-      ).length
-    );
-  }, 0);
+const currentSavingsMonthLabel = computed(() => {
+  return (
+    selectedSavingsMonthOptions.value.find(
+      (month) => month.value === currentSavingsMonthValue.value,
+    )?.label ?? "bulan ini"
+  );
 });
 
-const totalSavingsUnpaid = computed(
-  () => totalSavingsBills.value - totalSavingsPaid.value,
+const currentSavingsMonthIndex = computed(() =>
+  selectedSavingsMonthOptions.value.findIndex(
+    (month) => month.value === currentSavingsMonthValue.value,
+  ),
 );
 
-const savingsCompletionPercent = computed(() =>
-  totalSavingsBills.value > 0
-    ? Math.round((totalSavingsPaid.value / totalSavingsBills.value) * 100)
-    : 0,
+const previousSavingsMonthValue = computed(() => {
+  if (currentSavingsMonthIndex.value <= 0) return null;
+
+  return selectedSavingsMonthOptions.value[currentSavingsMonthIndex.value - 1]
+    ?.value ?? null;
+});
+
+const paidThisMonthCount = computed(() =>
+  selectedSavingsSantriList.value.filter((santri) =>
+    isSavingsPaid(santri.id, currentSavingsMonthValue.value),
+  ).length,
 );
+
+const savingsArrearsCount = computed(() => {
+  if (!previousSavingsMonthValue.value) return 0;
+
+  return selectedSavingsSantriList.value.filter(
+    (santri) =>
+      !isSavingsPaid(santri.id, previousSavingsMonthValue.value as string),
+  ).length;
+});
 
 const editInitialValue = computed<SavingsAccountFormData | null>(() => {
   if (!account.value) return null;
@@ -342,29 +354,35 @@ onMounted(loadData);
           </div>
         </header>
 
-        <Card class="grid grid-cols-2 md:grid-cols-4">
-          <div class="border-r p-4">
-            <p class="text-xs text-muted-foreground">Terdaftar</p>
-            <p class="text-2xl font-bold text-foreground">
+        <Card class="grid grid-cols-1 sm:grid-cols-3">
+          <div class="border-b p-4 sm:border-b-0 sm:border-r">
+            <p class="text-xs leading-snug text-muted-foreground">Terdaftar</p>
+            <p class="mt-0.5 text-2xl font-bold leading-tight text-foreground">
               {{ selectedSavingsSantriList.length }}
             </p>
           </div>
-          <div class="border-r-0 p-4 md:border-r">
-            <p class="text-xs text-muted-foreground">Lunas</p>
-            <p class="text-2xl font-bold text-[hsl(142_72%_29%)]">
-              {{ totalSavingsPaid }}
+          <div class="border-b p-4 sm:border-b-0 sm:border-r">
+            <p class="text-xs leading-snug text-muted-foreground">
+              Sudah bayar bulan ini
+            </p>
+            <p
+              class="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]"
+            >
+              {{ paidThisMonthCount }}
+            </p>
+            <p class="mt-1 text-[11px] text-muted-foreground">
+              {{ currentSavingsMonthLabel }}
             </p>
           </div>
-          <div class="border-r border-t p-4 md:border-t-0">
-            <p class="text-xs text-muted-foreground">Belum Lunas</p>
-            <p class="text-2xl font-bold text-destructive">
-              {{ totalSavingsUnpaid }}
+          <div class="p-4">
+            <p class="text-xs leading-snug text-muted-foreground">
+              Jumlah menunggak
             </p>
-          </div>
-          <div class="border-t p-4 md:border-t-0">
-            <p class="text-xs text-muted-foreground">Progress</p>
-            <p class="text-2xl font-bold text-foreground">
-              {{ savingsCompletionPercent }}%
+            <p class="mt-0.5 text-2xl font-bold leading-tight text-foreground">
+              {{ savingsArrearsCount }}
+            </p>
+            <p class="mt-1 text-[11px] text-muted-foreground">
+              Belum bayar bulan sebelumnya
             </p>
           </div>
         </Card>
@@ -425,7 +443,7 @@ onMounted(loadData);
                 >
                   <span>{{ formatMonthShort(month.label) }}</span>
                   <span class="mt-0.5 text-[10px]">
-                    {{ isSavingsPaid(santri.id, month.value) ? "Lunas" : "Belum" }}
+                    {{ isSavingsPaid(santri.id, month.value) ? "Bayar" : "Belum" }}
                   </span>
                 </button>
               </div>
@@ -455,7 +473,7 @@ onMounted(loadData);
                   >
                     {{ formatMonthShort(month.label) }}
                   </th>
-                  <th class="w-24 px-3 py-3 text-right font-semibold">Lunas</th>
+                  <th class="w-24 px-3 py-3 text-right font-semibold">Bayar</th>
                 </tr>
               </thead>
               <tbody class="divide-y">

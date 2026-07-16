@@ -26,6 +26,7 @@ import {
   getAcademicMonthOptions,
   getAcademicYearLabel,
   getAcademicYearOptions,
+  getCurrentAcademicMonth,
   getCurrentAcademicYearStart,
 } from "../utils/academicPeriod";
 import Toast from "../components/master/Toast.vue";
@@ -107,27 +108,42 @@ const hasMoreSantri = computed(
   () => visibleSantriList.value.length < filteredSantriList.value.length,
 );
 
-const totalTagihan = computed(
-  () => activeSantriList.value.length * monthOptions.value.length,
-);
+const currentMonthValue = computed(() => getCurrentAcademicMonth());
 
-const totalLunas = computed(() => {
-  return activeSantriList.value.reduce((total, santri) => {
-    return (
-      total +
-      monthOptions.value.filter((month) => isPaid(santri.id, month.value))
-        .length
-    );
-  }, 0);
+const currentMonthLabel = computed(() => {
+  return (
+    monthOptions.value.find((month) => month.value === currentMonthValue.value)
+      ?.label ?? "bulan ini"
+  );
 });
 
-const totalBelumLunas = computed(() => totalTagihan.value - totalLunas.value);
-
-const completionPercent = computed(() =>
-  totalTagihan.value > 0
-    ? Math.round((totalLunas.value / totalTagihan.value) * 100)
-    : 0,
+const currentMonthIndex = computed(() =>
+  monthOptions.value.findIndex((month) => month.value === currentMonthValue.value),
 );
+
+const previousMonthValue = computed(() => {
+  if (currentMonthIndex.value <= 0) return null;
+
+  return monthOptions.value[currentMonthIndex.value - 1]?.value ?? null;
+});
+
+const paidThisMonthCount = computed(() =>
+  activeSantriList.value.filter((santri) =>
+    isPaid(santri.id, currentMonthValue.value),
+  ).length,
+);
+
+const unpaidThisMonthCount = computed(
+  () => activeSantriList.value.length - paidThisMonthCount.value,
+);
+
+const arrearsCount = computed(() => {
+  if (!previousMonthValue.value) return 0;
+
+  return activeSantriList.value.filter(
+    (santri) => !isPaid(santri.id, previousMonthValue.value as string),
+  ).length;
+});
 
 const getJilidName = (jilidId: string) =>
   jilidList.value.find((jilid) => jilid.id === jilidId)?.nama ?? "-";
@@ -289,8 +305,8 @@ const exportCsv = () => {
     terms.levelSingularTitle,
     terms.mentorSingularTitle,
     ...monthOptions.value.map((month) => month.label),
-    "Total Lunas",
-    "Belum Lunas",
+    "Total Bayar",
+    "Belum Bayar",
   ];
   const rows = activeSantriList.value.map((santri) => {
     const paidCount = getPaidCount(santri.id);
@@ -299,7 +315,7 @@ const exportCsv = () => {
       getJilidName(santri.jilidId),
       getGuruName(santri.guruId),
       ...monthOptions.value.map((month) =>
-        isPaid(santri.id, month.value) ? "Lunas" : "Belum",
+        isPaid(santri.id, month.value) ? "Sudah Bayar" : "Belum Bayar",
       ),
       paidCount,
       monthOptions.value.length - paidCount,
@@ -350,7 +366,7 @@ const exportCsv = () => {
         <div>
           <h1 class="app-title">Keuangan {{ terms.paymentLabel }}</h1>
           <p class="app-subtitle">
-            Pantau pembayaran per bulan dalam satu tahun ajaran.
+            Pantau pembayaran bulanan dan tunggakan {{ terms.studentSingularLower }}.
           </p>
         </div>
         <Button
@@ -376,31 +392,40 @@ const exportCsv = () => {
     </div>
 
     <main v-else class="app-container-wide space-y-5 pb-28">
-      <Card class="grid grid-cols-2 md:grid-cols-4">
-        <div class="border-r p-4">
-          <p class="text-xs leading-snug text-muted-foreground">Tahun Ajaran</p>
-          <p class="mt-0.5 text-2xl font-bold leading-tight text-foreground">
-            {{ getAcademicYearLabel(selectedAcademicYearStart) }}
+      <Card class="grid grid-cols-1 sm:grid-cols-3">
+        <div class="border-b p-4 sm:border-b-0 sm:border-r">
+          <p class="text-xs leading-snug text-muted-foreground">
+            Sudah bayar bulan ini
           </p>
-        </div>
-        <div class="border-r-0 p-4 md:border-r">
-          <p class="text-xs leading-snug text-muted-foreground">Lunas</p>
           <p
             class="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]"
           >
-            {{ totalLunas }}
+            {{ paidThisMonthCount }}
+          </p>
+          <p class="mt-1 text-[11px] text-muted-foreground">
+            {{ currentMonthLabel }}
           </p>
         </div>
-        <div class="border-r border-t p-4 md:border-t-0">
-          <p class="text-xs leading-snug text-muted-foreground">Belum Lunas</p>
+        <div class="border-b p-4 sm:border-b-0 sm:border-r">
+          <p class="text-xs leading-snug text-muted-foreground">
+            Belum bayar bulan ini
+          </p>
           <p class="mt-0.5 text-2xl font-bold leading-tight text-destructive">
-            {{ totalBelumLunas }}
+            {{ unpaidThisMonthCount }}
+          </p>
+          <p class="mt-1 text-[11px] text-muted-foreground">
+            Dari {{ activeSantriList.length }} {{ terms.studentSingularLower }} aktif
           </p>
         </div>
-        <div class="border-t p-4 md:border-t-0">
-          <p class="text-xs leading-snug text-muted-foreground">Progress</p>
+        <div class="p-4">
+          <p class="text-xs leading-snug text-muted-foreground">
+            Jumlah menunggak
+          </p>
           <p class="mt-0.5 text-2xl font-bold leading-tight text-foreground">
-            {{ completionPercent }}%
+            {{ arrearsCount }}
+          </p>
+          <p class="mt-1 text-[11px] text-muted-foreground">
+            Belum bayar bulan sebelumnya
           </p>
         </div>
       </Card>
@@ -483,7 +508,7 @@ const exportCsv = () => {
               >
                 <span>{{ formatMonthShort(month.label) }}</span>
                 <span class="mt-0.5 text-[10px]">
-                  {{ isPaid(santri.id, month.value) ? "Lunas" : "Belum" }}
+                {{ isPaid(santri.id, month.value) ? "Bayar" : "Belum" }}
                 </span>
               </button>
             </div>
@@ -513,7 +538,7 @@ const exportCsv = () => {
                 >
                   {{ formatMonthShort(month.label) }}
                 </th>
-                <th class="w-24 px-3 py-3 text-right font-semibold">Lunas</th>
+                <th class="w-24 px-3 py-3 text-right font-semibold">Bayar</th>
               </tr>
             </thead>
             <tbody class="divide-y">

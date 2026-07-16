@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 src/services/firebase.ts
+supabase
+.env
+firebase.json

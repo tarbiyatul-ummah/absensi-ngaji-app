@@ -20,6 +20,7 @@ interface ImportRow {
   guruId: string;
   tipeId?: string;
   tanggalLahir?: string;
+  isActive: boolean;
 }
 
 const props = defineProps<{
@@ -104,6 +105,24 @@ const isValidDateKey = (value: string) => {
 
   const date = new Date(`${value}T00:00:00`);
   return !Number.isNaN(date.getTime()) && formatDateKey(date) === value;
+};
+
+const normalizeStatus = (value: unknown) => {
+  const text = normalized(value);
+
+  if (!text) return true;
+  if (["aktif", "active", "ya", "yes", "true", "1"].includes(text)) {
+    return true;
+  }
+  if (
+    ["nonaktif", "non aktif", "inactive", "tidak", "no", "false", "0"].includes(
+      text,
+    )
+  ) {
+    return false;
+  }
+
+  return null;
 };
 
 const csvToRows = (text: string) => {
@@ -208,6 +227,8 @@ const validateRows = (rawRows: Record<string, unknown>[]) => {
         "birth date",
       ]),
     );
+    const rawStatus = getRawCellValue(row, ["status", "aktif", "is active"]);
+    const isActive = normalizeStatus(rawStatus);
 
     const jilidId = jilidByName.get(normalized(jilidName));
     const guruId = guruByName.get(normalized(guruName));
@@ -232,13 +253,19 @@ const validateRows = (rawRows: Record<string, unknown>[]) => {
       );
     if (!isValidDateKey(tanggalLahir))
       nextErrors.push(`Baris ${rowNumber}: tanggal lahir tidak valid.`);
+    if (isActive === null) {
+      nextErrors.push(
+        `Baris ${rowNumber}: status harus Aktif atau Nonaktif.`,
+      );
+    }
 
     if (
       nama &&
       jilidId &&
       guruId &&
       (!tipeName || tipeId) &&
-      isValidDateKey(tanggalLahir)
+      isValidDateKey(tanggalLahir) &&
+      isActive !== null
     ) {
       nextRows.push({
         nama,
@@ -246,6 +273,7 @@ const validateRows = (rawRows: Record<string, unknown>[]) => {
         guruId,
         tipeId,
         tanggalLahir: tanggalLahir || undefined,
+        isActive,
       });
     }
   });
@@ -293,6 +321,7 @@ const downloadTemplate = () => {
       [terms.mentorSingularTitle]: props.guruList[0]?.nama ?? "Ustadz A",
       "Tipe Santri": props.tipeList[0]?.nama ?? "Reguler",
       "Tanggal Lahir": "2015-01-20",
+      Status: "Aktif",
     },
   ];
   const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -314,6 +343,7 @@ const downloadCsvTemplate = () => {
     terms.mentorSingularTitle,
     "Tipe Santri",
     "Tanggal Lahir",
+    "Status",
   ];
   const row = [
     "Ahmad",
@@ -321,6 +351,7 @@ const downloadCsvTemplate = () => {
     props.guruList[0]?.nama ?? "Ustadz A",
     props.tipeList[0]?.nama ?? "Reguler",
     "2015-01-20",
+    "Aktif",
   ];
   const csv = [headers, row]
     .map((items) => items.map(csvValue).join(","))

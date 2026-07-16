@@ -3,7 +3,7 @@ import { terms } from "../../config/organization";
 
 interface SummaryItem {
   nama: string;
-  count: number;
+  aktif: number;
 }
 
 defineProps<{
@@ -17,96 +17,91 @@ defineProps<{
 
 <template>
   <section
-    class="bg-white rounded-lg border border-[#E1E3E5] shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)] overflow-hidden"
+    class="overflow-hidden rounded-lg border border-[#E1E3E5] bg-white shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)]"
   >
     <div class="grid grid-cols-2 border-b border-[#F1F2F3]">
-      <div class="p-4 border-r border-[#F1F2F3]">
+      <div class="border-r border-[#F1F2F3] px-4 py-3">
         <p class="text-[12px] text-[#6D7175]">
           {{ terms.studentSingularTitle }} Aktif
         </p>
-        <p class="text-[24px] font-bold leading-tight text-[#008060]">
+        <p class="text-[22px] font-bold leading-tight text-[#008060]">
           {{ totalActive }}
         </p>
       </div>
-      <div class="p-4">
+      <div class="px-4 py-3">
         <p class="text-[12px] text-[#6D7175]">Non Aktif</p>
-        <p class="text-[24px] font-bold leading-tight text-[#454749]">
+        <p class="text-[22px] font-bold leading-tight text-[#454749]">
           {{ totalInactive }}
         </p>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-0 md:grid-cols-3">
+    <div class="grid grid-cols-1 md:grid-cols-3">
       <div class="p-4 md:border-r md:border-[#F1F2F3]">
-        <div class="mb-2 flex items-center justify-between">
-          <h2 class="text-[13px] font-semibold text-[#202223]">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="text-[14px] font-semibold text-[#202223]">
             Per {{ terms.levelSingularTitle }}
           </h2>
-          <span class="text-[11px] text-[#6D7175]">
+          <span class="text-[12px] text-[#6D7175]">
             {{ jilidStats.length }} {{ terms.levelSingularLower }}
           </span>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] leading-6">
           <span
             v-for="item in jilidStats"
             :key="item.nama"
-            class="inline-flex items-center gap-1 rounded-md border border-[#D0E4C9] bg-[#F1F8EF] px-2 py-1 text-[12px] text-[#202223]"
+            class="min-w-0 break-words text-[#202223]"
           >
-            <span class="font-medium">{{ item.nama }}</span>
-            <span class="text-[#6D7175]">:</span>
-            <span class="font-bold text-[#008060]">{{ item.count }}</span>
+            <span class="font-medium">{{ item.nama }}</span>:
+            <span class="font-semibold text-[#008060]">{{ item.aktif }}</span>
           </span>
-          <span v-if="jilidStats.length === 0" class="text-[12px] text-[#6D7175]">
+          <span v-if="jilidStats.length === 0" class="text-[#6D7175]">
             Belum ada data {{ terms.levelSingularLower }}.
           </span>
         </div>
       </div>
 
       <div class="border-t border-[#F1F2F3] p-4 md:border-t-0 md:border-r">
-        <div class="mb-2 flex items-center justify-between">
-          <h2 class="text-[13px] font-semibold text-[#202223]">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="text-[14px] font-semibold text-[#202223]">
             Per {{ terms.mentorSingularTitle }}
           </h2>
-          <span class="text-[11px] text-[#6D7175]">
+          <span class="text-[12px] text-[#6D7175]">
             {{ guruStats.length }} {{ terms.mentorSingularLower }}
           </span>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] leading-6">
           <span
             v-for="item in guruStats"
             :key="item.nama"
-            class="inline-flex items-center gap-1 rounded-md border border-[#D5D9DD] bg-[#F9FAFB] px-2 py-1 text-[12px] text-[#202223]"
+            class="min-w-0 break-words text-[#202223]"
           >
-            <span class="font-medium">{{ item.nama }}</span>
-            <span class="text-[#6D7175]">:</span>
-            <span class="font-bold text-[#454749]">{{ item.count }}</span>
+            <span class="font-medium">{{ item.nama }}</span>:
+            <span class="font-semibold text-[#008060]">{{ item.aktif }}</span>
           </span>
-          <span v-if="guruStats.length === 0" class="text-[12px] text-[#6D7175]">
+          <span v-if="guruStats.length === 0" class="text-[#6D7175]">
             Belum ada data {{ terms.mentorSingularLower }}.
           </span>
         </div>
       </div>
 
       <div class="border-t border-[#F1F2F3] p-4 md:border-t-0">
-        <div class="mb-2 flex items-center justify-between">
-          <h2 class="text-[13px] font-semibold text-[#202223]">
-            Per Tipe
-          </h2>
-          <span class="text-[11px] text-[#6D7175]">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="text-[14px] font-semibold text-[#202223]">Per Tipe</h2>
+          <span class="text-[12px] text-[#6D7175]">
             {{ tipeStats.length }} tipe
           </span>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] leading-6">
           <span
             v-for="item in tipeStats"
             :key="item.nama"
-            class="inline-flex items-center gap-1 rounded-md border border-[#D6E2F4] bg-[#F3F7FC] px-2 py-1 text-[12px] text-[#202223]"
+            class="min-w-0 break-words text-[#202223]"
           >
-            <span class="font-medium">{{ item.nama }}</span>
-            <span class="text-[#6D7175]">:</span>
-            <span class="font-bold text-[#2C6ECB]">{{ item.count }}</span>
+            <span class="font-medium">{{ item.nama }}</span>:
+            <span class="font-semibold text-[#008060]">{{ item.aktif }}</span>
           </span>
-          <span v-if="tipeStats.length === 0" class="text-[12px] text-[#6D7175]">
+          <span v-if="tipeStats.length === 0" class="text-[#6D7175]">
             Belum ada data tipe.
           </span>
         </div>

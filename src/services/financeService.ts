@@ -1,11 +1,21 @@
-import {
-  getDocs,
-  query,
-  setDoc,
-  where,
-} from "firebase/firestore";
+import { getCurrentUserId, supabase } from "./supabase";
 import type { SppPayment } from "../types";
-import { userCollection, userDoc } from "./dataScope";
+
+const TABLE = "spp_payments";
+
+const throwIfError = (error: { message: string } | null) => {
+  if (error) throw new Error(error.message);
+};
+
+const mapSppPayment = (row: any): SppPayment => ({
+  id: row.id,
+  santriId: row.santri_id,
+  academicYearStart: row.academic_year_start,
+  month: row.month,
+  isPaid: row.is_paid,
+  paidAt: row.paid_at ?? null,
+  updatedAt: row.updated_at,
+});
 
 export const getSppPaymentId = (
   academicYearStart: number,
@@ -16,31 +26,41 @@ export const getSppPaymentId = (
 export const getSppPaymentsByAcademicYear = async (
   academicYearStart: number,
 ) => {
-  const q = query(
-    userCollection("sppPayments"),
-    where("academicYearStart", "==", academicYearStart),
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as SppPayment);
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select(
+      "id,santri_id,academic_year_start,month,is_paid,paid_at,updated_at",
+    )
+    .eq("user_id", userId)
+    .eq("academic_year_start", academicYearStart);
+
+  throwIfError(error);
+  return (data ?? []).map(mapSppPayment);
 };
 
 export const saveSppPayment = async (
   data: Omit<SppPayment, "id" | "updatedAt">,
 ) => {
+  const userId = await getCurrentUserId();
   const id = getSppPaymentId(
     data.academicYearStart,
     data.month,
     data.santriId,
   );
-  const docRef = userDoc("sppPayments", id);
-
-  await setDoc(
-    docRef,
+  const { error } = await supabase.from(TABLE).upsert(
     {
-      ...data,
       id,
-      updatedAt: Date.now(),
+      user_id: userId,
+      santri_id: data.santriId,
+      academic_year_start: data.academicYearStart,
+      month: data.month,
+      is_paid: data.isPaid,
+      paid_at: data.paidAt ?? null,
+      updated_at: Date.now(),
     },
-    { merge: true },
+    { onConflict: "id" },
   );
+
+  throwIfError(error);
 };

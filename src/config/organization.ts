@@ -33,15 +33,15 @@ export const DEFAULT_FAVICON_URL = "/app-favicon-placeholder.svg";
 export const defaultOrganizationConfig: OrganizationConfig = {
   name: "LPQ Tarbiyatul Ummah",
   typeLabel: "LPQ",
-  appTitle: "Absensi Mengaji LPQ Tarbiyatul Ummah",
+  appTitle: "Sistem Absensi",
   faviconUrl: DEFAULT_FAVICON_URL,
   terms: {
-    studentSingularLower: "santri",
-    studentSingularTitle: "Santri",
+    studentSingularLower: "siswa",
+    studentSingularTitle: "Siswa",
     mentorSingularLower: "guru",
     mentorSingularTitle: "Guru",
-    levelSingularLower: "jilid",
-    levelSingularTitle: "Jilid",
+    levelSingularLower: "kelas",
+    levelSingularTitle: "Kelas",
     paymentLabel: "SPP",
   },
 };

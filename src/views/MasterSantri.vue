@@ -49,9 +49,10 @@ const loadData = async () => {
 
 onMounted(loadData);
 
-const activeSantriList = computed(() =>
-  santriList.value.filter((santri) => santri.isActive !== false),
-);
+const countActiveSantri = (items: Santri[]) =>
+  items.filter((santri) => santri.isActive !== false).length;
+
+const activeSantriCount = computed(() => countActiveSantri(santriList.value));
 
 const inactiveSantriCount = computed(
   () => santriList.value.filter((santri) => santri.isActive === false).length,
@@ -59,41 +60,53 @@ const inactiveSantriCount = computed(
 
 const jilidStats = computed(() =>
   jilidList.value
-    .map((jilid) => ({
-      nama: jilid.nama,
-      count: activeSantriList.value.filter(
-        (santri) => santri.jilidId === jilid.id,
-      ).length,
-    }))
-    .sort((a, b) => b.count - a.count || a.nama.localeCompare(b.nama)),
+    .map((jilid) => {
+      return {
+        nama: jilid.nama,
+        aktif: countActiveSantri(
+          santriList.value.filter((santri) => santri.jilidId === jilid.id),
+        ),
+      };
+    })
+    .filter((item) => item.aktif > 0)
+    .sort((a, b) => b.aktif - a.aktif || a.nama.localeCompare(b.nama)),
 );
 
 const guruStats = computed(() =>
   guruList.value
-    .map((guru) => ({
-      nama: guru.nama,
-      count: activeSantriList.value.filter(
-        (santri) => santri.guruId === guru.id,
-      ).length,
-    }))
-    .sort((a, b) => b.count - a.count || a.nama.localeCompare(b.nama)),
+    .map((guru) => {
+      return {
+        nama: guru.nama,
+        aktif: countActiveSantri(
+          santriList.value.filter((santri) => santri.guruId === guru.id),
+        ),
+      };
+    })
+    .filter((item) => item.aktif > 0)
+    .sort((a, b) => b.aktif - a.aktif || a.nama.localeCompare(b.nama)),
 );
 
 const tipeStats = computed(() => {
-  const stats = tipeList.value.map((tipe) => ({
-    nama: tipe.nama,
-    count: activeSantriList.value.filter((santri) => santri.tipeId === tipe.id)
-      .length,
-  }));
-  const untypedCount = activeSantriList.value.filter(
-    (santri) => !santri.tipeId,
-  ).length;
+  const stats = tipeList.value.map((tipe) => {
+    return {
+      nama: tipe.nama,
+      aktif: countActiveSantri(
+        santriList.value.filter((santri) => santri.tipeId === tipe.id),
+      ),
+    };
+  });
 
-  if (untypedCount > 0) {
-    stats.push({ nama: "Tanpa tipe", count: untypedCount });
+  const untypedActiveCount = countActiveSantri(
+    santriList.value.filter((santri) => !santri.tipeId),
+  );
+
+  if (untypedActiveCount > 0) {
+    stats.push({ nama: "Tanpa tipe", aktif: untypedActiveCount });
   }
 
-  return stats.sort((a, b) => b.count - a.count || a.nama.localeCompare(b.nama));
+  return stats
+    .filter((item) => item.aktif > 0)
+    .sort((a, b) => b.aktif - a.aktif || a.nama.localeCompare(b.nama));
 });
 
 const getJilidName = (jilidId: string) =>
@@ -202,6 +215,7 @@ const handleImportSantri = async (
     guruId: string;
     tipeId?: string;
     tanggalLahir?: string;
+    isActive?: boolean;
   }[],
 ) => {
   await addSantriItems(rows);
@@ -212,7 +226,7 @@ const handleImportSantri = async (
 
 // Logika dari SantriList
 const handleToggleStatus = async (santri: Santri) => {
-  await updateSantri(santri.id, { isActive: !santri.isActive });
+  await updateSantri(santri.id, { isActive: santri.isActive === false });
   await loadData();
 };
 
@@ -327,7 +341,7 @@ const executeDelete = async () => {
 
     <div class="app-container space-y-5">
       <MasterDataSummary
-        :total-active="activeSantriList.length"
+        :total-active="activeSantriCount"
         :total-inactive="inactiveSantriCount"
         :jilid-stats="jilidStats"
         :guru-stats="guruStats"

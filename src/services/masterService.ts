@@ -1,43 +1,95 @@
-import {
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  deleteField,
-  getDocs,
-} from "firebase/firestore";
-import type { Santri, Guru, Jilid, SantriType } from "../types";
-import { userCollection, userDoc } from "./dataScope";
+import { getCurrentUserId, supabase } from "./supabase";
+import type { Guru, Jilid, Santri, SantriType } from "../types";
 
-// --- Jilid & Guru (Contoh fungsi GET) ---
+const TABLES = {
+  classes: "classes",
+  teachers: "teachers",
+  studentTypes: "student_types",
+  students: "students",
+} as const;
+
+const throwIfError = (error: { message: string } | null) => {
+  if (error) throw new Error(error.message);
+};
+
+const mapClass = (row: any): Jilid => ({
+  id: row.id,
+  nama: row.nama,
+  urutan: row.urutan ?? 0,
+});
+
+const mapTeacher = (row: any): Guru => ({
+  id: row.id,
+  nama: row.nama,
+});
+
+const mapStudentType = (row: any): SantriType => ({
+  id: row.id,
+  nama: row.nama,
+  createdAt: row.created_at ?? undefined,
+});
+
+const mapStudent = (row: any): Santri => ({
+  id: row.id,
+  nama: row.nama,
+  jilidId: row.jilid_id,
+  guruId: row.guru_id,
+  tipeId: row.tipe_id ?? undefined,
+  tanggalLahir: row.tanggal_lahir ?? undefined,
+  isActive: row.is_active,
+  createdAt: row.created_at,
+});
+
+// --- Kelas & Guru ---
 export const getJilid = async () => {
-  const snapshot = await getDocs(userCollection("jilid"));
-  const data = snapshot.docs.map((doc) => {
-    const d = doc.data();
-    // Jika data lama belum punya urutan, kita set default 0
-    return { id: doc.id, urutan: d.urutan || 0, nama: d.nama } as Jilid;
-  });
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from(TABLES.classes)
+    .select("id,nama,urutan")
+    .eq("user_id", userId)
+    .order("urutan", { ascending: true });
 
-  // Mengurutkan array berdasarkan angka 'urutan'
-  return data.sort((a, b) => a.urutan - b.urutan);
+  throwIfError(error);
+  return (data ?? []).map(mapClass);
 };
 
 export const getGuru = async () => {
-  const snapshot = await getDocs(userCollection("guru"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Guru);
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from(TABLES.teachers)
+    .select("id,nama")
+    .eq("user_id", userId)
+    .order("nama", { ascending: true });
+
+  throwIfError(error);
+  return (data ?? []).map(mapTeacher);
 };
 
-// --- Tipe Santri ---
+// --- Tipe Siswa ---
 export const getSantriTypes = async () => {
-  const snapshot = await getDocs(userCollection("santriTypes"));
-  return snapshot.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() }) as SantriType)
-    .sort((a, b) => a.nama.localeCompare(b.nama));
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from(TABLES.studentTypes)
+    .select("id,nama,created_at")
+    .eq("user_id", userId)
+    .order("nama", { ascending: true });
+
+  throwIfError(error);
+  return (data ?? []).map(mapStudentType);
 };
 
-// --- Santri ---
+// --- Siswa ---
 export const getSantri = async () => {
-  const snapshot = await getDocs(userCollection("santri"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Santri);
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from(TABLES.students)
+    .select(
+      "id,nama,jilid_id,guru_id,tipe_id,tanggal_lahir,is_active,created_at",
+    )
+    .eq("user_id", userId);
+
+  throwIfError(error);
+  return (data ?? []).map(mapStudent);
 };
 
 export interface SantriBulkItem {
@@ -46,9 +98,9 @@ export interface SantriBulkItem {
   guruId: string;
   tipeId?: string;
   tanggalLahir?: string;
+  isActive?: boolean;
 }
 
-// Fitur 1: Bulk/Single Input Santri
 export const addSantriBulk = async (
   namaInput: string,
   jilidId: string,
@@ -56,66 +108,95 @@ export const addSantriBulk = async (
   tipeId?: string,
   tanggalLahir?: string,
 ) => {
-  const names = namaInput
+  const userId = await getCurrentUserId();
+  const createdAt = Date.now();
+  const rows = namaInput
     .split(",")
     .map((n) => n.trim())
-    .filter((n) => n !== "");
-  const promises = names.map((nama) => {
-    return addDoc(userCollection("santri"), {
+    .filter((n) => n !== "")
+    .map((nama) => ({
+      user_id: userId,
       nama,
-      jilidId,
-      guruId,
-      ...(tipeId ? { tipeId } : {}),
-      ...(tanggalLahir ? { tanggalLahir } : {}),
-      isActive: true,
-      createdAt: Date.now(),
-    });
-  });
-  await Promise.all(promises);
+      jilid_id: jilidId,
+      guru_id: guruId,
+      tipe_id: tipeId || null,
+      tanggal_lahir: tanggalLahir || null,
+      is_active: true,
+      created_at: createdAt,
+    }));
+
+  if (rows.length === 0) return;
+
+  const { error } = await supabase.from(TABLES.students).insert(rows);
+  throwIfError(error);
 };
 
 export const addSantriItems = async (items: SantriBulkItem[]) => {
-  const timestamp = Date.now();
-  const promises = items.map((item) =>
-    addDoc(userCollection("santri"), {
-      nama: item.nama,
-      jilidId: item.jilidId,
-      guruId: item.guruId,
-      ...(item.tipeId ? { tipeId: item.tipeId } : {}),
-      ...(item.tanggalLahir ? { tanggalLahir: item.tanggalLahir } : {}),
-      isActive: true,
-      createdAt: timestamp,
-    }),
-  );
+  const userId = await getCurrentUserId();
+  const createdAt = Date.now();
+  const rows = items.map((item) => ({
+    user_id: userId,
+    nama: item.nama,
+    jilid_id: item.jilidId,
+    guru_id: item.guruId,
+    tipe_id: item.tipeId || null,
+    tanggal_lahir: item.tanggalLahir || null,
+    is_active: item.isActive ?? true,
+    created_at: createdAt,
+  }));
 
-  await Promise.all(promises);
+  if (rows.length === 0) return;
+
+  const { error } = await supabase.from(TABLES.students).insert(rows);
+  throwIfError(error);
 };
 
-// Fitur 2 & 3: Edit dan Delete Santri
 export const updateSantri = async (id: string, data: Partial<Santri>) => {
-  const payload: Record<string, unknown> = { ...data };
+  const userId = await getCurrentUserId();
+  const payload: Record<string, unknown> = {};
 
-  for (const field of ["tipeId", "tanggalLahir"]) {
-    if (field in payload && !payload[field]) {
-      payload[field] = deleteField();
-    }
+  if ("nama" in data) payload.nama = data.nama;
+  if ("jilidId" in data) payload.jilid_id = data.jilidId;
+  if ("guruId" in data) payload.guru_id = data.guruId;
+  if ("tipeId" in data) payload.tipe_id = data.tipeId || null;
+  if ("tanggalLahir" in data) {
+    payload.tanggal_lahir = data.tanggalLahir || null;
   }
+  if ("isActive" in data) payload.is_active = data.isActive;
 
-  await updateDoc(userDoc("santri", id), payload);
+  const { error } = await supabase
+    .from(TABLES.students)
+    .update(payload)
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
 export const deleteSantri = async (id: string) => {
-  await deleteDoc(userDoc("santri", id));
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.students)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
-// --- CRUD Jilid ---
+// --- CRUD Kelas ---
 export const addJilid = async (nama: string) => {
+  const userId = await getCurrentUserId();
   const currentList = await getJilid();
-  // Cari angka urutan terbesar saat ini
   const maxUrutan =
     currentList.length > 0 ? Math.max(...currentList.map((j) => j.urutan)) : 0;
+  const { error } = await supabase.from(TABLES.classes).insert({
+    user_id: userId,
+    nama,
+    urutan: maxUrutan + 1,
+  });
 
-  await addDoc(userCollection("jilid"), { nama, urutan: maxUrutan + 1 });
+  throwIfError(error);
 };
 
 export const swapUrutanJilid = async (
@@ -124,43 +205,107 @@ export const swapUrutanJilid = async (
   id2: string,
   urutan2: number,
 ) => {
-  await updateDoc(userDoc("jilid", id1), { urutan: urutan2 });
-  await updateDoc(userDoc("jilid", id2), { urutan: urutan1 });
+  const userId = await getCurrentUserId();
+  const first = await supabase
+    .from(TABLES.classes)
+    .update({ urutan: urutan2 })
+    .eq("id", id1)
+    .eq("user_id", userId);
+  const second = await supabase
+    .from(TABLES.classes)
+    .update({ urutan: urutan1 })
+    .eq("id", id2)
+    .eq("user_id", userId);
+
+  throwIfError(first.error);
+  throwIfError(second.error);
 };
 
 export const updateJilid = async (id: string, nama: string) => {
-  await updateDoc(userDoc("jilid", id), { nama });
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.classes)
+    .update({ nama })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
 export const deleteJilid = async (id: string) => {
-  await deleteDoc(userDoc("jilid", id));
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.classes)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
 // --- CRUD Guru ---
 export const addGuru = async (nama: string) => {
-  await addDoc(userCollection("guru"), { nama });
+  const userId = await getCurrentUserId();
+  const { error } = await supabase.from(TABLES.teachers).insert({
+    user_id: userId,
+    nama,
+  });
+
+  throwIfError(error);
 };
 
 export const updateGuru = async (id: string, nama: string) => {
-  await updateDoc(userDoc("guru", id), { nama });
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.teachers)
+    .update({ nama })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
 export const deleteGuru = async (id: string) => {
-  await deleteDoc(userDoc("guru", id));
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.teachers)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
-// --- CRUD Tipe Santri ---
+// --- CRUD Tipe Siswa ---
 export const addSantriType = async (nama: string) => {
-  await addDoc(userCollection("santriTypes"), {
+  const userId = await getCurrentUserId();
+  const { error } = await supabase.from(TABLES.studentTypes).insert({
+    user_id: userId,
     nama,
-    createdAt: Date.now(),
+    created_at: Date.now(),
   });
+
+  throwIfError(error);
 };
 
 export const updateSantriType = async (id: string, nama: string) => {
-  await updateDoc(userDoc("santriTypes", id), { nama });
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.studentTypes)
+    .update({ nama })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };
 
 export const deleteSantriType = async (id: string) => {
-  await deleteDoc(userDoc("santriTypes", id));
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from(TABLES.studentTypes)
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  throwIfError(error);
 };

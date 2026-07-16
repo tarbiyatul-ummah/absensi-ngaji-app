@@ -3,6 +3,12 @@ import { computed, ref, watch } from "vue";
 import type { Santri, Jilid, Guru, SantriType } from "../../types";
 import PaginationControls from "../common/PaginationControls.vue";
 import { terms } from "../../config/organization";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const props = defineProps<{
   santriList: Santri[];
@@ -39,6 +45,7 @@ const editForm = ref({
 const searchQuery = ref("");
 const statusFilter = ref<"aktif" | "nonaktif">("aktif");
 const currentPage = ref(1);
+const selectedDetailSantri = ref<Santri | null>(null);
 const itemsPerPage = 10;
 
 const getGuruName = (guruId: string) =>
@@ -66,8 +73,10 @@ const formatTanggalLahir = (tanggalLahir?: string) => {
   });
 };
 
+const isSantriActive = (santri: Santri) => santri.isActive !== false;
+
 const activeSantriCount = computed(
-  () => props.santriList.filter((santri) => santri.isActive !== false).length,
+  () => props.santriList.filter((santri) => isSantriActive(santri)).length,
 );
 
 const inactiveSantriCount = computed(
@@ -79,7 +88,7 @@ const filteredSantriList = computed(() => {
   const shouldShowActive = statusFilter.value === "aktif";
 
   return props.santriList.filter((santri) => {
-    const isActive = santri.isActive !== false;
+    const isActive = isSantriActive(santri);
     const matchesStatus = shouldShowActive ? isActive : !isActive;
     const searchableText = [
       santri.nama,
@@ -116,6 +125,7 @@ const visibleEnd = computed(() =>
 watch([searchQuery, statusFilter], () => {
   currentPage.value = 1;
   editingId.value = null;
+  selectedDetailSantri.value = null;
 });
 
 watch(totalPages, (pageCount) => {
@@ -139,6 +149,14 @@ const startEdit = (santri: Santri) => {
 // Membatalkan edit
 const cancelEdit = () => {
   editingId.value = null;
+};
+
+const openDetail = (santri: Santri) => {
+  selectedDetailSantri.value = santri;
+};
+
+const closeDetail = (isOpen: boolean) => {
+  if (!isOpen) selectedDetailSantri.value = null;
 };
 
 // Mengirim data edit ke Parent
@@ -256,11 +274,7 @@ const saveEdit = (id: string) => {
             class="w-full rounded-md border border-[#C9CCCF] bg-white p-2 text-[14px] focus:border-[#008060] outline-none"
           >
             <option value="">Tanpa tipe</option>
-            <option
-              v-for="tipe in tipeList"
-              :key="tipe.id"
-              :value="tipe.id"
-            >
+            <option v-for="tipe in tipeList" :key="tipe.id" :value="tipe.id">
               {{ tipe.nama }}
             </option>
           </select>
@@ -287,30 +301,22 @@ const saveEdit = (id: string) => {
 
         <!-- === TAMPILAN MODE NORMAL === -->
         <div v-else>
-          <div class="flex justify-between items-center mb-3">
+          <button
+            type="button"
+            class="flex w-full justify-between items-center mb-3 text-left"
+            @click="openDetail(santri)"
+          >
             <div class="flex flex-col gap-1">
-              <div class="flex items-center gap-2">
-                <span
-                  class="text-[14px] font-medium text-[#202223]"
-                  :class="{ 'line-through text-[#8C9196]': !santri.isActive }"
-                >
-                  {{ santri.nama }}
-                </span>
-                <span
-                  v-if="!santri.isActive"
-                  class="bg-[#FFEA8A] text-[#8A6116] text-[11px] px-1.5 py-0.5 rounded"
-                  >Tidak Aktif</span
-                >
-              </div>
+              <span
+                class="text-[14px] font-medium text-[#202223]"
+                :class="{ 'line-through text-[#8C9196]': !isSantriActive(santri) }"
+              >
+                {{ santri.nama }}
+              </span>
               <span class="text-[12px] text-[#6D7175]">
-                {{ terms.mentorSingularTitle }}:
                 {{ getGuruName(santri.guruId) }}
-              </span>
-              <span class="text-[12px] text-[#6D7175]">
-                Tipe: {{ getTipeName(santri.tipeId) }}
-              </span>
-              <span class="text-[12px] text-[#6D7175]">
-                Tanggal lahir: {{ formatTanggalLahir(santri.tanggalLahir) }}
+                &bull;
+                {{ getTipeName(santri.tipeId) }}
               </span>
             </div>
             <span
@@ -318,27 +324,28 @@ const saveEdit = (id: string) => {
             >
               {{ getJilidName(santri.jilidId) }}
             </span>
-          </div>
+          </button>
 
           <div
             class="flex gap-2 items-center mt-3 pt-3 border-t border-dashed border-[#E1E3E5] flex-wrap"
+            @click.stop
           >
             <button
-              @click="emit('toggleStatus', santri)"
+              @click.stop="emit('toggleStatus', santri)"
               class="px-3 py-1.5 rounded-md text-[13px] font-medium border border-[#C9CCCF] bg-white text-[#202223] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] transition-colors"
             >
-              {{ santri.isActive ? "Nonaktifkan" : "Aktifkan" }}
+              {{ isSantriActive(santri) ? "Nonaktifkan" : "Aktifkan" }}
             </button>
 
             <button
-              @click="startEdit(santri)"
+              @click.stop="startEdit(santri)"
               class="px-3 py-1.5 rounded-md text-[13px] font-medium border border-[#C9CCCF] bg-white text-[#2C6ECB] shadow-[0_1px_0_rgba(0,0,0,0.05)] hover:bg-[#F9FAFB] transition-colors"
             >
               Edit Data
             </button>
 
             <button
-              @click="emit('deleteSantri', santri.id)"
+              @click.stop="emit('deleteSantri', santri.id)"
               class="px-3 py-1.5 rounded-md text-[13px] font-medium text-[#D82C0D] hover:bg-[#FFF4F4] transition-colors ml-auto"
             >
               Hapus
@@ -364,5 +371,63 @@ const saveEdit = (id: string) => {
       :visibleEnd="visibleEnd"
       :itemLabel="terms.studentSingularLower"
     />
+
+    <Dialog :open="!!selectedDetailSantri" @update:open="closeDetail">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Detail {{ terms.studentSingularTitle }}</DialogTitle>
+        </DialogHeader>
+
+        <div v-if="selectedDetailSantri" class="space-y-3 text-[14px]">
+          <div>
+            <p class="text-[12px] text-[#6D7175]">Nama</p>
+            <p class="font-medium text-[#202223]">
+              {{ selectedDetailSantri.nama }}
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <p class="text-[12px] text-[#6D7175]">
+                {{ terms.mentorSingularTitle }}
+              </p>
+              <p class="font-medium text-[#202223]">
+                {{ getGuruName(selectedDetailSantri.guruId) }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[12px] text-[#6D7175]">
+                {{ terms.levelSingularTitle }}
+              </p>
+              <p class="font-medium text-[#202223]">
+                {{ getJilidName(selectedDetailSantri.jilidId) }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[12px] text-[#6D7175]">Tipe siswa</p>
+              <p class="font-medium text-[#202223]">
+                {{ getTipeName(selectedDetailSantri.tipeId) }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[12px] text-[#6D7175]">Tanggal lahir</p>
+              <p class="font-medium text-[#202223]">
+                {{ formatTanggalLahir(selectedDetailSantri.tanggalLahir) }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[12px] text-[#6D7175]">Status</p>
+              <p class="font-medium text-[#202223]">
+                {{ isSantriActive(selectedDetailSantri) ? "Aktif" : "Non Aktif" }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -4,9 +4,9 @@ import { getSantri, getJilid } from "../services/masterService";
 import {
   saveAttendance,
   listenAttendanceByDate,
+  type Unsubscribe,
 } from "../services/attendanceService";
 import type { Santri, Jilid, Attendance, AttendanceStatus } from "../types";
-import type { Unsubscribe } from "firebase/firestore";
 // import { useRoute } from "vue-router"; // Dihapus jika tidak digunakan
 
 // Import komponen-komponen kecil
@@ -15,7 +15,6 @@ import AbsensiList from "../components/absensi/AbsensiList.vue";
 import DailyRecapButton from "../components/absensi/DailyRecapButton.vue";
 import Toast from "../components/master/Toast.vue";
 import { Input } from "@/components/ui/input";
-import { terms } from "../config/organization";
 
 // 🛠️ HELPER: Dapatkan tanggal sesuai Local Timezone Device (Format: YYYY-MM-DD)
 const getLocalDateString = () => {
@@ -83,7 +82,7 @@ const resetAttendanceListener = () => {
 };
 
 // Listener Firebase berdasarkan tanggal
-const listenCurrentDateAttendance = () => {
+const listenCurrentDateAttendance = async () => {
   resetAttendanceListener();
 
   if (currentDate.value > todayDate.value) {
@@ -92,7 +91,7 @@ const listenCurrentDateAttendance = () => {
     return;
   }
 
-  unsubscribeAttendance = listenAttendanceByDate(
+  unsubscribeAttendance = await listenAttendanceByDate(
     currentDate.value,
     (data) => {
       attendanceData.value = data;

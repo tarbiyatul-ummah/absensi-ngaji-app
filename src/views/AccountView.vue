@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { signOut } from "firebase/auth";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import {
   AccountSetting02Icon,
@@ -16,21 +15,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { auth } from "../services/firebase";
 import {
   dashboardMenuItems,
   organizationConfig,
   terms,
 } from "../config/organization";
+import { getCurrentUser, supabase } from "../services/supabase";
 
 const router = useRouter();
 const activeFeatureItems = dashboardMenuItems.filter((item) => item.enabled);
+const currentUserEmail = ref("");
 const accountEmail = computed(
-  () => auth.currentUser?.email ?? `Admin ${organizationConfig.typeLabel}`,
+  () => currentUserEmail.value || `Admin ${organizationConfig.typeLabel}`,
 );
 
+onMounted(async () => {
+  const user = await getCurrentUser();
+  currentUserEmail.value = user?.email ?? "";
+});
+
 const handleLogout = async () => {
-  await signOut(auth);
+  await supabase.auth.signOut();
   router.push("/login");
 };
 </script>
