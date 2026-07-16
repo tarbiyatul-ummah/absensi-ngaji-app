@@ -202,7 +202,7 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
       <div>
         <h1 class="app-title">Absensi Harian</h1>
         <p class="app-subtitle">
-          {{ terms.studentSingularTitle }} - {{ formattedDate }}
+          {{ formattedDate }}
         </p>
       </div>
       <!-- Cukup gunakan v-model, vue otomatis urus event @change -->
@@ -251,9 +251,7 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
             {{ attendanceSummary.permission }}
           </p>
         </div>
-        <div
-          class="rounded-lg border bg-muted p-2.5 sm:p-3"
-        >
+        <div class="rounded-lg border bg-muted p-2.5 sm:p-3">
           <p class="text-xs text-muted-foreground">Belum diabsen</p>
           <p class="text-xl font-bold text-foreground">
             {{ attendanceSummary.unmarked }}

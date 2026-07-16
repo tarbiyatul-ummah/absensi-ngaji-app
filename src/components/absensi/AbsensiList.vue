@@ -62,7 +62,6 @@ const getButtonClass = (santriId: string, status: AttendanceStatus) => {
             santri.nama
           }}</span>
           <span class="text-xs text-muted-foreground">
-            {{ terms.levelSingularTitle }}:
             {{ jilidList.find((j) => j.id === santri.jilidId)?.nama || "N/A" }}
           </span>
         </div>
