@@ -85,10 +85,7 @@ const deletePayload = ref<{
   id: string;
 } | null>(null);
 
-const openDeleteModal = (
-  type: "jilid" | "guru" | "santriType",
-  id: string,
-) => {
+const openDeleteModal = (type: "jilid" | "guru" | "santriType", id: string) => {
   deletePayload.value = { type, id };
   isDeleteModalOpen.value = true;
 };
@@ -177,7 +174,7 @@ const executeEdit = async (namaBaru: string) => {
       />
 
       <MasterDataCard
-        title="Data Tipe Santri"
+        :title="`Data Tipe ${terms.studentSingularTitle}`"
         placeholder="Contoh: Reguler, Akselerasi, Tahfidz"
         :items="santriTypeList"
         @add="handleAddSantriType"
@@ -194,7 +191,7 @@ const executeEdit = async (namaBaru: string) => {
           ? `Edit ${terms.levelSingularTitle}`
           : editPayload?.type === 'guru'
             ? `Edit ${terms.mentorSingularTitle}`
-            : 'Edit Tipe Santri'
+            : `Edit Tipe ${terms.studentSingularTitle}`
       "
       label="Nama Baru"
       :initialValue="editPayload?.namaLama || ''"
@@ -210,7 +207,7 @@ const executeEdit = async (namaBaru: string) => {
           ? `Hapus ${terms.levelSingularTitle}`
           : deletePayload?.type === 'guru'
             ? `Hapus ${terms.mentorSingularTitle}`
-            : 'Hapus Tipe Santri'
+            : `Hapus Tipe ${terms.studentSingularTitle}`
       "
       message="Apakah Anda yakin ingin menghapus data ini secara permanen?"
       confirmText="Hapus"
