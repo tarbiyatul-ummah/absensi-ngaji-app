@@ -25,6 +25,8 @@ import {
 
 const showSavedMessage = ref(false);
 const uploadError = ref("");
+const saveError = ref("");
+const isSaving = ref(false);
 const editableConfig = reactive({
   name: organizationConfig.name,
   typeLabel: organizationConfig.typeLabel,
@@ -91,39 +93,63 @@ const resetFavicon = () => {
   editableConfig.faviconUrl = DEFAULT_FAVICON_URL;
 };
 
-const handleSaveSettings = () => {
+const getSettingsSaveError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : "Error tidak diketahui.";
+
+  return `Pengaturan gagal disimpan ke akun. Pastikan organization_settings_schema.sql atau schema.sql terbaru sudah dijalankan di Supabase. Detail: ${message}`;
+};
+
+const handleSaveSettings = async () => {
   const studentSingularTitle = normalizeTitle(
     editableConfig.studentSingularTitle,
   );
   const mentorSingularTitle = normalizeTitle(editableConfig.mentorSingularTitle);
   const levelSingularTitle = normalizeTitle(editableConfig.levelSingularTitle);
 
-  saveOrganizationConfig({
-    name: normalizeTitle(editableConfig.name),
-    typeLabel: normalizeTitle(editableConfig.typeLabel),
-    appTitle:
-      normalizeTitle(editableConfig.appTitle) || organizationConfig.appTitle,
-    faviconUrl: editableConfig.faviconUrl || DEFAULT_FAVICON_URL,
-    terms: {
-      studentSingularTitle,
-      studentSingularLower: normalizeLower(studentSingularTitle),
-      mentorSingularTitle,
-      mentorSingularLower: normalizeLower(mentorSingularTitle),
-      levelSingularTitle,
-      levelSingularLower: normalizeLower(levelSingularTitle),
-      paymentLabel: normalizeTitle(editableConfig.paymentLabel),
-    },
-  });
+  saveError.value = "";
+  isSaving.value = true;
 
-  syncEditableConfig();
-  showSavedState();
+  try {
+    await saveOrganizationConfig({
+      name: normalizeTitle(editableConfig.name),
+      typeLabel: normalizeTitle(editableConfig.typeLabel),
+      appTitle:
+        normalizeTitle(editableConfig.appTitle) || organizationConfig.appTitle,
+      faviconUrl: editableConfig.faviconUrl || DEFAULT_FAVICON_URL,
+      terms: {
+        studentSingularTitle,
+        studentSingularLower: normalizeLower(studentSingularTitle),
+        mentorSingularTitle,
+        mentorSingularLower: normalizeLower(mentorSingularTitle),
+        levelSingularTitle,
+        levelSingularLower: normalizeLower(levelSingularTitle),
+        paymentLabel: normalizeTitle(editableConfig.paymentLabel),
+      },
+    });
+
+    syncEditableConfig();
+    showSavedState();
+  } catch (error) {
+    saveError.value = getSettingsSaveError(error);
+  } finally {
+    isSaving.value = false;
+  }
 };
 
-const handleResetSettings = () => {
-  resetOrganizationConfig();
-  syncEditableConfig();
-  uploadError.value = "";
-  showSavedState();
+const handleResetSettings = async () => {
+  saveError.value = "";
+  isSaving.value = true;
+
+  try {
+    await resetOrganizationConfig();
+    syncEditableConfig();
+    uploadError.value = "";
+    showSavedState();
+  } catch (error) {
+    saveError.value = getSettingsSaveError(error);
+  } finally {
+    isSaving.value = false;
+  }
 };
 </script>
 
@@ -157,6 +183,13 @@ const handleResetSettings = () => {
           class="border-emerald-200 bg-emerald-50 text-emerald-700"
         >
           Pengaturan berhasil disimpan.
+        </Alert>
+        <Alert
+          v-if="saveError"
+          variant="destructive"
+          class="block leading-relaxed break-words"
+        >
+          {{ saveError }}
         </Alert>
         <Alert v-if="uploadError" variant="destructive">
           {{ uploadError }}
@@ -202,7 +235,7 @@ const handleResetSettings = () => {
               <div>
                 <h2 class="text-sm font-semibold text-foreground">Tampilan Web</h2>
                 <p class="text-xs text-muted-foreground">
-                  Mengubah title tab browser dan favicon aplikasi di perangkat ini.
+                  Mengubah title tab browser dan favicon aplikasi untuk akun ini.
                 </p>
               </div>
               <div>
@@ -301,12 +334,13 @@ const handleResetSettings = () => {
               type="button"
               variant="outline"
               class="w-full sm:w-auto"
+              :disabled="isSaving"
               @click="handleResetSettings"
             >
               Kembalikan Default
             </Button>
-            <Button type="submit" class="w-full sm:w-auto">
-              Simpan Pengaturan
+            <Button type="submit" class="w-full sm:w-auto" :disabled="isSaving">
+              {{ isSaving ? "Menyimpan..." : "Simpan Pengaturan" }}
             </Button>
           </CardFooter>
         </Card>

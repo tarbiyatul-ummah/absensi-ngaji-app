@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { loadOrganizationConfigFromCloud } from "../config/organization";
 import { getCurrentUser } from "../services/supabase";
+
+let organizationConfigLoaded = false;
 
 const router = createRouter({
   history: createWebHistory(),
@@ -76,6 +79,15 @@ router.beforeEach(async (to) => {
   const user = await getCurrentUser();
 
   if (requiresAuth && !user) return "/login";
+  if (user && !organizationConfigLoaded) {
+    try {
+      await loadOrganizationConfigFromCloud();
+    } catch {
+      // Tetap izinkan masuk; halaman pengaturan akan menampilkan error saat disimpan.
+    } finally {
+      organizationConfigLoaded = true;
+    }
+  }
   if (to.path === "/login" && user) return "/";
 });
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { loadOrganizationConfigFromCloud } from "../config/organization";
 import { supabase } from "../services/supabase";
 import {
   clearLoginRateLimit,
@@ -63,6 +64,7 @@ const handleLogin = async () => {
     }
 
     clearLoginRateLimit();
+    await loadOrganizationConfigFromCloud().catch(() => undefined);
     router.push("/"); // Redirect ke home setelah login sukses
   } catch {
     recordFailedLoginAttempt();

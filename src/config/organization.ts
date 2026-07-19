@@ -8,6 +8,7 @@ import {
   DatabaseIcon,
   Wallet01Icon,
 } from "@hugeicons/core-free-icons";
+import { getCurrentUserId, supabase } from "../services/supabase";
 
 export interface OrganizationTerms {
   studentSingularLower: string;
@@ -28,6 +29,7 @@ export interface OrganizationConfig {
 }
 
 const STORAGE_KEY = "absensi-ngaji:organization-config";
+const SETTINGS_TABLE = "organization_settings";
 export const DEFAULT_FAVICON_URL = "/app-favicon-placeholder.svg";
 
 export const defaultOrganizationConfig: OrganizationConfig = {
@@ -49,6 +51,41 @@ export const defaultOrganizationConfig: OrganizationConfig = {
 const cloneConfig = (config: OrganizationConfig): OrganizationConfig =>
   JSON.parse(JSON.stringify(config)) as OrganizationConfig;
 
+const normalizeConfig = (
+  config: Partial<OrganizationConfig> | null | undefined,
+): OrganizationConfig => {
+  const parsedTerms = (config?.terms ?? {}) as Partial<OrganizationTerms>;
+
+  return {
+    name: config?.name ?? defaultOrganizationConfig.name,
+    typeLabel: config?.typeLabel ?? defaultOrganizationConfig.typeLabel,
+    appTitle: config?.appTitle ?? defaultOrganizationConfig.appTitle,
+    faviconUrl: config?.faviconUrl ?? defaultOrganizationConfig.faviconUrl,
+    terms: {
+      studentSingularLower:
+        parsedTerms.studentSingularLower ??
+        defaultOrganizationConfig.terms.studentSingularLower,
+      studentSingularTitle:
+        parsedTerms.studentSingularTitle ??
+        defaultOrganizationConfig.terms.studentSingularTitle,
+      mentorSingularLower:
+        parsedTerms.mentorSingularLower ??
+        defaultOrganizationConfig.terms.mentorSingularLower,
+      mentorSingularTitle:
+        parsedTerms.mentorSingularTitle ??
+        defaultOrganizationConfig.terms.mentorSingularTitle,
+      levelSingularLower:
+        parsedTerms.levelSingularLower ??
+        defaultOrganizationConfig.terms.levelSingularLower,
+      levelSingularTitle:
+        parsedTerms.levelSingularTitle ??
+        defaultOrganizationConfig.terms.levelSingularTitle,
+      paymentLabel:
+        parsedTerms.paymentLabel ?? defaultOrganizationConfig.terms.paymentLabel,
+    },
+  };
+};
+
 const readStoredConfig = () => {
   if (typeof window === "undefined") return cloneConfig(defaultOrganizationConfig);
 
@@ -57,36 +94,7 @@ const readStoredConfig = () => {
 
   try {
     const parsed = JSON.parse(stored) as Partial<OrganizationConfig>;
-    const parsedTerms = (parsed.terms ?? {}) as Partial<OrganizationTerms>;
-    return {
-      name: parsed.name ?? defaultOrganizationConfig.name,
-      typeLabel: parsed.typeLabel ?? defaultOrganizationConfig.typeLabel,
-      appTitle: parsed.appTitle ?? defaultOrganizationConfig.appTitle,
-      faviconUrl: parsed.faviconUrl ?? defaultOrganizationConfig.faviconUrl,
-      terms: {
-        studentSingularLower:
-          parsedTerms.studentSingularLower ??
-          defaultOrganizationConfig.terms.studentSingularLower,
-        studentSingularTitle:
-          parsedTerms.studentSingularTitle ??
-          defaultOrganizationConfig.terms.studentSingularTitle,
-        mentorSingularLower:
-          parsedTerms.mentorSingularLower ??
-          defaultOrganizationConfig.terms.mentorSingularLower,
-        mentorSingularTitle:
-          parsedTerms.mentorSingularTitle ??
-          defaultOrganizationConfig.terms.mentorSingularTitle,
-        levelSingularLower:
-          parsedTerms.levelSingularLower ??
-          defaultOrganizationConfig.terms.levelSingularLower,
-        levelSingularTitle:
-          parsedTerms.levelSingularTitle ??
-          defaultOrganizationConfig.terms.levelSingularTitle,
-        paymentLabel:
-          parsedTerms.paymentLabel ??
-          defaultOrganizationConfig.terms.paymentLabel,
-      },
-    };
+    return normalizeConfig(parsed);
   } catch {
     return cloneConfig(defaultOrganizationConfig);
   }
@@ -98,21 +106,68 @@ export const organizationConfig = reactive<OrganizationConfig>(
 
 export const terms = organizationConfig.terms;
 
-export const saveOrganizationConfig = (nextConfig: OrganizationConfig) => {
+const writeStoredConfig = (config: OrganizationConfig) => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+};
+
+const applyOrganizationConfig = (nextConfig: OrganizationConfig) => {
   organizationConfig.name = nextConfig.name;
   organizationConfig.typeLabel = nextConfig.typeLabel;
   organizationConfig.appTitle = nextConfig.appTitle;
   organizationConfig.faviconUrl = nextConfig.faviconUrl;
   Object.assign(organizationConfig.terms, nextConfig.terms);
+  writeStoredConfig(nextConfig);
+  applyOrganizationMetadata();
+};
 
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(organizationConfig));
-    applyOrganizationMetadata();
+const saveOrganizationConfigToCloud = async (nextConfig: OrganizationConfig) => {
+  const userId = await getCurrentUserId();
+  const { error } = await supabase.from(SETTINGS_TABLE).upsert(
+    {
+      user_id: userId,
+      config: nextConfig,
+      updated_at: Date.now(),
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (error) {
+    throw new Error(error.message);
   }
 };
 
+export const loadOrganizationConfigFromCloud = async () => {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from(SETTINGS_TABLE)
+    .select("config")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (data?.config) {
+    applyOrganizationConfig(
+      normalizeConfig(data.config as Partial<OrganizationConfig>),
+    );
+    return;
+  }
+
+  await saveOrganizationConfigToCloud(normalizeConfig(organizationConfig));
+};
+
+export const saveOrganizationConfig = async (nextConfig: OrganizationConfig) => {
+  const normalizedConfig = normalizeConfig(nextConfig);
+  await saveOrganizationConfigToCloud(normalizedConfig);
+  applyOrganizationConfig(normalizedConfig);
+};
+
 export const resetOrganizationConfig = () => {
-  saveOrganizationConfig(cloneConfig(defaultOrganizationConfig));
+  return saveOrganizationConfig(cloneConfig(defaultOrganizationConfig));
 };
 
 export const applyOrganizationMetadata = () => {
