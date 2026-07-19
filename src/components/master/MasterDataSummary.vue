@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { computed, ref } from "vue";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { terms } from "../../config/organization";
 
 interface SummaryItem {
@@ -6,106 +14,98 @@ interface SummaryItem {
   aktif: number;
 }
 
-defineProps<{
+type BreakdownTab = "jilid" | "asatidz" | "tipe";
+
+const props = defineProps<{
   totalActive: number;
-  totalInactive: number;
   jilidStats: SummaryItem[];
   guruStats: SummaryItem[];
   tipeStats: SummaryItem[];
 }>();
+
+const activeTab = ref<BreakdownTab>("jilid");
+
+const tabs = computed(() => [
+  {
+    key: "jilid" as const,
+    label: `Per ${terms.levelSingularTitle}`,
+    items: props.jilidStats,
+    empty: `Belum ada data ${terms.levelSingularLower}.`,
+  },
+  {
+    key: "asatidz" as const,
+    label: "Per Asatidz",
+    items: props.guruStats,
+    empty: `Belum ada data ${terms.mentorSingularLower}.`,
+  },
+  {
+    key: "tipe" as const,
+    label: "Per Tipe",
+    items: props.tipeStats,
+    empty: "Belum ada data tipe.",
+  },
+]);
+
+const selectedTab = computed(
+  () => tabs.value.find((tab) => tab.key === activeTab.value) ?? tabs.value[0],
+);
 </script>
 
 <template>
-  <section
-    class="overflow-hidden rounded-lg border border-[#E1E3E5] bg-white shadow-[0_1px_3px_rgba(63,63,68,0.15),0_0_0_1px_rgba(63,63,68,0.05)]"
-  >
-    <div class="grid grid-cols-2 border-b border-[#F1F2F3]">
-      <div class="border-r border-[#F1F2F3] px-4 py-3">
-        <p class="text-[12px] text-[#6D7175]">
+  <section class="grid grid-cols-[minmax(112px,0.8fr)_minmax(0,1.2fr)] gap-3">
+    <Card class="gap-0 py-0">
+      <CardHeader class="px-4 pt-4 pb-2">
+        <CardTitle class="text-sm font-medium text-muted-foreground">
           {{ terms.studentSingularTitle }} Aktif
-        </p>
-        <p class="text-[22px] font-bold leading-tight text-[#008060]">
+        </CardTitle>
+      </CardHeader>
+      <CardContent class="px-4 pb-4">
+        <p class="text-3xl font-semibold leading-none tracking-normal text-foreground">
           {{ totalActive }}
         </p>
-      </div>
-      <div class="px-4 py-3">
-        <p class="text-[12px] text-[#6D7175]">Non Aktif</p>
-        <p class="text-[22px] font-bold leading-tight text-[#454749]">
-          {{ totalInactive }}
-        </p>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
 
-    <div class="grid grid-cols-1 md:grid-cols-3">
-      <div class="p-4 md:border-r md:border-[#F1F2F3]">
-        <div class="mb-3 flex items-center justify-between gap-2">
-          <h2 class="text-[14px] font-semibold text-[#202223]">
-            Per {{ terms.levelSingularTitle }}
-          </h2>
-          <span class="text-[12px] text-[#6D7175]">
-            {{ jilidStats.length }} {{ terms.levelSingularLower }}
-          </span>
+    <Card class="min-w-0 gap-0 py-0">
+      <CardHeader class="px-4 pt-4 pb-2">
+        <div class="inline-flex w-fit max-w-full justify-self-start rounded-md bg-muted p-1">
+          <Button
+            v-for="tab in tabs"
+            :key="tab.key"
+            type="button"
+            variant="ghost"
+            size="xs"
+            :class="
+              activeTab === tab.key
+                ? 'bg-background text-foreground shadow-xs hover:bg-background'
+                : 'text-muted-foreground hover:bg-transparent hover:text-foreground'
+            "
+            @click="activeTab = tab.key"
+          >
+            {{ tab.label }}
+          </Button>
         </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] leading-6">
+      </CardHeader>
+
+      <CardContent class="px-4 pb-4">
+        <div class="flex max-h-28 flex-wrap gap-x-4 gap-y-1.5 overflow-y-auto pr-1 text-sm leading-6">
           <span
-            v-for="item in jilidStats"
+            v-for="item in selectedTab.items"
             :key="item.nama"
-            class="min-w-0 break-words text-[#202223]"
+            class="min-w-0 break-words text-foreground"
           >
             <span class="font-medium">{{ item.nama }}</span>:
-            <span class="font-semibold text-[#008060]">{{ item.aktif }}</span>
+            <span class="font-semibold">{{ item.aktif }}</span>
           </span>
-          <span v-if="jilidStats.length === 0" class="text-[#6D7175]">
-            Belum ada data {{ terms.levelSingularLower }}.
-          </span>
-        </div>
-      </div>
 
-      <div class="border-t border-[#F1F2F3] p-4 md:border-t-0 md:border-r">
-        <div class="mb-3 flex items-center justify-between gap-2">
-          <h2 class="text-[14px] font-semibold text-[#202223]">
-            Per {{ terms.mentorSingularTitle }}
-          </h2>
-          <span class="text-[12px] text-[#6D7175]">
-            {{ guruStats.length }} {{ terms.mentorSingularLower }}
-          </span>
-        </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] leading-6">
-          <span
-            v-for="item in guruStats"
-            :key="item.nama"
-            class="min-w-0 break-words text-[#202223]"
+          <p
+            v-if="selectedTab.items.length === 0"
+            class="text-sm text-muted-foreground"
           >
-            <span class="font-medium">{{ item.nama }}</span>:
-            <span class="font-semibold text-[#008060]">{{ item.aktif }}</span>
-          </span>
-          <span v-if="guruStats.length === 0" class="text-[#6D7175]">
-            Belum ada data {{ terms.mentorSingularLower }}.
-          </span>
+            {{ selectedTab.empty }}
+          </p>
         </div>
-      </div>
-
-      <div class="border-t border-[#F1F2F3] p-4 md:border-t-0">
-        <div class="mb-3 flex items-center justify-between gap-2">
-          <h2 class="text-[14px] font-semibold text-[#202223]">Per Tipe</h2>
-          <span class="text-[12px] text-[#6D7175]">
-            {{ tipeStats.length }} tipe
-          </span>
-        </div>
-        <div class="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] leading-6">
-          <span
-            v-for="item in tipeStats"
-            :key="item.nama"
-            class="min-w-0 break-words text-[#202223]"
-          >
-            <span class="font-medium">{{ item.nama }}</span>:
-            <span class="font-semibold text-[#008060]">{{ item.aktif }}</span>
-          </span>
-          <span v-if="tipeStats.length === 0" class="text-[#6D7175]">
-            Belum ada data tipe.
-          </span>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   </section>
 </template>

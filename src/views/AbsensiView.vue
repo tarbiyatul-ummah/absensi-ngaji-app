@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import { getSantri, getJilid } from "../services/masterService";
 import {
   saveAttendance,
@@ -14,7 +15,18 @@ import AbsensiFilter from "../components/absensi/AbsensiFilter.vue";
 import AbsensiList from "../components/absensi/AbsensiList.vue";
 import DailyRecapButton from "../components/absensi/DailyRecapButton.vue";
 import Toast from "../components/master/Toast.vue";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { hasSeenAccountSetupOnboarding } from "../services/onboardingService";
+
+const router = useRouter();
 
 // 🛠️ HELPER: Dapatkan tanggal sesuai Local Timezone Device (Format: YYYY-MM-DD)
 const getLocalDateString = () => {
@@ -35,6 +47,7 @@ const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const attendanceData = ref<Attendance[]>([]);
 const savingSantriIds = ref<Set<string>>(new Set());
+const isSetupOnboardingOpen = ref(false);
 let unsubscribeAttendance: Unsubscribe | null = null;
 
 // State Toast
@@ -64,6 +77,7 @@ onMounted(async () => {
     const [santriRes, jilidRes] = await Promise.all([getSantri(), getJilid()]);
     santriList.value = santriRes;
     jilidList.value = jilidRes;
+    isSetupOnboardingOpen.value = !(await hasSeenAccountSetupOnboarding());
   } catch (error) {
     triggerToast("Koneksi bermasalah. Data belum bisa dimuat.", "error");
   }
@@ -193,6 +207,14 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
     savingSantriIds.value.delete(santri.id);
   }
 };
+
+const goToAccountSetup = () => {
+  isSetupOnboardingOpen.value = false;
+  router.push({
+    path: "/akun",
+    query: { onboarding: "setup" },
+  });
+};
 </script>
 
 <template>
@@ -273,5 +295,21 @@ const handleStatusChange = async (santri: Santri, status: AttendanceStatus) => {
       :type="toastType"
       @close="showToast = false"
     />
+
+    <Dialog :open="isSetupOnboardingOpen">
+      <DialogContent class="sm:max-w-md" :show-close-button="false">
+        <DialogHeader>
+          <DialogTitle>Selamat Datang</DialogTitle>
+          <DialogDescription>
+            Silakan lengkapi pengaturan aplikasi di halaman akun sebelum mulai
+            mengelola data.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Button type="button" class="w-full" @click="goToAccountSetup">
+          Buka Pengaturan Akun
+        </Button>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -2,10 +2,15 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
-import { UserMultipleIcon } from "@hugeicons/core-free-icons";
+import { ChevronRight } from "@lucide/vue";
 import { getSantri } from "../services/masterService";
 import { getAttendanceByDateRange } from "../services/attendanceService";
-import type { Santri, Attendance } from "../types";
+import {
+  getAcademicYears,
+  getAcademicYearSelectOptions,
+  getDefaultAcademicYearStart,
+} from "../services/academicYearService";
+import type { AcademicYear, Santri, Attendance } from "../types";
 import {
   dashboardMenuItems,
   organizationConfig,
@@ -17,8 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import StatisticCard from "../components/dashboard/StatisticCard.vue";
 import StatisticListCard from "../components/dashboard/StatisticListCard.vue";
 import DailyAttendanceChart from "../components/dashboard/DailyAttendanceChart.vue";
 import Toast from "../components/master/Toast.vue";
@@ -29,7 +34,6 @@ import {
   formatDateLong,
   getAcademicMonthOptions,
   getAcademicPeriodRange,
-  getAcademicYearOptions,
   getCurrentAcademicMonth,
   getCurrentAcademicYearStart,
   getCurrentSemester,
@@ -39,6 +43,7 @@ import {
 const santriList = ref<Santri[]>([]);
 const attendanceList = ref<Attendance[]>([]);
 const weeklyAttendanceList = ref<Attendance[]>([]);
+const academicYearList = ref<AcademicYear[]>([]);
 const isLoading = ref(true);
 const isAttendanceLoading = ref(false);
 const showToast = ref(false);
@@ -60,12 +65,6 @@ const selectedTrackedWeekdays = ref([1, 2, 3, 4, 5]);
 const activeDashboardMenuItems = dashboardMenuItems.filter(
   (item) => item.enabled,
 );
-const menuToneClasses: Record<string, string> = {
-  green: "bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)]",
-  blue: "bg-[hsl(214_100%_96%)] text-[hsl(221_83%_53%)]",
-  amber: "bg-[hsl(48_96%_89%)] text-[hsl(32_95%_35%)]",
-};
-
 const triggerToast = (message: string) => {
   toastMessage.value = message;
   showToast.value = true;
@@ -116,7 +115,7 @@ const isAttendancePresent = (attendance: Attendance) => {
 };
 
 const academicYearOptions = computed(() =>
-  getAcademicYearOptions(getCurrentAcademicYearStart()),
+  getAcademicYearSelectOptions(academicYearList.value),
 );
 
 const academicMonthOptions = computed(() =>
@@ -214,8 +213,18 @@ const toggleTrackedWeekday = (day: number) => {
 
 onMounted(async () => {
   try {
-    const resSantri = await getSantri();
+    const [resSantri, academicYearRes] = await Promise.all([
+      getSantri(),
+      getAcademicYears().catch(() => []),
+    ]);
     santriList.value = resSantri.filter((s) => s.isActive !== false);
+    academicYearList.value = academicYearRes;
+    selectedAcademicYearStart.value =
+      getDefaultAcademicYearStart(academicYearRes);
+    const monthOptions = getAcademicMonthOptions(
+      selectedAcademicYearStart.value,
+    );
+    selectedMonth.value = monthOptions[0]?.value ?? selectedMonth.value;
     await Promise.all([loadWeeklyAttendance(), loadPeriodAttendance()]);
   } catch (error) {
     triggerToast("Koneksi bermasalah. Dashboard belum bisa dimuat.");
@@ -389,49 +398,37 @@ const weeklyAttendanceChart = computed(() => {
           </CardDescription>
         </CardHeader>
 
-        <div class="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+        <div class="space-y-2.5 p-4">
           <RouterLink
             v-for="item in activeDashboardMenuItems"
             :key="item.key"
             :to="item.to"
-            class="flex min-h-[104px] flex-col rounded-lg border bg-background p-4 transition hover:bg-accent"
+            class="flex min-h-[76px] items-center gap-3 rounded-xl bg-muted/60 px-4 py-3 transition hover:bg-muted"
           >
-            <div
-              class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg"
-              :class="menuToneClasses[item.tone]"
-            >
+            <div class="flex h-7 w-7 shrink-0 items-start justify-center pt-0.5 text-foreground">
               <HugeiconsIcon
                 :icon="item.icon"
-                :size="22"
+                :size="18"
                 color="currentColor"
-                :stroke-width="1.7"
+                :stroke-width="1.9"
               />
             </div>
-            <h3 class="text-sm font-semibold text-foreground">
-              {{ item.label }}
-            </h3>
-            <p class="mt-1 text-xs leading-5 text-muted-foreground">
-              {{ item.description }}
-            </p>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-sm font-semibold leading-5 text-foreground">
+                {{ item.label }}
+              </h3>
+              <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                {{ item.description }}
+              </p>
+            </div>
+            <ChevronRight
+              class="h-4 w-4 shrink-0 text-muted-foreground"
+              :stroke-width="1.8"
+              aria-hidden="true"
+            />
           </RouterLink>
         </div>
       </Card>
-
-      <StatisticCard
-        :title="`Total Seluruh ${terms.studentSingularTitle}`"
-        :value="totalSantri"
-        icon-bg-color="#E3F1DF"
-        icon-color="#008060"
-      >
-        <template #icon>
-          <HugeiconsIcon
-            :icon="UserMultipleIcon"
-            :size="32"
-            color="currentColor"
-            :stroke-width="1.7"
-          />
-        </template>
-      </StatisticCard>
 
       <DailyAttendanceChart
         :items="weeklyAttendanceChart"
@@ -441,83 +438,121 @@ const weeklyAttendanceChart = computed(() => {
         @toggle-tracked-weekday="toggleTrackedWeekday"
       />
 
-      <Card class="gap-0 py-0">
-        <CardHeader class="border-b py-4">
-          <CardTitle>
-            Filter Periode Ranking
-          </CardTitle>
-          <CardDescription>
-            {{ selectedPeriodLabel }} - {{ selectedDateRangeLabel }}
-          </CardDescription>
-        </CardHeader>
+      <Card class="gap-0 px-4 py-4">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0">
+              <h2 class="text-sm font-semibold text-foreground">
+                Periode Ranking
+              </h2>
+              <p class="mt-1 text-sm leading-5 text-muted-foreground">
+                {{ selectedPeriodLabel }} - {{ selectedDateRangeLabel }}
+              </p>
+            </div>
 
-        <div class="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
-          <div>
-            <Label>
-              Tahun Ajaran
-            </Label>
-            <select
-              :value="selectedAcademicYearStart"
-              @change="
-                handleAcademicYearChange(
-                  ($event.target as HTMLSelectElement).value,
-                )
-              "
-              class="ui-select"
-            >
-              <option
-                v-for="year in academicYearOptions"
-                :key="year.startYear"
-                :value="year.startYear"
+            <div class="inline-flex h-9 w-fit max-w-full shrink-0 items-center overflow-x-auto rounded-md bg-muted p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                :class="
+                  selectedPeriodType === 'academicYear'
+                    ? 'h-7 bg-background px-3 text-foreground shadow-xs hover:bg-background'
+                    : 'h-7 px-3 text-muted-foreground hover:bg-transparent hover:text-foreground'
+                "
+                @click="selectedPeriodType = 'academicYear'"
               >
-                {{ year.label }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <Label>
-              Jenis Periode
-            </Label>
-            <select
-              v-model="selectedPeriodType"
-              class="ui-select"
-            >
-              <option value="semester">Semester</option>
-              <option value="month">Bulanan</option>
-              <option value="academicYear">Tahun Ajaran</option>
-            </select>
-          </div>
-
-          <div v-if="selectedPeriodType === 'semester'">
-            <Label>
-              Semester
-            </Label>
-            <select
-              v-model="selectedSemester"
-              class="ui-select"
-            >
-              <option value="ganjil">Ganjil</option>
-              <option value="genap">Genap</option>
-            </select>
-          </div>
-
-          <div v-if="selectedPeriodType === 'month'">
-            <Label>
-              Bulan
-            </Label>
-            <select
-              v-model="selectedMonth"
-              class="ui-select"
-            >
-              <option
-                v-for="month in academicMonthOptions"
-                :key="month.value"
-                :value="month.value"
+                Tahun Ajaran
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                :class="
+                  selectedPeriodType === 'semester'
+                    ? 'h-7 bg-background px-3 text-foreground shadow-xs hover:bg-background'
+                    : 'h-7 px-3 text-muted-foreground hover:bg-transparent hover:text-foreground'
+                "
+                @click="selectedPeriodType = 'semester'"
               >
-                {{ month.label }}
-              </option>
-            </select>
+                Semester
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                :class="
+                  selectedPeriodType === 'month'
+                    ? 'h-7 bg-background px-3 text-foreground shadow-xs hover:bg-background'
+                    : 'h-7 px-3 text-muted-foreground hover:bg-transparent hover:text-foreground'
+                "
+                @click="selectedPeriodType = 'month'"
+              >
+                Bulanan
+              </Button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <div class="min-w-[150px] sm:w-40">
+              <Label class="mb-1.5 text-xs">
+                Tahun Ajaran
+              </Label>
+              <select
+                :value="selectedAcademicYearStart"
+                @change="
+                  handleAcademicYearChange(
+                    ($event.target as HTMLSelectElement).value,
+                  )
+                "
+                class="ui-select h-9"
+              >
+                <option
+                  v-for="year in academicYearOptions"
+                  :key="year.startYear"
+                  :value="year.startYear"
+                >
+                  {{ year.label }}
+                </option>
+              </select>
+            </div>
+
+            <div
+              v-if="selectedPeriodType === 'semester'"
+              class="min-w-[130px] sm:w-36"
+            >
+              <Label class="mb-1.5 text-xs">
+                Semester
+              </Label>
+              <select
+                v-model="selectedSemester"
+                class="ui-select h-9"
+              >
+                <option value="ganjil">Ganjil</option>
+                <option value="genap">Genap</option>
+              </select>
+            </div>
+
+            <div
+              v-if="selectedPeriodType === 'month'"
+              class="min-w-[160px] sm:w-44"
+            >
+              <Label class="mb-1.5 text-xs">
+                Bulan
+              </Label>
+              <select
+                v-model="selectedMonth"
+                class="ui-select h-9"
+              >
+                <option
+                  v-for="month in academicMonthOptions"
+                  :key="month.value"
+                  :value="month.value"
+                >
+                  {{ month.label }}
+                </option>
+              </select>
+            </div>
           </div>
         </div>
       </Card>

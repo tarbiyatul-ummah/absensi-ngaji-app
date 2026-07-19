@@ -2,7 +2,12 @@
 import { ref, onMounted, computed } from "vue";
 import { getSantri, getJilid, getGuru } from "../services/masterService";
 import { getAttendanceByDateRange } from "../services/attendanceService";
-import type { Attendance, Santri, Jilid, Guru } from "../types";
+import {
+  getAcademicYears,
+  getAcademicYearSelectOptions,
+  getDefaultAcademicYearStart,
+} from "../services/academicYearService";
+import type { AcademicYear, Attendance, Santri, Jilid, Guru } from "../types";
 import ExportFilter from "../components/export/ExportFilter.vue";
 import ExportResult from "../components/export/ExportResult.vue";
 import Toast from "../components/master/Toast.vue";
@@ -12,7 +17,6 @@ import {
   formatDateInput,
   getAcademicMonthOptions,
   getAcademicPeriodRange,
-  getAcademicYearOptions,
   getCurrentAcademicMonth,
   getCurrentAcademicYearStart,
   getCurrentSemester,
@@ -65,9 +69,10 @@ const isGenerating = ref(false);
 const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
+const academicYearList = ref<AcademicYear[]>([]);
 
 const academicYearOptions = computed(() =>
-  getAcademicYearOptions(getCurrentAcademicYearStart()),
+  getAcademicYearSelectOptions(academicYearList.value),
 );
 
 const academicMonthOptions = computed(() =>
@@ -88,10 +93,23 @@ const syncDateRange = () => {
 };
 
 onMounted(async () => {
+  const [santriRes, jilidRes, guruRes, academicYearRes] = await Promise.all([
+    getSantri(),
+    getJilid(),
+    getGuru(),
+    getAcademicYears().catch(() => []),
+  ]);
+
+  santriList.value = santriRes;
+  jilidList.value = jilidRes;
+  guruList.value = guruRes;
+  academicYearList.value = academicYearRes;
+  selectedAcademicYearStart.value =
+    getDefaultAcademicYearStart(academicYearRes);
+  selectedMonth.value =
+    getAcademicMonthOptions(selectedAcademicYearStart.value)[0]?.value ??
+    selectedMonth.value;
   syncDateRange();
-  santriList.value = await getSantri();
-  jilidList.value = await getJilid();
-  guruList.value = await getGuru();
 });
 
 const handlePeriodTypeChange = (type: AcademicPeriodType) => {

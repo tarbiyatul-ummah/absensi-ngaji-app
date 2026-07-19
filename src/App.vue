@@ -12,7 +12,7 @@ const bottomNavHiddenPaths = new Set([
   "/penilaian",
   "/akun/istilah",
 ]);
-const bottomNavHiddenPrefixes = ["/tabungan"];
+const bottomNavHiddenPrefixes = ["/tabungan", "/penilaian/"];
 const shouldShowBottomNav = computed(
   () =>
     !bottomNavHiddenPaths.has(route.path) &&
@@ -26,22 +26,24 @@ const shouldShowBottomNav = computed(
 
     <nav
       v-if="shouldShowBottomNav"
-      class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 px-3 py-2 shadow-[0_-10px_40px_hsl(222.2_84%_4.9%/0.06)] backdrop-blur-xl"
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_24px_hsl(222.2_84%_4.9%/0.08)]"
     >
-      <div class="mx-auto grid max-w-md grid-cols-4 gap-1 rounded-xl bg-muted p-1">
+      <div class="mx-auto grid max-w-md grid-cols-4">
         <RouterLink
           v-for="item in enabledNavigationItems"
           :key="item.key"
           :to="item.to"
-          class="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg px-2 text-muted-foreground transition-colors hover:text-foreground active-link"
+          class="active-link flex min-h-[58px] flex-col items-center justify-center gap-1 rounded-md px-1 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <HugeiconsIcon
-            :icon="item.icon"
-            :size="19"
-            color="currentColor"
-            :stroke-width="1.8"
-          />
-          <span class="max-w-full truncate text-[11px] font-semibold">
+          <span class="nav-icon flex h-8 w-8 items-center justify-center rounded-full transition-colors">
+            <HugeiconsIcon
+              :icon="item.icon"
+              :size="22"
+              color="currentColor"
+              :stroke-width="1.8"
+            />
+          </span>
+          <span class="max-w-full truncate text-xs font-medium leading-none">
             {{ item.label }}
           </span>
         </RouterLink>
@@ -52,8 +54,7 @@ const shouldShowBottomNav = computed(
 
 <style>
 .router-link-active.active-link {
-  background: var(--background);
   color: var(--foreground);
-  box-shadow: 0 1px 2px hsl(222.2 84% 4.9% / 0.08);
 }
+
 </style>

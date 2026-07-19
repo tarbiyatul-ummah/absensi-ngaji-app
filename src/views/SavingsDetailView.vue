@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
+import { MoreVertical, Pencil, Trash2 } from "@lucide/vue";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +56,8 @@ const isDeleting = ref(false);
 const savingPaymentIds = ref<Set<string>>(new Set());
 const isEditModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
+const isActionsMenuOpen = ref(false);
+const actionsMenuRef = ref<HTMLElement | null>(null);
 const showToast = ref(false);
 const toastMessage = ref("");
 const toastType = ref<"success" | "error">("success");
@@ -68,9 +71,9 @@ const triggerToast = (
   showToast.value = true;
 };
 
-const activeSantriList = computed(() =>
+const sortedSantriList = computed(() =>
   santriList.value
-    .filter((santri) => santri.isActive !== false)
+    .slice()
     .sort((a, b) => a.nama.localeCompare(b.nama)),
 );
 
@@ -97,7 +100,7 @@ const selectedSavingsSantriList = computed(() => {
   if (!account.value) return [];
 
   const selectedIds = new Set(account.value.santriIds);
-  return activeSantriList.value.filter((santri) => selectedIds.has(santri.id));
+  return sortedSantriList.value.filter((santri) => selectedIds.has(santri.id));
 });
 
 const currentSavingsMonthValue = computed(() => getCurrentAcademicMonth());
@@ -217,7 +220,15 @@ const loadData = async () => {
 const openEditModal = () => {
   if (!account.value) return;
 
+  isActionsMenuOpen.value = false;
   isEditModalOpen.value = true;
+};
+
+const openDeleteModal = () => {
+  if (!account.value) return;
+
+  isActionsMenuOpen.value = false;
+  isDeleteModalOpen.value = true;
 };
 
 const handleUpdateSavings = async (data: SavingsAccountFormData) => {
@@ -300,7 +311,20 @@ const handleDeleteSavings = async () => {
   }
 };
 
-onMounted(loadData);
+const handleDocumentClick = (event: MouseEvent) => {
+  if (!actionsMenuRef.value?.contains(event.target as Node)) {
+    isActionsMenuOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  void loadData();
+  document.addEventListener("click", handleDocumentClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleDocumentClick);
+});
 </script>
 
 <template>
@@ -340,17 +364,51 @@ onMounted(loadData);
               Semester {{ semesterLabel(account.semester) }}
             </p>
           </div>
-          <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button type="button" variant="outline" @click="openEditModal">
-              Edit Tabungan
-            </Button>
+          <div ref="actionsMenuRef" class="relative w-full sm:w-auto">
             <Button
               type="button"
-              variant="destructive"
-              @click="isDeleteModalOpen = true"
+              variant="outline"
+              class="w-full justify-center sm:w-auto"
+              @click.stop="isActionsMenuOpen = !isActionsMenuOpen"
             >
-              Hapus
+              <MoreVertical
+                class="h-4 w-4"
+                :stroke-width="1.8"
+                aria-hidden="true"
+              />
+              Lainnya
             </Button>
+
+            <div
+              v-if="isActionsMenuOpen"
+              class="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-48 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+              @click.stop
+            >
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                @click="openEditModal"
+              >
+                <Pencil
+                  class="h-4 w-4"
+                  :stroke-width="1.8"
+                  aria-hidden="true"
+                />
+                Edit Tabungan
+              </button>
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+                @click="openDeleteModal"
+              >
+                <Trash2
+                  class="h-4 w-4"
+                  :stroke-width="1.8"
+                  aria-hidden="true"
+                />
+                Hapus
+              </button>
+            </div>
           </div>
         </header>
 

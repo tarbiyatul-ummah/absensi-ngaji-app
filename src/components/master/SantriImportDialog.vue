@@ -125,53 +125,8 @@ const normalizeStatus = (value: unknown) => {
   return null;
 };
 
-const csvToRows = (text: string) => {
-  const rows: string[][] = [];
-  let current = "";
-  let row: string[] = [];
-  let isQuoted = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const nextChar = text[index + 1];
-
-    if (char === '"' && isQuoted && nextChar === '"') {
-      current += '"';
-      index += 1;
-    } else if (char === '"') {
-      isQuoted = !isQuoted;
-    } else if (char === "," && !isQuoted) {
-      row.push(current);
-      current = "";
-    } else if ((char === "\n" || char === "\r") && !isQuoted) {
-      if (char === "\r" && nextChar === "\n") index += 1;
-      row.push(current);
-      if (row.some((cell) => cell.trim())) rows.push(row);
-      row = [];
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  row.push(current);
-  if (row.some((cell) => cell.trim())) rows.push(row);
-
-  const headers = rows[0] ?? [];
-  return rows.slice(1).map((cells) =>
-    headers.reduce<Record<string, string>>((result, header, index) => {
-      result[header] = cells[index] ?? "";
-      return result;
-    }, {}),
-  );
-};
-
 const parseFile = async (file: File) => {
   const extension = file.name.split(".").pop()?.toLowerCase();
-
-  if (extension === "csv") {
-    return csvToRows(await file.text());
-  }
 
   if (extension === "xlsx" || extension === "xls") {
     const workbook = XLSX.read(await file.arrayBuffer(), {
@@ -186,7 +141,7 @@ const parseFile = async (file: File) => {
     });
   }
 
-  throw new Error("Format file harus .xlsx, .xls, atau .csv.");
+  throw new Error("Format file harus .xlsx atau .xls.");
 };
 
 const validateRows = (rawRows: Record<string, unknown>[]) => {
@@ -331,43 +286,6 @@ const downloadTemplate = () => {
   XLSX.writeFile(workbook, "template-import-santri.xlsx");
 };
 
-const csvValue = (value: string) => {
-  const text = value.replaceAll('"', '""');
-  return `"${text}"`;
-};
-
-const downloadCsvTemplate = () => {
-  const headers = [
-    "Nama Santri",
-    terms.levelSingularTitle,
-    terms.mentorSingularTitle,
-    "Tipe Santri",
-    "Tanggal Lahir",
-    "Status",
-  ];
-  const row = [
-    "Ahmad",
-    props.jilidList[0]?.nama ?? "Jilid 1",
-    props.guruList[0]?.nama ?? "Ustadz A",
-    props.tipeList[0]?.nama ?? "Reguler",
-    "2015-01-20",
-    "Aktif",
-  ];
-  const csv = [headers, row]
-    .map((items) => items.map(csvValue).join(","))
-    .join("\n");
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "template-import-santri.csv";
-  link.click();
-  URL.revokeObjectURL(url);
-};
-
 watch(
   () => props.open,
   (isOpen) => {
@@ -385,7 +303,7 @@ watch(
       <DialogHeader>
         <DialogTitle>Import {{ terms.studentSingularTitle }}</DialogTitle>
         <DialogDescription>
-          Upload file Excel atau CSV sesuai template.
+          Upload file Excel sesuai template.
         </DialogDescription>
       </DialogHeader>
 
@@ -394,16 +312,13 @@ watch(
           <Button type="button" variant="outline" @click="downloadTemplate">
             Download Template Excel
           </Button>
-          <Button type="button" variant="outline" @click="downloadCsvTemplate">
-            Download Template CSV
-          </Button>
         </div>
 
         <div class="space-y-2">
           <Label>File</Label>
           <input
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls"
             class="block w-full rounded-md border border-[#C9CCCF] bg-white px-3 py-2 text-sm"
             @change="handleFileChange"
           />

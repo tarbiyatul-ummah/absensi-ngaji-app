@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
+import * as XLSX from "xlsx";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import {
   Download05Icon,
@@ -53,10 +54,6 @@ const countActiveSantri = (items: Santri[]) =>
   items.filter((santri) => santri.isActive !== false).length;
 
 const activeSantriCount = computed(() => countActiveSantri(santriList.value));
-
-const inactiveSantriCount = computed(
-  () => santriList.value.filter((santri) => santri.isActive === false).length,
-);
 
 const jilidStats = computed(() =>
   jilidList.value
@@ -147,45 +144,23 @@ const formatDateValue = (dateValue?: string) => {
   });
 };
 
-const csvValue = (value: string | number) => {
-  const text = String(value).replaceAll('"', '""');
-  return `"${text}"`;
-};
-
-const exportSantriCsv = () => {
-  const headers = [
-    `Nama ${terms.studentSingularTitle}`,
-    terms.levelSingularTitle,
-    terms.mentorSingularTitle,
-    "Tipe Santri",
-    "Tanggal Lahir",
-    "Status",
-    "Tanggal Ditambahkan",
-  ];
+const exportSantriExcel = () => {
   const rows = [...santriList.value]
     .sort((a, b) => a.nama.localeCompare(b.nama))
-    .map((santri) => [
-      santri.nama,
-      getJilidName(santri.jilidId),
-      getGuruName(santri.guruId),
-      getTipeName(santri.tipeId),
-      formatDateValue(santri.tanggalLahir),
-      santri.isActive !== false ? "Aktif" : "Nonaktif",
-      formatCreatedAt(santri.createdAt),
-    ]);
-  const csv = [headers, ...rows]
-    .map((row) => row.map(csvValue).join(","))
-    .join("\n");
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+    .map((santri) => ({
+      [`Nama ${terms.studentSingularTitle}`]: santri.nama,
+      [terms.levelSingularTitle]: getJilidName(santri.jilidId),
+      [terms.mentorSingularTitle]: getGuruName(santri.guruId),
+      "Tipe Santri": getTipeName(santri.tipeId),
+      "Tanggal Lahir": formatDateValue(santri.tanggalLahir),
+      Status: santri.isActive !== false ? "Aktif" : "Nonaktif",
+      "Tanggal Ditambahkan": formatCreatedAt(santri.createdAt),
+    }));
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
 
-  link.href = url;
-  link.download = `data-${terms.studentSingularLower}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Data Santri");
+  XLSX.writeFile(workbook, `data-${terms.studentSingularLower}.xlsx`);
 };
 
 // Logika dari SantriForm
@@ -309,7 +284,7 @@ const executeDelete = async () => {
         <Button
           type="button"
           variant="outline"
-          @click="exportSantriCsv"
+          @click="exportSantriExcel"
           :disabled="santriList.length === 0"
           class="sm:flex-none"
         >
@@ -319,7 +294,7 @@ const executeDelete = async () => {
             color="currentColor"
             :stroke-width="2"
           />
-          Export CSV
+          Export Excel
         </Button>
 
         <Button
@@ -328,13 +303,7 @@ const executeDelete = async () => {
           @click="isImportModalOpen = true"
           class="col-span-2 sm:col-span-1 sm:flex-none"
         >
-          Import Excel/CSV
-        </Button>
-
-        <Button as-child variant="outline" class="col-span-2 sm:col-span-1 sm:flex-none">
-          <RouterLink to="/master-guru">
-            Kelola Master Data
-          </RouterLink>
+          Import Excel
         </Button>
       </div>
     </header>
@@ -342,7 +311,6 @@ const executeDelete = async () => {
     <div class="app-container space-y-5">
       <MasterDataSummary
         :total-active="activeSantriCount"
-        :total-inactive="inactiveSantriCount"
         :jilid-stats="jilidStats"
         :guru-stats="guruStats"
         :tipe-stats="tipeStats"

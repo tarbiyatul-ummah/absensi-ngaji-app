@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import {
@@ -21,7 +21,9 @@ import {
   addSavingsAccount,
   getSavingsAccounts,
 } from "../services/savingsService";
+import { getAcademicYears } from "../services/academicYearService";
 import type {
+  AcademicYear,
   Guru,
   Jilid,
   Santri,
@@ -41,6 +43,7 @@ const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
 const savingsAccounts = ref<SavingsAccount[]>([]);
+const academicYearList = ref<AcademicYear[]>([]);
 const isLoading = ref(true);
 const isSaving = ref(false);
 const isAddModalOpen = ref(false);
@@ -57,13 +60,6 @@ const triggerToast = (
   showToast.value = true;
 };
 
-const totalConfiguredSantri = computed(() =>
-  savingsAccounts.value.reduce(
-    (total, account) => total + account.santriIds.length,
-    0,
-  ),
-);
-
 const semesterLabel = (semester: AcademicSemester) =>
   semester === "ganjil" ? "Ganjil" : "Genap";
 
@@ -75,16 +71,19 @@ const loadData = async () => {
   isLoading.value = true;
 
   try {
-    const [santriRes, jilidRes, guruRes, savingsRes] = await Promise.all([
-      getSantri(),
-      getJilid(),
-      getGuru(),
-      getSavingsAccounts(),
-    ]);
+    const [santriRes, jilidRes, guruRes, savingsRes, academicYearRes] =
+      await Promise.all([
+        getSantri(),
+        getJilid(),
+        getGuru(),
+        getSavingsAccounts(),
+        getAcademicYears().catch(() => []),
+      ]);
     santriList.value = santriRes;
     jilidList.value = jilidRes;
     guruList.value = guruRes;
     savingsAccounts.value = savingsRes;
+    academicYearList.value = academicYearRes;
   } catch (error) {
     triggerToast("Koneksi bermasalah. Data tabungan belum bisa dimuat.", "error");
   } finally {
@@ -155,21 +154,6 @@ onMounted(loadData);
       </div>
 
       <main v-else class="space-y-5">
-        <Card class="grid grid-cols-2">
-          <div class="border-r p-4">
-            <p class="text-xs text-muted-foreground">Total Tabungan</p>
-            <p class="text-2xl font-bold text-foreground">
-              {{ savingsAccounts.length }}
-            </p>
-          </div>
-          <div class="p-4">
-            <p class="text-xs text-muted-foreground">Total Terdaftar</p>
-            <p class="text-2xl font-bold text-foreground">
-              {{ totalConfiguredSantri }}
-            </p>
-          </div>
-        </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Daftar Tabungan</CardTitle>
@@ -233,6 +217,7 @@ onMounted(loadData);
       :santri-list="santriList"
       :jilid-list="jilidList"
       :guru-list="guruList"
+      :academic-year-list="academicYearList"
       @submit="handleCreateSavings"
       @validation-error="(message) => triggerToast(message, 'error')"
     />

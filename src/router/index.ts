@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { getCurrentUser } from "../services/supabase";
-import { terms } from "../config/organization";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -49,12 +48,12 @@ const router = createRouter({
     },
     {
       path: "/penilaian",
-      component: () => import("../views/FeaturePlaceholderView.vue"),
-      props: () => ({
-        title: "Penilaian",
-        description:
-          `Catat perkembangan ${terms.studentSingularLower} dengan format yang bisa disesuaikan untuk organisasi.`,
-      }),
+      component: () => import("../views/AssessmentView.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/penilaian/:id",
+      component: () => import("../views/AssessmentView.vue"),
       meta: { requiresAuth: true },
     },
     {

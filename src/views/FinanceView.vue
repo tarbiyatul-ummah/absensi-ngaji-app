@@ -7,6 +7,7 @@ import {
   ref,
   watch,
 } from "vue";
+import * as XLSX from "xlsx";
 import { RouterLink } from "vue-router";
 import { HugeiconsIcon } from "@hugeicons/vue";
 import { ArrowLeft02Icon, Download05Icon } from "@hugeicons/core-free-icons";
@@ -21,11 +22,15 @@ import {
   getSppPaymentsByAcademicYear,
   saveSppPayment,
 } from "../services/financeService";
-import type { Guru, Jilid, Santri, SppPayment } from "../types";
+import {
+  getAcademicYears,
+  getAcademicYearSelectOptions,
+  getDefaultAcademicYearStart,
+} from "../services/academicYearService";
+import type { AcademicYear, Guru, Jilid, Santri, SppPayment } from "../types";
 import {
   getAcademicMonthOptions,
   getAcademicYearLabel,
-  getAcademicYearOptions,
   getCurrentAcademicMonth,
   getCurrentAcademicYearStart,
 } from "../utils/academicPeriod";
@@ -38,6 +43,7 @@ const santriList = ref<Santri[]>([]);
 const jilidList = ref<Jilid[]>([]);
 const guruList = ref<Guru[]>([]);
 const paymentList = ref<SppPayment[]>([]);
+const academicYearList = ref<AcademicYear[]>([]);
 const selectedAcademicYearStart = ref(getCurrentAcademicYearStart());
 const searchQuery = ref("");
 const renderedSantriCount = ref(SANTRI_BATCH_SIZE);
@@ -60,7 +66,7 @@ const triggerToast = (
 };
 
 const academicYearOptions = computed(() =>
-  getAcademicYearOptions(getCurrentAcademicYearStart()),
+  getAcademicYearSelectOptions(academicYearList.value),
 );
 
 const monthOptions = computed(() =>
@@ -216,14 +222,18 @@ onMounted(async () => {
   setupLazyLoadObserver();
 
   try {
-    const [santriRes, jilidRes, guruRes] = await Promise.all([
+    const [santriRes, jilidRes, guruRes, academicYearRes] = await Promise.all([
       getSantri(),
       getJilid(),
       getGuru(),
+      getAcademicYears().catch(() => []),
     ]);
     santriList.value = santriRes;
     jilidList.value = jilidRes;
     guruList.value = guruRes;
+    academicYearList.value = academicYearRes;
+    selectedAcademicYearStart.value =
+      getDefaultAcademicYearStart(academicYearRes);
     await loadPayments();
   } catch (error) {
     triggerToast(
@@ -294,48 +304,35 @@ const togglePayment = async (santri: Santri, month: string) => {
   }
 };
 
-const csvValue = (value: string | number) => {
-  const text = String(value).replaceAll('"', '""');
-  return `"${text}"`;
-};
-
-const exportCsv = () => {
-  const headers = [
-    `Nama ${terms.studentSingularTitle}`,
-    terms.levelSingularTitle,
-    terms.mentorSingularTitle,
-    ...monthOptions.value.map((month) => month.label),
-    "Total Bayar",
-    "Belum Bayar",
-  ];
+const exportExcel = () => {
   const rows = activeSantriList.value.map((santri) => {
     const paidCount = getPaidCount(santri.id);
-    return [
-      santri.nama,
-      getJilidName(santri.jilidId),
-      getGuruName(santri.guruId),
-      ...monthOptions.value.map((month) =>
-        isPaid(santri.id, month.value) ? "Sudah Bayar" : "Belum Bayar",
-      ),
-      paidCount,
-      monthOptions.value.length - paidCount,
-    ];
-  });
-  const csv = [headers, ...rows]
-    .map((row) => row.map(csvValue).join(","))
-    .join("\n");
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
 
-  link.href = url;
-  link.download = `rekap-${terms.paymentLabel.toLowerCase()}-${getAcademicYearLabel(
+    return {
+      [`Nama ${terms.studentSingularTitle}`]: santri.nama,
+      [terms.levelSingularTitle]: getJilidName(santri.jilidId),
+      [terms.mentorSingularTitle]: getGuruName(santri.guruId),
+      ...Object.fromEntries(
+        monthOptions.value.map((month) => [
+          month.label,
+          isPaid(santri.id, month.value) ? "Lunas" : "-",
+        ]),
+      ),
+      "Total Bayar": paidCount,
+      "Belum Bayar": monthOptions.value.length - paidCount,
+    };
+  });
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  const academicYearName = getAcademicYearLabel(
     selectedAcademicYearStart.value,
-  ).replace("/", "-")}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  ).replace("/", "-");
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, terms.paymentLabel);
+  XLSX.writeFile(
+    workbook,
+    `rekap-${terms.paymentLabel.toLowerCase()}-${academicYearName}.xlsx`,
+  );
   triggerToast(`Data ${terms.paymentLabel} berhasil diexport.`);
 };
 </script>
@@ -371,7 +368,7 @@ const exportCsv = () => {
         </div>
         <Button
           type="button"
-          @click="exportCsv"
+          @click="exportExcel"
           :disabled="isLoading || activeSantriList.length === 0"
         >
           <HugeiconsIcon
@@ -380,7 +377,7 @@ const exportCsv = () => {
             color="currentColor"
             :stroke-width="2"
           />
-          Export CSV
+          Export Excel
         </Button>
       </div>
     </header>

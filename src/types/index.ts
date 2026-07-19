@@ -48,6 +48,14 @@ export interface SppPayment {
   updatedAt: number;
 }
 
+export interface AcademicYear {
+  id: string;
+  startYear: number;
+  isActive: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export type SavingsAccountMode = "monthly";
 export type SavingsAccountSemester = "ganjil" | "genap";
 
@@ -77,4 +85,70 @@ export interface SavingsPayment {
   isPaid: boolean;
   paidAt?: number | null;
   updatedAt: number;
+}
+
+export type AssessmentItemType = "score" | "scale";
+
+export interface AssessmentItem {
+  id: string;
+  assessmentId: string;
+  label: string;
+  assessmentType: AssessmentItemType;
+  maxScore: number;
+  sortOrder: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AssessmentParticipant {
+  id: string;
+  assessmentId: string;
+  santriId: string;
+  createdAt: number;
+}
+
+export interface AssessmentScore {
+  id: string;
+  assessmentId: string;
+  santriId: string;
+  assessmentItemId: string;
+  score: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AssessmentResult {
+  id: string;
+  assessmentId: string;
+  santriId: string;
+  notes?: string;
+  submittedAt: number;
+  updatedAt: number;
+  scores: AssessmentScore[];
+}
+
+export interface Assessment {
+  id: string;
+  name: string;
+  assessmentType: AssessmentItemType;
+  minimumScore: number;
+  isArchived: boolean;
+  createdAt: number;
+  updatedAt: number;
+  items: AssessmentItem[];
+  participants: AssessmentParticipant[];
+  results: AssessmentResult[];
+}
+
+export interface AssessmentFormItem {
+  id?: string;
+  label: string;
+}
+
+export interface AssessmentFormData {
+  name: string;
+  assessmentType: AssessmentItemType;
+  minimumScore: number;
+  items: AssessmentFormItem[];
+  santriIds: string[];
 }
