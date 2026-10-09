@@ -11,6 +11,8 @@ import type { AcademicYear, Attendance, Santri, Jilid, Guru } from "../types";
 import { ExportFilter } from "../components/export/ExportFilter";
 import { ExportResult } from "../components/export/ExportResult";
 import { Toast } from "../components/master/Toast";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import {
   type AcademicPeriodType,
   type AcademicSemester,
@@ -49,6 +51,7 @@ export const ExportView: React.FC = () => {
   const terms = useTerms();
   const organizationConfig = useOrganizationConfig();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [periodType, setPeriodType] = useState<AcademicPeriodType>("semester");
@@ -129,6 +132,8 @@ export const ExportView: React.FC = () => {
         syncDateRange("semester", defaultYear, getCurrentSemester(), initialMonth);
       } catch (err) {
         console.error("Failed to load export master data", err);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
     };
     loadData();
@@ -555,10 +560,13 @@ export const ExportView: React.FC = () => {
   };
 
   return (
-    <div className="pb-24 font-sans">
-      <header className="px-4 pt-5 pb-4 max-w-3xl mx-auto flex items-center justify-between">
-        <h1 className="text-[20px] font-bold text-[#202223]">Export Rekap PDF</h1>
-      </header>
+    <div className="app-page">
+      <div className="app-container">
+        <PageHeader
+          title="Export Rekap Kehadiran"
+          subtitle={`Unduh dan cetak rekap kehadiran ${terms.studentSingularLower} dalam format PDF atau CSV`}
+        />
+      </div>
 
       {toastMessage && (
         <Toast
@@ -568,42 +576,46 @@ export const ExportView: React.FC = () => {
         />
       )}
 
-      <div className="px-4 space-y-6 max-w-3xl mx-auto">
-        <ExportFilter
-          startDate={startDate}
-          endDate={endDate}
-          periodType={periodType}
-          academicYearStart={selectedAcademicYearStart}
-          semester={selectedSemester}
-          selectedMonth={selectedMonth}
-          academicYearOptions={academicYearOptions}
-          academicMonthOptions={academicMonthOptions}
-          filterType={filterType}
-          filterId={filterId}
-          jilidList={jilidList}
-          guruList={guruList}
-          isGenerating={isGenerating}
-          onUpdateStartDate={setStartDate}
-          onUpdateEndDate={setEndDate}
-          onUpdatePeriodType={handlePeriodTypeChange}
-          onUpdateAcademicYearStart={handleAcademicYearChange}
-          onUpdateSemester={handleSemesterChange}
-          onUpdateSelectedMonth={handleMonthChange}
-          onUpdateFilterType={setFilterType}
-          onUpdateFilterId={setFilterId}
-          onGenerate={generateExport}
-        />
+      {isLoading ? (
+        <LoadingState size="lg" text="Memuat Data" />
+      ) : (
+        <div className="app-container space-y-6">
+          <ExportFilter
+            startDate={startDate}
+            endDate={endDate}
+            periodType={periodType}
+            academicYearStart={selectedAcademicYearStart}
+            semester={selectedSemester}
+            selectedMonth={selectedMonth}
+            academicYearOptions={academicYearOptions}
+            academicMonthOptions={academicMonthOptions}
+            filterType={filterType}
+            filterId={filterId}
+            jilidList={jilidList}
+            guruList={guruList}
+            isGenerating={isGenerating}
+            onUpdateStartDate={setStartDate}
+            onUpdateEndDate={setEndDate}
+            onUpdatePeriodType={handlePeriodTypeChange}
+            onUpdateAcademicYearStart={handleAcademicYearChange}
+            onUpdateSemester={handleSemesterChange}
+            onUpdateSelectedMonth={handleMonthChange}
+            onUpdateFilterType={setFilterType}
+            onUpdateFilterId={setFilterId}
+            onGenerate={generateExport}
+          />
 
-        <AnimatePresence>
-          {exportReport && (
-            <ExportResult
-              report={exportReport}
-              onExportPdf={printPdf}
-              onExportCsv={exportCsv}
-            />
-          )}
-        </AnimatePresence>
-      </div>
+          <AnimatePresence>
+            {exportReport && (
+              <ExportResult
+                report={exportReport}
+                onExportPdf={printPdf}
+                onExportCsv={exportCsv}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 };

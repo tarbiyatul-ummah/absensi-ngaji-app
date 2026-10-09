@@ -17,6 +17,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import {
   Dialog,
   DialogContent,
@@ -250,14 +252,10 @@ export const AccountView: React.FC = () => {
       )}
 
       <div className="app-container space-y-4">
-        <header className="app-header">
-          <div>
-            <h1 className="app-title">Akun</h1>
-            <p className="app-subtitle">
-              Kelola identitas organisasi, istilah aplikasi, dan sesi admin.
-            </p>
-          </div>
-        </header>
+        <PageHeader
+          title="Akun"
+          subtitle="Kelola identitas organisasi, istilah aplikasi, dan sesi admin."
+        />
 
         <Card className="gap-0 py-0">
           <CardHeader className="border-b py-4">
@@ -273,7 +271,7 @@ export const AccountView: React.FC = () => {
                 Organisasi
               </p>
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                   <HugeiconsIcon icon={AccountSetting02Icon} size={24} strokeWidth={1.7} />
                 </div>
                 <div className="min-w-0">
@@ -316,19 +314,19 @@ export const AccountView: React.FC = () => {
                 Bahasa Aplikasi
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border p-3">
+                <div className="rounded-xl border border-border bg-card p-3 shadow-2xs">
                   <p className="text-xs text-muted-foreground">Peserta</p>
                   <p className="text-sm font-semibold text-foreground">
                     {terms.studentSingularTitle}
                   </p>
                 </div>
-                <div className="rounded-lg border p-3">
+                <div className="rounded-xl border border-border bg-card p-3 shadow-2xs">
                   <p className="text-xs text-muted-foreground">Pengajar/Pembina</p>
                   <p className="text-sm font-semibold text-foreground">
                     {terms.mentorSingularTitle}
                   </p>
                 </div>
-                <div className="rounded-lg border p-3">
+                <div className="rounded-xl border border-border bg-card p-3 shadow-2xs">
                   <p className="text-xs text-muted-foreground">Tingkatan</p>
                   <p className="text-sm font-semibold text-foreground">
                     {terms.levelSingularTitle}
@@ -369,11 +367,11 @@ export const AccountView: React.FC = () => {
 
           <CardContent className="space-y-4 p-4">
             {isAcademicYearLoading ? (
-              <div className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">
-                Memuat tahun ajaran...
+              <div className="rounded-xl border border-border px-4 py-8 text-center">
+                <LoadingState size="sm" text="Memuat Data" className="py-0" />
               </div>
             ) : sortedAcademicYears.length > 0 ? (
-              <div className="divide-y rounded-lg border">
+              <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
                 {sortedAcademicYears.map((academicYear) => (
                   <div
                     key={academicYear.id}
@@ -385,7 +383,7 @@ export const AccountView: React.FC = () => {
                           {getAcademicYearLabel(academicYear.startYear)}
                         </p>
                         {academicYear.isActive && (
-                          <Badge variant="secondary">Aktif</Badge>
+                          <Badge variant="success">Aktif</Badge>
                         )}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -420,7 +418,7 @@ export const AccountView: React.FC = () => {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        className="text-danger hover:bg-danger-subtle hover:text-danger"
                         disabled={isAcademicYearSaving}
                         onClick={() => setDeletingAcademicYear(academicYear)}
                       >
@@ -457,7 +455,7 @@ export const AccountView: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                   <HugeiconsIcon icon={DatabaseIcon} size={21} strokeWidth={1.7} />
                 </div>
                 <div className="min-w-0">
@@ -486,13 +484,13 @@ export const AccountView: React.FC = () => {
             </CardDescription>
           </CardHeader>
 
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {activeFeatureItems.map((item) => (
               <div
                 key={item.key}
                 className="flex items-center gap-3 px-4 py-3"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-foreground">
                   <HugeiconsIcon icon={item.icon} size={20} strokeWidth={1.7} />
                 </div>
                 <div>
@@ -520,7 +518,7 @@ export const AccountView: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full justify-center"
+              className="w-full justify-center text-danger hover:bg-danger-subtle hover:text-danger hover:border-danger-border"
               onClick={handleLogout}
             >
               <HugeiconsIcon icon={Logout03Icon} size={18} strokeWidth={1.7} />

@@ -5,11 +5,12 @@ import { useSmoothMotion } from "@/lib/motion";
 
 export interface StatisticCardProps {
   title: string;
-  value: number;
+  value: number | string;
   subtitle?: string;
   icon?: React.ReactNode;
   iconBgColor?: string;
   iconColor?: string;
+  className?: string;
 }
 
 export const StatisticCard: React.FC<StatisticCardProps> = ({
@@ -17,19 +18,20 @@ export const StatisticCard: React.FC<StatisticCardProps> = ({
   value,
   subtitle,
   icon,
-  iconBgColor = "hsl(210 40% 96.1%)",
-  iconColor = "hsl(222.2 47.4% 11.2%)",
+  iconBgColor,
+  iconColor,
+  className,
 }) => {
   const { cardHoverProps } = useSmoothMotion();
 
   return (
     <motion.div {...cardHoverProps}>
-      <Card className="flex flex-row items-center justify-between p-6">
+      <Card className={`flex flex-row items-center justify-between p-5 ${className || ""}`}>
         <div>
-          <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {title}
           </p>
-          <h2 className="text-4xl font-bold leading-tight text-foreground">
+          <h2 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
             {value}
           </h2>
           {subtitle && (
@@ -39,10 +41,10 @@ export const StatisticCard: React.FC<StatisticCardProps> = ({
 
         {icon && (
           <div
-            className="p-3 rounded-full"
-            style={{ backgroundColor: iconBgColor }}
+            className={`p-3 rounded-xl ${iconBgColor ? "" : "bg-muted text-foreground"}`}
+            style={iconBgColor ? { backgroundColor: iconBgColor, color: iconColor } : undefined}
           >
-            <div style={{ color: iconColor }}>{icon}</div>
+            {icon}
           </div>
         )}
       </Card>

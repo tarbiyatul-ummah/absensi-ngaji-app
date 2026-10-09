@@ -29,11 +29,14 @@ import SantriImportDialog, {
 import SantriList from "@/components/master/SantriList";
 import ConfirmModal from "@/components/master/ConfirmModal";
 import MasterDataSummary from "@/components/master/MasterDataSummary";
+import PageHeader from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import { useTerms } from "@/config/organization";
 
 export const MasterSantri: React.FC = () => {
   const terms = useTerms();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [jilidList, setJilidList] = useState<Jilid[]>([]);
   const [guruList, setGuruList] = useState<Guru[]>([]);
   const [tipeList, setTipeList] = useState<SantriType[]>([]);
@@ -45,16 +48,20 @@ export const MasterSantri: React.FC = () => {
   const [santriIdToDelete, setSantriIdToDelete] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
-    const [jRes, gRes, tRes, sRes] = await Promise.all([
-      getJilid(),
-      getGuru(),
-      getSantriTypes(),
-      getSantri(),
-    ]);
-    setJilidList(jRes);
-    setGuruList(gRes);
-    setTipeList(tRes);
-    setSantriList(sRes);
+    try {
+      const [jRes, gRes, tRes, sRes] = await Promise.all([
+        getJilid(),
+        getGuru(),
+        getSantriTypes(),
+        getSantri(),
+      ]);
+      setJilidList(jRes);
+      setGuruList(gRes);
+      setTipeList(tRes);
+      setSantriList(sRes);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -260,73 +267,73 @@ export const MasterSantri: React.FC = () => {
 
   return (
     <div className="app-page">
-      <header className="app-container pb-4">
-        <div className="app-header">
-          <div>
-            <h1 className="app-title">Data {terms.studentSingularTitle}</h1>
-          </div>
-        </div>
+      <header className="app-container">
+        <PageHeader
+          title={`Data ${terms.studentSingularTitle}`}
+          actions={
+            <>
+              <Button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <HugeiconsIcon
+                  icon={PlusSignIcon}
+                  size={17}
+                  color="currentColor"
+                  strokeWidth={2}
+                />
+                Tambah {terms.studentSingularTitle}
+              </Button>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:flex">
-          <Button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="sm:flex-none"
-          >
-            <HugeiconsIcon
-              icon={PlusSignIcon}
-              size={17}
-              color="currentColor"
-              strokeWidth={2}
-            />
-            Tambah {terms.studentSingularTitle}
-          </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={exportSantriExcel}
+                disabled={santriList.length === 0}
+              >
+                <HugeiconsIcon
+                  icon={Download05Icon}
+                  size={17}
+                  color="currentColor"
+                  strokeWidth={2}
+                />
+                Export Excel
+              </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={exportSantriExcel}
-            disabled={santriList.length === 0}
-            className="sm:flex-none"
-          >
-            <HugeiconsIcon
-              icon={Download05Icon}
-              size={17}
-              color="currentColor"
-              strokeWidth={2}
-            />
-            Export Excel
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsImportModalOpen(true)}
-            className="col-span-2 sm:col-span-1 sm:flex-none"
-          >
-            Import Excel
-          </Button>
-        </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                Import Excel
+              </Button>
+            </>
+          }
+        />
       </header>
 
-      <div className="app-container space-y-5">
-        <MasterDataSummary
-          totalActive={activeSantriCount}
-          jilidStats={jilidStats}
-          guruStats={guruStats}
-          tipeStats={tipeStats}
-        />
+      {isLoading ? (
+        <LoadingState size="lg" text="Memuat Data" />
+      ) : (
+        <div className="app-container space-y-5">
+          <MasterDataSummary
+            totalActive={activeSantriCount}
+            jilidStats={jilidStats}
+            guruStats={guruStats}
+            tipeStats={tipeStats}
+          />
 
-        <SantriList
-          santriList={santriList}
-          jilidList={jilidList}
-          guruList={guruList}
-          tipeList={tipeList}
-          onToggleStatus={handleToggleStatus}
-          onDeleteSantri={promptDeleteSantri}
-          onEditSantri={handleEditSantri}
-        />
-      </div>
+          <SantriList
+            santriList={santriList}
+            jilidList={jilidList}
+            guruList={guruList}
+            tipeList={tipeList}
+            onToggleStatus={handleToggleStatus}
+            onDeleteSantri={promptDeleteSantri}
+            onEditSantri={handleEditSantri}
+          />
+        </div>
+      )}
 
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-lg">

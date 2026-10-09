@@ -89,16 +89,16 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border shadow-xs overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-xs overflow-hidden">
       <div className="p-4 border-b border-border bg-muted/30">
-        <h2 className="text-[14px] font-semibold text-foreground">
+        <h2 className="text-sm font-semibold text-foreground">
           Pengaturan Rekap
         </h2>
       </div>
 
       <div className="p-4 space-y-4">
         <div>
-          <label className="block text-[13px] text-foreground font-medium mb-2">
+          <label className="block text-xs font-semibold text-foreground mb-2">
             Pilih Periode Laporan
           </label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
@@ -107,7 +107,7 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
               variant={periodType === "academicYear" ? "default" : "outline"}
               size="sm"
               onClick={() => handlePeriodSelect("academicYear")}
-              className="text-[12px]"
+              className="text-xs rounded-xl"
             >
               Tahun Ajaran
             </Button>
@@ -116,7 +116,7 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
               variant={periodType === "semester" ? "default" : "outline"}
               size="sm"
               onClick={() => handlePeriodSelect("semester")}
-              className="text-[12px]"
+              className="text-xs rounded-xl"
             >
               Semester
             </Button>
@@ -125,7 +125,7 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
               variant={periodType === "month" ? "default" : "outline"}
               size="sm"
               onClick={() => handlePeriodSelect("month")}
-              className="text-[12px]"
+              className="text-xs rounded-xl"
             >
               Bulanan
             </Button>
@@ -134,7 +134,7 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
               variant={periodType === "custom" ? "default" : "outline"}
               size="sm"
               onClick={() => handlePeriodSelect("custom")}
-              className="text-[12px]"
+              className="text-xs rounded-xl"
             >
               Kustom
             </Button>
@@ -243,8 +243,8 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
           )}
 
           {startDate && endDate && (
-            <div className="px-3 py-2 bg-[hsl(142_76%_97%)] rounded-md border border-[hsl(142_42%_82%)]">
-              <p className="text-[12px] text-[hsl(142_72%_29%)] font-medium">
+            <div className="px-3 py-2 bg-success-subtle rounded-xl border border-success-border">
+              <p className="text-xs text-success font-medium">
                 {formatDate(startDate)} - {formatDate(endDate)}
               </p>
             </div>

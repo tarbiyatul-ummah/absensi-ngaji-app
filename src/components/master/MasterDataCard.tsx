@@ -89,7 +89,7 @@ export const MasterDataCard: React.FC<MasterDataCardProps> = ({
             >
               <div className="flex items-center gap-3">
                 {isSortable && (
-                  <div className="flex flex-col rounded border bg-muted">
+                  <div className="flex flex-col rounded-lg border border-border bg-muted/60 overflow-hidden">
                     {index > 0 ? (
                       <Button
                         type="button"
@@ -97,7 +97,7 @@ export const MasterDataCard: React.FC<MasterDataCardProps> = ({
                         size="sm"
                         aria-label={`Naikkan urutan ${item.nama}`}
                         onClick={() => onMoveUp?.(index)}
-                        className="h-6 w-6 p-0 rounded-b-none text-muted-foreground"
+                        className="h-6 w-6 p-0 rounded-none text-muted-foreground hover:text-foreground"
                       >
                         <HugeiconsIcon
                           icon={ArrowUp01Icon}
@@ -117,7 +117,7 @@ export const MasterDataCard: React.FC<MasterDataCardProps> = ({
                         size="sm"
                         aria-label={`Turunkan urutan ${item.nama}`}
                         onClick={() => onMoveDown?.(index)}
-                        className="h-6 w-6 p-0 rounded-t-none text-muted-foreground"
+                        className="h-6 w-6 p-0 rounded-none text-muted-foreground hover:text-foreground"
                       >
                         <HugeiconsIcon
                           icon={ArrowDown01Icon}
@@ -143,7 +143,7 @@ export const MasterDataCard: React.FC<MasterDataCardProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => onEdit(item)}
-                  className="text-[13px]"
+                  className="text-xs rounded-lg"
                 >
                   Edit
                 </Button>
@@ -152,7 +152,7 @@ export const MasterDataCard: React.FC<MasterDataCardProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => onDelete(item.id)}
-                  className="text-[13px] text-destructive hover:bg-red-50 hover:text-destructive"
+                  className="text-xs rounded-lg text-danger hover:bg-danger-subtle hover:text-danger"
                 >
                   Hapus
                 </Button>

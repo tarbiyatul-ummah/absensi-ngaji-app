@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { LoadingState } from "@/components/ui/loading-state";
 
 const getLocalDateString = () => {
   const d = new Date();
@@ -33,6 +34,7 @@ const getLocalDateString = () => {
 export const AbsensiView: React.FC = () => {
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [todayDate] = useState(() => getLocalDateString());
   const [currentDate, setCurrentDate] = useState(() => getLocalDateString());
 
@@ -95,6 +97,10 @@ export const AbsensiView: React.FC = () => {
       } catch {
         if (isMounted) {
           triggerToast("Koneksi bermasalah. Data belum bisa dimuat.", "error");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
         }
       }
     };
@@ -289,54 +295,58 @@ export const AbsensiView: React.FC = () => {
         />
       </header>
 
-      <div className="app-container space-y-5">
-        <div className="space-y-3">
-          <AbsensiFilter
-            jilidList={jilidList}
-            selectedJilid={selectedJilid}
-            onSelectJilid={setSelectedJilid}
-          />
+      {isLoading ? (
+        <LoadingState size="lg" text="Memuat Data" />
+      ) : (
+        <div className="app-container space-y-5">
+          <div className="space-y-3">
+            <AbsensiFilter
+              jilidList={jilidList}
+              selectedJilid={selectedJilid}
+              onSelectJilid={setSelectedJilid}
+            />
 
-          <DailyRecapButton
+            <DailyRecapButton
+              filteredSantri={filteredSantri}
+              attendanceData={attendanceData}
+              onSuccess={(msg) => triggerToast(msg, "success")}
+              onError={(msg) => triggerToast(msg, "error")}
+            />
+          </div>
+
+          <div
+            className="grid grid-cols-3 gap-2 sm:gap-3"
+            aria-label="Ringkasan absensi"
+          >
+            <div className="rounded-xl border border-success-border bg-success-subtle p-2.5 sm:p-3 shadow-2xs">
+              <p className="text-xs text-success font-medium">Hadir</p>
+              <p className="text-xl font-bold text-success">
+                {attendanceSummary.present}
+              </p>
+            </div>
+            <div className="rounded-xl border border-warning-border bg-warning-subtle p-2.5 sm:p-3 shadow-2xs">
+              <p className="text-xs text-warning font-medium">Izin</p>
+              <p className="text-xl font-bold text-warning">
+                {attendanceSummary.permission}
+              </p>
+            </div>
+            <div className="rounded-xl border border-border bg-muted/60 p-2.5 sm:p-3 shadow-2xs">
+              <p className="text-xs text-muted-foreground font-medium">Belum diabsen</p>
+              <p className="text-xl font-bold text-foreground">
+                {attendanceSummary.unmarked}
+              </p>
+            </div>
+          </div>
+
+          <AbsensiList
             filteredSantri={filteredSantri}
+            jilidList={jilidList}
             attendanceData={attendanceData}
-            onSuccess={(msg) => triggerToast(msg, "success")}
-            onError={(msg) => triggerToast(msg, "error")}
+            savingSantriIds={savingSantriIds}
+            onStatusChange={handleStatusChange}
           />
         </div>
-
-        <div
-          className="grid grid-cols-3 gap-2 sm:gap-3"
-          aria-label="Ringkasan absensi"
-        >
-          <div className="rounded-lg border border-[hsl(142_42%_82%)] bg-[hsl(142_76%_97%)] p-2.5 sm:p-3">
-            <p className="text-xs text-[hsl(142_72%_29%)]">Hadir</p>
-            <p className="text-xl font-bold text-[hsl(142_72%_29%)]">
-              {attendanceSummary.present}
-            </p>
-          </div>
-          <div className="rounded-lg border border-[hsl(48_76%_78%)] bg-[hsl(48_96%_97%)] p-2.5 sm:p-3">
-            <p className="text-xs text-[hsl(32_95%_35%)]">Izin</p>
-            <p className="text-xl font-bold text-[hsl(32_95%_35%)]">
-              {attendanceSummary.permission}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border bg-muted p-2.5 sm:p-3">
-            <p className="text-xs text-muted-foreground">Belum diabsen</p>
-            <p className="text-xl font-bold text-foreground">
-              {attendanceSummary.unmarked}
-            </p>
-          </div>
-        </div>
-
-        <AbsensiList
-          filteredSantri={filteredSantri}
-          jilidList={jilidList}
-          attendanceData={attendanceData}
-          savingSantriIds={savingSantriIds}
-          onStatusChange={handleStatusChange}
-        />
-      </div>
+      )}
 
       <Toast
         show={toast.show}

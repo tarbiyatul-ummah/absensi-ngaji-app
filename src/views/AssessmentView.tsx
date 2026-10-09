@@ -41,7 +41,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
+import { LoadingState } from "@/components/ui/loading-state";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { AssessmentFormDialog } from "../components/assessment/AssessmentFormDialog";
 import { AssessmentRadarChart } from "../components/assessment/AssessmentRadarChart";
 import { AssessmentScoreDialog } from "../components/assessment/AssessmentScoreDialog";
@@ -674,36 +677,26 @@ export const AssessmentView: React.FC = () => {
       )}
 
       <div className="app-container-wide space-y-5">
-        <Button asChild variant="ghost" size="sm" className="w-fit px-2">
-          <Link
-            to={isDetailPage ? "/penilaian" : "/dashboard"}
-            className="flex items-center gap-1.5"
-          >
-            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.7} />
-            {isDetailPage ? "Penilaian" : "Dashboard"}
-          </Link>
-        </Button>
-
-        <header className="app-header">
-          <div>
-            <h1 className="app-title">Penilaian</h1>
-            <p className="app-subtitle">
-              Buat format penilaian, pilih {terms.studentSingularLower}, lalu
-              isi nilai dan catatan perkembangan.
-            </p>
-          </div>
-          {!isDetailPage && (
-            <Button type="button" onClick={openCreateModal}>
-              <HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2} />
-              Add Penilaian
-            </Button>
-          )}
-        </header>
+        <PageHeader
+          title={isDetailPage ? (selectedAssessment?.name || "Detail Penilaian") : "Penilaian"}
+          subtitle={
+            isDetailPage
+              ? `${selectedAssessment?.participants.length || 0} ${terms.studentSingularLower} • Nilai Minimum ${selectedAssessment?.minimumScore || 0}`
+              : `Buat format penilaian, pilih ${terms.studentSingularLower}, lalu isi nilai dan catatan perkembangan.`
+          }
+          backTo={isDetailPage ? "/penilaian" : undefined}
+          actions={
+            !isDetailPage ? (
+              <Button type="button" onClick={openCreateModal}>
+                <HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2} />
+                Add Penilaian
+              </Button>
+            ) : undefined
+          }
+        />
 
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          </div>
+          <LoadingState size="lg" text="Memuat Data" />
         ) : !isDetailPage ? (
           <main>
             <Card className="gap-0 py-0">
@@ -720,7 +713,7 @@ export const AssessmentView: React.FC = () => {
                     <Link
                       key={assessment.id}
                       to={`/penilaian/${assessment.id}`}
-                      className="rounded-lg border bg-background p-4 text-left transition-colors hover:bg-accent"
+                      className="rounded-xl border border-border bg-card p-4 text-left transition hover:bg-accent/60 shadow-2xs"
                     >
                       <p className="text-sm font-semibold text-foreground">
                         {assessment.name}
@@ -814,16 +807,16 @@ export const AssessmentView: React.FC = () => {
 
                       {isActionsMenuOpen && (
                         <div
-                          className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-48 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                          className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-44 overflow-hidden rounded-xl border border-border bg-card p-1.5 text-card-foreground shadow-xl"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
                             type="button"
-                            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-accent/70 hover:text-foreground"
                             onClick={openEditModal}
                           >
                             <Pencil
-                              className="h-4 w-4"
+                              className="h-3.5 w-3.5 text-muted-foreground"
                               strokeWidth={1.8}
                               aria-hidden="true"
                             />
@@ -831,11 +824,11 @@ export const AssessmentView: React.FC = () => {
                           </button>
                           <button
                             type="button"
-                            className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-danger transition-colors hover:bg-danger-subtle"
                             onClick={openDeleteModal}
                           >
                             <Trash2
-                              className="h-4 w-4"
+                              className="h-3.5 w-3.5 text-danger"
                               strokeWidth={1.8}
                               aria-hidden="true"
                             />
@@ -847,7 +840,7 @@ export const AssessmentView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-3 rounded-lg border bg-muted/30 p-3">
+                <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -858,13 +851,13 @@ export const AssessmentView: React.FC = () => {
                       </p>
                     </div>
 
-                    <div className="grid w-full grid-cols-2 rounded-lg bg-muted p-1 sm:w-auto">
+                    <div className="grid w-full grid-cols-2 rounded-xl bg-muted p-1 sm:w-auto">
                       <button
                         type="button"
-                        className={`rounded px-3 py-2 text-sm font-semibold transition-colors ${
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                           reportRangeMode === "semester"
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground"
+                            ? "bg-card text-foreground shadow-xs font-semibold"
+                            : "text-muted-foreground hover:text-foreground"
                         }`}
                         onClick={() => setReportRangeMode("semester")}
                       >
@@ -872,10 +865,10 @@ export const AssessmentView: React.FC = () => {
                       </button>
                       <button
                         type="button"
-                        className={`rounded px-3 py-2 text-sm font-semibold transition-colors ${
+                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                           reportRangeMode === "custom"
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground"
+                            ? "bg-card text-foreground shadow-xs font-semibold"
+                            : "text-muted-foreground hover:text-foreground"
                         }`}
                         onClick={() => setReportRangeMode("custom")}
                       >
@@ -958,10 +951,9 @@ export const AssessmentView: React.FC = () => {
 
               <CardContent className="space-y-4 p-4">
                 <section className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-center">
-                  <Input
+                  <SearchInput
                     value={studentSearch}
-                    onChange={(e) => setStudentSearch(e.target.value)}
-                    type="search"
+                    onChange={setStudentSearch}
                     placeholder={`Cari ${terms.studentSingularLower}...`}
                   />
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -981,7 +973,7 @@ export const AssessmentView: React.FC = () => {
                           <button
                             key={santri.id}
                             type="button"
-                            className="rounded-lg border bg-background p-4 text-left transition-colors hover:bg-accent focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none"
+                            className="rounded-xl border border-border bg-card p-4 text-left transition hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none shadow-2xs"
                             onClick={() => openScoreModal(santri.id)}
                           >
                             <span className="flex items-start justify-between gap-3">
@@ -995,12 +987,8 @@ export const AssessmentView: React.FC = () => {
                                 </span>
                               </span>
                               <Badge
-                                variant={res ? "secondary" : "outline"}
-                                className={`shrink-0 ${
-                                  res
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : ""
-                                }`}
+                                variant={res ? "success" : "neutral"}
+                                className="shrink-0"
                               >
                                 {res ? "Selesai" : "Belum"}
                               </Badge>
@@ -1021,7 +1009,7 @@ export const AssessmentView: React.FC = () => {
                       })}
                     </div>
                   ) : (
-                    <div className="rounded-lg border px-4 py-12 text-center text-sm text-muted-foreground">
+                    <div className="rounded-xl border border-border px-4 py-12 text-center text-sm text-muted-foreground">
                       Tidak ada {terms.studentSingularLower} yang sesuai.
                     </div>
                   )}

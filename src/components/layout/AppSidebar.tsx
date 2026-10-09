@@ -363,7 +363,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-danger hover:bg-danger-subtle transition-colors text-left cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
                     <LogOut className="size-3.5 shrink-0" />

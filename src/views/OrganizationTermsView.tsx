@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/PageHeader";
 import {
   Card,
   CardContent,
@@ -161,26 +162,15 @@ export const OrganizationTermsView: React.FC = () => {
   return (
     <div className="app-page">
       <div className="app-container space-y-4">
-        <Button asChild variant="ghost" size="sm" className="w-fit px-2">
-          <Link to="/akun" className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.7} />
-            Akun
-          </Link>
-        </Button>
-
-        <header className="app-header">
-          <div>
-            <h1 className="app-title">Edit Pengaturan</h1>
-            <p className="app-subtitle">
-              Atur identitas organisasi, tampilan browser, dan istilah yang
-              dipakai di aplikasi.
-            </p>
-          </div>
-        </header>
+        <PageHeader
+          title="Edit Pengaturan"
+          subtitle="Atur identitas organisasi, tampilan browser, dan istilah yang dipakai di aplikasi."
+          backTo="/akun"
+        />
 
         <form className="space-y-4" onSubmit={handleSaveSettings}>
           {showSavedMessage && (
-            <Alert className="border-emerald-200 bg-emerald-50 text-emerald-700">
+            <Alert className="border-success-border bg-success-subtle text-success">
               Pengaturan berhasil disimpan.
             </Alert>
           )}

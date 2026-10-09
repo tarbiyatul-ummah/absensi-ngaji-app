@@ -96,16 +96,16 @@ export const MasterDataSummary: React.FC<MasterDataSummaryProps> = ({
           </div>
 
           {/* Desktop tabs */}
-          <div className="hidden sm:inline-flex w-fit max-w-full justify-self-start rounded-md bg-muted p-1">
+          <div className="hidden sm:inline-flex w-fit max-w-full justify-self-start rounded-xl bg-muted p-1">
             {tabs.map((tab) => (
               <Button
                 key={tab.key}
                 type="button"
                 variant="ghost"
                 size="sm"
-                className={`h-7 px-2.5 text-xs ${
+                className={`h-7 rounded-lg px-2.5 text-xs font-medium ${
                   activeTab === tab.key
-                    ? "bg-background text-foreground shadow-xs hover:bg-background"
+                    ? "bg-card text-foreground shadow-xs hover:bg-card"
                     : "text-muted-foreground hover:bg-transparent hover:text-foreground"
                 }`}
                 onClick={() => setActiveTab(tab.key)}

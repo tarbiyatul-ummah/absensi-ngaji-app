@@ -6,18 +6,25 @@ import type { Transition, Variants } from "motion/react";
  * Designed for fast, snappy interactions (under 300ms) with GPU-accelerated transforms.
  */
 
-// Natural spring for standard UI transitions
+// Natural spring for standard UI transitions (smoothui-animation.md: duration 0.25, bounce 0.1)
 export const springDefault: Transition = {
   type: "spring",
   duration: 0.25,
   bounce: 0.1,
 };
 
-// Snappy spring for micro-interactions (hover, tap, buttons)
+// Smooth spring for pill filters, tabs, and shared layout elements (zero unwanted wobble)
+export const springSmooth: Transition = {
+  type: "spring",
+  duration: 0.25,
+  bounce: 0.05,
+};
+
+// Snappy spring for micro-interactions (hover, tap, buttons) with critical damping
 export const springSnappy: Transition = {
   type: "spring",
   stiffness: 400,
-  damping: 17,
+  damping: 28,
 };
 
 // Smooth cubic bezier ease-out
@@ -95,7 +102,7 @@ export function useSmoothMotion() {
     tapProps: shouldReduceMotion
       ? {}
       : {
-          whileTap: { scale: 0.97 },
+          whileTap: { scale: 0.98 },
           transition: springSnappy,
         },
     cardHoverProps: shouldReduceMotion

@@ -15,6 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import { SavingsAccountFormDialog } from "../components/savings/SavingsAccountFormDialog";
 import { getGuru, getJilid, getSantri } from "../services/masterService";
 import {
@@ -126,35 +128,24 @@ export const SavingsView: React.FC = () => {
       )}
 
       <div className="app-container-wide space-y-5">
-        <Button asChild variant="ghost" size="sm" className="w-fit px-2">
-          <Link to="/dashboard" className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.7} />
-            Dashboard
-          </Link>
-        </Button>
-
-        <header className="app-header">
-          <div>
-            <h1 className="app-title">Tabungan</h1>
-            <p className="app-subtitle">
-              Buat tabungan per semester, lalu buka detail untuk tracking
-              pembayaran.
-            </p>
-          </div>
-          <Button type="button" onClick={() => setIsAddModalOpen(true)}>
-            <HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2} />
-            Tambah Tabungan
-          </Button>
-        </header>
+        <PageHeader
+          title="Tabungan"
+          subtitle="Buat tabungan per semester, lalu buka detail untuk tracking pembayaran."
+          backTo="/dashboard"
+          actions={
+            <Button type="button" onClick={() => setIsAddModalOpen(true)}>
+              <HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2} />
+              Tambah Tabungan
+            </Button>
+          }
+        />
 
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          </div>
+          <LoadingState size="lg" text="Memuat Data" />
         ) : (
           <main className="space-y-5">
-            <Card>
-              <CardHeader>
+            <Card className="gap-0 py-0">
+              <CardHeader className="border-b py-4">
                 <CardTitle>Daftar Tabungan</CardTitle>
                 <CardDescription>
                   Klik tabungan untuk membuka tracking pembayaran.
@@ -166,7 +157,7 @@ export const SavingsView: React.FC = () => {
                     variants={staggerContainerVariants}
                     initial={shouldReduceMotion ? false : "hidden"}
                     animate="visible"
-                    className="divide-y divide-[#F1F2F3]"
+                    className="divide-y divide-border"
                   >
                     {savingsAccounts.map((account) => (
                       <motion.div
@@ -180,7 +171,7 @@ export const SavingsView: React.FC = () => {
                           className="flex w-full flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-accent sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
                               <HugeiconsIcon icon={AddMoneyCircleIcon} size={22} strokeWidth={1.7} />
                             </div>
                             <div>

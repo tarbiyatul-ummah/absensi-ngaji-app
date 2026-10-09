@@ -18,11 +18,9 @@ const AssessmentView = lazy(() => import("./views/AssessmentView"));
 const AccountView = lazy(() => import("./views/AccountView"));
 const OrganizationTermsView = lazy(() => import("./views/OrganizationTermsView"));
 
-const SuspenseFallback = (
-  <div className="flex h-screen w-full items-center justify-center">
-    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-  </div>
-);
+import { LoadingState } from "./components/ui/loading-state";
+
+const SuspenseFallback = <LoadingState size="fullscreen" text="Memuat Data" />;
 
 export const router = createBrowserRouter([
   {

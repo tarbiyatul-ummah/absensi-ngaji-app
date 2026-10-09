@@ -48,12 +48,12 @@ export const AbsensiList: React.FC<AbsensiListProps> = ({
 
     if (status === "present") {
       return isActive
-        ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] shadow-sm"
+        ? "border-success-border bg-success-subtle text-success shadow-2xs font-semibold"
         : "border-border bg-background text-foreground hover:bg-accent";
     }
 
     return isActive
-      ? "border-[hsl(48_76%_78%)] bg-[hsl(48_96%_89%)] text-[hsl(32_95%_35%)] shadow-sm"
+      ? "border-warning-border bg-warning-subtle text-warning shadow-2xs font-semibold"
       : "border-border bg-background text-foreground hover:bg-accent";
   };
 
@@ -97,7 +97,7 @@ export const AbsensiList: React.FC<AbsensiListProps> = ({
                   whileTap={
                     shouldReduceMotion || saving
                       ? undefined
-                      : { scale: 0.94 }
+                      : { scale: 0.98 }
                   }
                   transition={springSnappy}
                   className={`inline-flex items-center justify-center rounded-lg border h-9 px-3 text-[13px] font-semibold transition-colors disabled:cursor-wait ${getButtonClass(
@@ -115,7 +115,7 @@ export const AbsensiList: React.FC<AbsensiListProps> = ({
                   whileTap={
                     shouldReduceMotion || saving
                       ? undefined
-                      : { scale: 0.94 }
+                      : { scale: 0.98 }
                   }
                   transition={springSnappy}
                   className={`inline-flex items-center justify-center rounded-lg border h-9 px-3 text-[13px] font-semibold transition-colors disabled:cursor-wait ${getButtonClass(

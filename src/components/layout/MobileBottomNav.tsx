@@ -74,7 +74,7 @@ export const MobileBottomNav: React.FC = () => {
             >
               <motion.div
                 className="flex flex-col items-center justify-center gap-1 w-full"
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.94 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
               >
                 <span className="relative flex h-8 w-8 items-center justify-center rounded-lg">
                   {active && (

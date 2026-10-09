@@ -37,6 +37,8 @@ import DailyAttendanceChart, {
   type TrackedDayOption,
 } from "@/components/dashboard/DailyAttendanceChart";
 import Toast from "@/components/master/Toast";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import {
   type AcademicPeriodType,
   type AcademicSemester,
@@ -426,20 +428,13 @@ export const DashboardView: React.FC = () => {
         onClose={() => setShowToast(false)}
       />
 
-      <header className="app-container app-header pb-4">
-        <div>
-          <h1 className="app-title">Dashboard Rekap</h1>
-          <p className="app-subtitle">
-            Ringkasan data {terms.studentSingularLower} aktif dan kehadiran per
-            periode
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        title="Dashboard Rekap"
+        subtitle={`Ringkasan data ${terms.studentSingularLower} aktif dan kehadiran per periode`}
+      />
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
+        <LoadingState size="lg" text="Memuat Data" />
       ) : (
         <div className="app-container space-y-6">
           <Card className="gap-0 py-0">
@@ -509,14 +504,14 @@ export const DashboardView: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="inline-flex h-9 w-fit max-w-full shrink-0 items-center overflow-x-auto rounded-md bg-muted p-1">
+                <div className="inline-flex h-9 w-fit max-w-full shrink-0 items-center overflow-x-auto rounded-xl bg-muted p-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`h-7 px-3 ${
+                    className={`h-7 rounded-lg px-3 text-xs ${
                       selectedPeriodType === "academicYear"
-                        ? "bg-background text-foreground shadow-xs hover:bg-background"
+                        ? "bg-card text-foreground shadow-xs hover:bg-card font-medium"
                         : "text-muted-foreground hover:bg-transparent hover:text-foreground"
                     }`}
                     onClick={() => setSelectedPeriodType("academicYear")}
@@ -527,9 +522,9 @@ export const DashboardView: React.FC = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`h-7 px-3 ${
+                    className={`h-7 rounded-lg px-3 text-xs ${
                       selectedPeriodType === "semester"
-                        ? "bg-background text-foreground shadow-xs hover:bg-background"
+                        ? "bg-card text-foreground shadow-xs hover:bg-card font-medium"
                         : "text-muted-foreground hover:bg-transparent hover:text-foreground"
                     }`}
                     onClick={() => setSelectedPeriodType("semester")}
@@ -540,9 +535,9 @@ export const DashboardView: React.FC = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`h-7 px-3 ${
+                    className={`h-7 rounded-lg px-3 text-xs ${
                       selectedPeriodType === "month"
-                        ? "bg-background text-foreground shadow-xs hover:bg-background"
+                        ? "bg-card text-foreground shadow-xs hover:bg-card font-medium"
                         : "text-muted-foreground hover:bg-transparent hover:text-foreground"
                     }`}
                     onClick={() => setSelectedPeriodType("month")}
@@ -620,8 +615,8 @@ export const DashboardView: React.FC = () => {
           </Card>
 
           {isAttendanceLoading && (
-            <div className="rounded-xl border border-border bg-card px-4 py-3 text-center text-[13px] text-muted-foreground shadow-xs">
-              Memuat data ranking periode...
+            <div className="rounded-xl border border-border bg-card px-4 py-3 text-center shadow-xs">
+              <LoadingState size="sm" text="Memuat Data" className="py-0" />
             </div>
           )}
 

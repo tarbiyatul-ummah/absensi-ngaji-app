@@ -83,7 +83,7 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
 
       <CardContent className="p-4">
         <details className="relative mb-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-md border bg-background px-3 py-2.5 text-[13px] font-medium text-foreground marker:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs font-medium text-foreground shadow-2xs transition hover:bg-accent/50 marker:hidden">
             <span>Hari yang di-track</span>
             <span className="truncate text-right text-xs font-semibold text-foreground">
               {selectedDaySummary}
@@ -91,21 +91,21 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
           </summary>
 
           <div
-            className="absolute left-0 right-0 z-20 mt-2 grid grid-cols-2 gap-2 rounded-md border bg-popover p-2 shadow-lg sm:grid-cols-4"
+            className="absolute left-0 right-0 z-20 mt-2 grid grid-cols-2 gap-2 rounded-xl border border-border bg-card p-2 shadow-xl sm:grid-cols-4"
             aria-label="Hari yang di-track pada grafik"
           >
             {trackedDayOptions.map((day) => (
               <label
                 key={day.value}
-                className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-[13px] font-medium transition-colors hover:bg-accent ${
+                className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors hover:bg-accent/80 ${
                   isTrackedDaySelected(day.value)
-                    ? "bg-secondary text-foreground"
+                    ? "bg-secondary text-foreground font-semibold"
                     : "text-muted-foreground"
                 }`}
               >
                 <input
                   type="checkbox"
-                  className="h-4 w-4 shrink-0 accent-primary"
+                  className="h-4 w-4 shrink-0 rounded accent-primary"
                   checked={isTrackedDaySelected(day.value)}
                   onChange={() => {}}
                   onClick={(e) => handleTrackedDayClick(e, day.value)}
@@ -116,7 +116,7 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
           </div>
         </details>
 
-        <div className="flex h-56 items-end gap-2 rounded-md border bg-muted px-3 pt-4 pb-3">
+        <div className="flex h-56 items-end gap-2 rounded-xl border border-border bg-muted/50 px-3 pt-4 pb-3">
           {items.map((item) => (
             <div
               key={item.date}
@@ -130,11 +130,11 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
               </div>
 
               <div
-                className="flex h-32 w-full max-w-9 items-end rounded bg-secondary"
+                className="flex h-32 w-full max-w-9 items-end rounded-t-lg bg-secondary/80 overflow-hidden"
                 aria-label={`${item.label}: ${item.count} ${terms.studentSingularLower} hadir`}
               >
                 <div
-                  className="w-full rounded bg-primary transition-all duration-300"
+                  className="w-full rounded-t-md bg-primary transition-all duration-300"
                   style={{ height: barHeight(item.count) }}
                 />
               </div>

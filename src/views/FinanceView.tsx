@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
+import { LoadingState } from "@/components/ui/loading-state";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -539,9 +541,7 @@ export const FinanceView: React.FC = () => {
       </header>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-        </div>
+        <LoadingState size="lg" text="Memuat Data" />
       ) : (
         <main className="app-container-wide space-y-5 pb-28">
           <Card className="grid grid-cols-1 sm:grid-cols-3">
@@ -549,7 +549,7 @@ export const FinanceView: React.FC = () => {
               <p className="text-xs leading-snug text-muted-foreground">
                 Sudah bayar bulan ini
               </p>
-              <p className="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]">
+              <p className="mt-0.5 text-2xl font-bold leading-tight text-success">
                 {paidThisMonthCount}
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -560,7 +560,7 @@ export const FinanceView: React.FC = () => {
               <p className="text-xs leading-snug text-muted-foreground">
                 Belum bayar bulan ini
               </p>
-              <p className="mt-0.5 text-2xl font-bold leading-tight text-destructive">
+              <p className="mt-0.5 text-2xl font-bold leading-tight text-danger">
                 {unpaidThisMonthCount}
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -606,19 +606,18 @@ export const FinanceView: React.FC = () => {
                 </Select>
               </div>
               <div>
-                <Label> Cari {terms.studentSingularTitle} </Label>
-                <Input
+                <Label className="mb-1.5 block text-xs">Cari {terms.studentSingularTitle}</Label>
+                <SearchInput
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  type="search"
+                  onChange={setSearchQuery}
                   placeholder={`Cari nama, ${terms.levelSingularLower}, atau ${terms.mentorSingularLower}...`}
                 />
               </div>
             </div>
 
             {isPaymentLoading && (
-              <div className="border-b px-4 py-3 text-[13px] text-muted-foreground">
-                Memuat pembayaran tahun ajaran...
+              <div className="border-b px-4 py-3 text-center">
+                <LoadingState size="sm" text="Memuat Data" className="py-0" />
               </div>
             )}
 
@@ -686,14 +685,14 @@ export const FinanceView: React.FC = () => {
                           whileTap={
                             shouldReduceMotion || isItemSaving
                               ? undefined
-                              : { scale: 0.94 }
+                              : { scale: 0.98 }
                           }
                           transition={springSnappy}
                           onClick={() => togglePayment(santri, month.value)}
                           disabled={isItemSaving}
                           className={`flex h-12 flex-col items-center justify-center rounded-md border text-[11px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 cursor-pointer ${
                             paid
-                              ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] shadow-sm"
+                              ? "border-success-border bg-success-subtle text-success shadow-2xs"
                               : "border-border bg-background text-muted-foreground active:bg-accent"
                           }`}
                         >
@@ -800,7 +799,7 @@ export const FinanceView: React.FC = () => {
                               disabled={isItemSaving}
                               className={`mx-auto flex h-8 w-8 items-center justify-center rounded-md border text-[12px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 cursor-pointer ${
                                 paid
-                                  ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] shadow-sm"
+                                  ? "border-success-border bg-success-subtle text-success shadow-2xs"
                                   : "border-border bg-background text-muted-foreground hover:bg-accent"
                               }`}
                               aria-label={`${santri.nama} ${month.label}`}
@@ -917,24 +916,15 @@ export const FinanceView: React.FC = () => {
                         </span>
                         <span className="col-span-3 text-center">
                           {disabledByEntry ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] text-muted-foreground bg-muted/40 font-normal"
-                            >
+                            <Badge variant="neutral">
                               Belum Masuk
                             </Badge>
                           ) : paid ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] border-[hsl(142_42%_82%)] font-medium shadow-none hover:bg-[hsl(142_76%_94%)]"
-                            >
+                            <Badge variant="success">
                               Lunas
                             </Badge>
                           ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] bg-rose-50 text-rose-700 border-rose-200/80 font-medium shadow-none hover:bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/60"
-                            >
+                            <Badge variant="danger">
                               Belum Bayar
                             </Badge>
                           )}
@@ -961,13 +951,13 @@ export const FinanceView: React.FC = () => {
                 </span>
                 <span>
                   Sudah Bayar:{" "}
-                  <strong className="text-[hsl(142_72%_29%)]">
+                  <strong className="text-success">
                     {getPaidCount(selectedSantriDetail.id)}
                   </strong>
                 </span>
                 <span>
                   Sisa Tagihan:{" "}
-                  <strong className="text-destructive">
+                  <strong className="text-danger">
                     {Math.max(
                       0,
                       getApplicableMonths(selectedSantriDetail).length -

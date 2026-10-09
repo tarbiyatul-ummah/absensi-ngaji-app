@@ -47,25 +47,11 @@ export const StatisticListCard: React.FC<StatisticListCardProps> = ({
           >
             <span className="text-sm text-foreground font-medium">{stat.nama}</span>
             <Badge
-              variant="outline"
-              className={`text-sm font-bold ${
-                badgeColor === "green"
-                  ? "bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] border-[hsl(142_42%_82%)]"
-                  : badgeColor === "red"
-                    ? "bg-[hsl(0_86%_97%)] text-destructive border-[hsl(0_75%_88%)]"
-                    : "bg-secondary text-secondary-foreground"
-              }`}
+              variant={badgeColor === "green" ? "success" : badgeColor === "red" ? "danger" : "neutral"}
+              className="text-xs font-semibold px-2.5 py-0.5"
             >
-              {stat.count}{" "}
-              <span
-                className={`text-[12px] font-normal ml-1 ${
-                  badgeColor === "green"
-                    ? "text-[hsl(142_72%_29%)]"
-                    : badgeColor === "red"
-                      ? "text-destructive"
-                      : "text-muted-foreground"
-                }`}
-              >
+              {stat.count}
+              <span className="opacity-80 ml-1 font-normal">
                 {unit || "Anak"}
               </span>
             </Badge>

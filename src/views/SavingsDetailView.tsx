@@ -19,6 +19,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import { ConfirmModal } from "../components/master/ConfirmModal";
 import { SavingsAccountFormDialog } from "../components/savings/SavingsAccountFormDialog";
 import { Toast } from "../components/master/Toast";
@@ -372,80 +374,69 @@ export const SavingsDetailView: React.FC = () => {
       )}
 
       <div className="app-container-wide space-y-5">
-        <Button asChild variant="ghost" size="sm" className="w-fit px-2">
-          <Link to="/tabungan" className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.7} />
-            Tabungan
-          </Link>
-        </Button>
-
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          </div>
+          <LoadingState size="lg" text="Memuat Data" />
         ) : account ? (
           <main className="space-y-5">
-            <header className="app-header">
-              <div>
-                <h1 className="app-title">{account.name}</h1>
-                <p className="app-subtitle">
-                  {getAcademicYearLabel(account.academicYearStart)} - Semester{" "}
-                  {semesterLabel(account.semester)}
-                </p>
-              </div>
-              <div ref={actionsMenuRef} className="relative w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-center sm:w-auto"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsActionsMenuOpen((prev) => !prev);
-                  }}
-                >
-                  <MoreVertical
-                    className="h-4 w-4"
-                    strokeWidth={1.8}
-                    aria-hidden="true"
-                  />
-                  Lainnya
-                </Button>
-
-                {isActionsMenuOpen && (
-                  <div
-                    className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-48 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
-                    onClick={(e) => e.stopPropagation()}
+            <PageHeader
+              title={account.name}
+              subtitle={`${getAcademicYearLabel(account.academicYearStart)} • Semester ${semesterLabel(account.semester)}`}
+              backTo="/tabungan"
+              actions={
+                <div ref={actionsMenuRef} className="relative">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsActionsMenuOpen((prev) => !prev);
+                    }}
                   >
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                      onClick={openEditModal}
-                    >
-                      <Pencil
-                        className="h-4 w-4"
-                        strokeWidth={1.8}
-                        aria-hidden="true"
-                      />
-                      Edit Tabungan
-                    </button>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
-                      onClick={openDeleteModal}
-                    >
-                      <Trash2
-                        className="h-4 w-4"
-                        strokeWidth={1.8}
-                        aria-hidden="true"
-                      />
-                      Hapus
-                    </button>
-                  </div>
-                )}
-              </div>
-            </header>
+                    <MoreVertical
+                      className="h-4 w-4"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                    Lainnya
+                  </Button>
 
-            <Card className="grid grid-cols-1 sm:grid-cols-3">
+                  {isActionsMenuOpen && (
+                    <div
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-44 overflow-hidden rounded-xl border border-border bg-card p-1.5 text-card-foreground shadow-xl"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-accent/70 hover:text-foreground"
+                        onClick={openEditModal}
+                      >
+                        <Pencil
+                          className="h-3.5 w-3.5 text-muted-foreground"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
+                        Edit Tabungan
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-danger transition-colors hover:bg-danger-subtle"
+                        onClick={openDeleteModal}
+                      >
+                        <Trash2
+                          className="h-3.5 w-3.5 text-danger"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
+                        Hapus
+                      </button>
+                    </div>
+                  )}
+                </div>
+              }
+            />
+
+            <Card className="grid grid-cols-1 sm:grid-cols-3 gap-0 py-0 overflow-hidden">
               <div className="border-b p-4 sm:border-b-0 sm:border-r">
                 <p className="text-xs leading-snug text-muted-foreground">
                   Terdaftar
@@ -458,10 +449,10 @@ export const SavingsDetailView: React.FC = () => {
                 <p className="text-xs leading-snug text-muted-foreground">
                   Sudah bayar bulan ini
                 </p>
-                <p className="mt-0.5 text-2xl font-bold leading-tight text-[hsl(142_72%_29%)]">
+                <p className="mt-0.5 text-2xl font-bold leading-tight text-success">
                   {paidThisMonthCount}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {{ ...account }.semester ? currentSavingsMonthLabel : ""}
                 </p>
               </div>
@@ -469,17 +460,17 @@ export const SavingsDetailView: React.FC = () => {
                 <p className="text-xs leading-snug text-muted-foreground">
                   Jumlah menunggak
                 </p>
-                <p className="mt-0.5 text-2xl font-bold leading-tight text-foreground">
+                <p className="mt-0.5 text-2xl font-bold leading-tight text-danger">
                   {savingsArrearsCount}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Belum bayar bulan sebelumnya
                 </p>
               </div>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="gap-0 py-0">
+              <CardHeader className="border-b py-4">
                 <CardTitle>Tracking Pembayaran</CardTitle>
                 <CardDescription>
                   Checklist pembayaran tabungan bulanan untuk semester ini.
@@ -487,17 +478,17 @@ export const SavingsDetailView: React.FC = () => {
               </CardHeader>
 
               {isPaymentLoading && (
-                <div className="border-t px-4 py-3 text-[13px] text-muted-foreground">
-                  Memuat pembayaran tabungan...
+                <div className="border-t px-4 py-3 text-center">
+                  <LoadingState size="sm" text="Memuat Data" className="py-0" />
                 </div>
               )}
 
               {/* Mobile list */}
-              <div className="space-y-3 border-t p-4 md:hidden">
+              <div className="space-y-3 p-4 md:hidden">
                 {selectedSavingsSantriList.map((santri) => (
                   <article
                     key={santri.id}
-                    className="rounded-lg border bg-background p-3"
+                    className="rounded-xl border border-border bg-card p-4 shadow-2xs"
                   >
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -533,17 +524,17 @@ export const SavingsDetailView: React.FC = () => {
                             whileTap={
                               shouldReduceMotion || isSavingThis
                                 ? undefined
-                                : { scale: 0.94 }
+                                : { scale: 0.98 }
                             }
                             transition={springSnappy}
                             onClick={() =>
-                              toggleSavingsPayment(santri, month.value)
+                               toggleSavingsPayment(santri, month.value)
                             }
                             disabled={isSavingThis}
-                            className={`flex h-12 flex-col items-center justify-center rounded-md border text-[11px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                            className={`flex h-12 flex-col items-center justify-center rounded-xl border text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
                               paid
-                                ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] shadow-sm"
-                                : "border-border bg-background text-muted-foreground active:bg-accent"
+                                ? "border-success-border bg-success-subtle text-success shadow-2xs"
+                                : "border-border bg-muted/40 text-muted-foreground active:bg-accent/70"
                             }`}
                           >
                             <span>{formatMonthShort(month.label)}</span>
@@ -624,10 +615,10 @@ export const SavingsDetailView: React.FC = () => {
                                   toggleSavingsPayment(santri, month.value)
                                 }
                                 disabled={isSavingThis}
-                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-md border text-[12px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
                                   paid
-                                    ? "border-[hsl(142_42%_82%)] bg-[hsl(142_76%_94%)] text-[hsl(142_72%_29%)] shadow-sm"
-                                    : "border-border bg-background text-muted-foreground hover:bg-accent"
+                                    ? "border-success-border bg-success-subtle text-success shadow-2xs"
+                                    : "border-border bg-card text-muted-foreground hover:bg-accent/70"
                                 }`}
                                 aria-label={`${santri.nama} ${month.label}`}
                               >

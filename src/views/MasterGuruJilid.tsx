@@ -24,11 +24,14 @@ import MasterDataCard, {
 } from "@/components/master/MasterDataCard";
 import ConfirmModal from "@/components/master/ConfirmModal";
 import InputModal from "@/components/master/InputModal";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { LoadingState } from "@/components/ui/loading-state";
 import { useTerms } from "@/config/organization";
 
 export const MasterGuruJilid: React.FC = () => {
   const terms = useTerms();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [jilidList, setJilidList] = useState<Jilid[]>([]);
   const [guruList, setGuruList] = useState<Guru[]>([]);
   const [santriTypeList, setSantriTypeList] = useState<SantriType[]>([]);
@@ -47,14 +50,18 @@ export const MasterGuruJilid: React.FC = () => {
   } | null>(null);
 
   const loadData = useCallback(async () => {
-    const [jRes, gRes, tRes] = await Promise.all([
-      getJilid(),
-      getGuru(),
-      getSantriTypes(),
-    ]);
-    setJilidList(jRes);
-    setGuruList(gRes);
-    setSantriTypeList(tRes);
+    try {
+      const [jRes, gRes, tRes] = await Promise.all([
+        getJilid(),
+        getGuru(),
+        getSantriTypes(),
+      ]);
+      setJilidList(jRes);
+      setGuruList(gRes);
+      setSantriTypeList(tRes);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -150,51 +157,49 @@ export const MasterGuruJilid: React.FC = () => {
 
   return (
     <div className="app-page">
-      <header className="app-container flex items-center gap-3 pb-4">
-        <Button asChild variant="ghost" size="icon">
-          <Link to="/master">
-            <HugeiconsIcon
-              icon={ArrowLeft02Icon}
-              size={20}
-              color="currentColor"
-              strokeWidth={2}
-            />
-          </Link>
-        </Button>
-        <h1 className="app-title">Kelola Master Data</h1>
-      </header>
-
-      <div className="app-container space-y-6">
-        <MasterDataCard
-          title={`Data ${terms.levelSingularTitle}`}
-          placeholder={`Masukkan nama ${terms.levelSingularLower} baru`}
-          items={jilidList}
-          isSortable={true}
-          onAdd={handleAddJilid}
-          onEdit={(item) => openEditModal("jilid", item)}
-          onDelete={(id) => openDeleteModal("jilid", id)}
-          onMoveUp={handleMoveUpJilid}
-          onMoveDown={handleMoveDownJilid}
-        />
-
-        <MasterDataCard
-          title={`Data ${terms.mentorSingularTitle}`}
-          placeholder={`Masukkan nama ${terms.mentorSingularLower} baru`}
-          items={guruList}
-          onAdd={handleAddGuru}
-          onEdit={(item) => openEditModal("guru", item)}
-          onDelete={(id) => openDeleteModal("guru", id)}
-        />
-
-        <MasterDataCard
-          title={`Data Tipe ${terms.studentSingularTitle}`}
-          placeholder="Contoh: Reguler, Akselerasi, Tahfidz"
-          items={santriTypeList}
-          onAdd={handleAddSantriType}
-          onEdit={(item) => openEditModal("santriType", item)}
-          onDelete={(id) => openDeleteModal("santriType", id)}
+      <div className="app-container">
+        <PageHeader
+          title="Kelola Master Data"
+          subtitle={`Atur data referensi ${terms.levelSingularLower}, ${terms.mentorSingularLower}, dan tipe ${terms.studentSingularLower}`}
+          backTo="/master"
         />
       </div>
+
+      {isLoading ? (
+        <LoadingState size="lg" text="Memuat Data" />
+      ) : (
+        <div className="app-container space-y-6">
+          <MasterDataCard
+            title={`Data ${terms.levelSingularTitle}`}
+            placeholder={`Masukkan nama ${terms.levelSingularLower} baru`}
+            items={jilidList}
+            isSortable={true}
+            onAdd={handleAddJilid}
+            onEdit={(item) => openEditModal("jilid", item)}
+            onDelete={(id) => openDeleteModal("jilid", id)}
+            onMoveUp={handleMoveUpJilid}
+            onMoveDown={handleMoveDownJilid}
+          />
+
+          <MasterDataCard
+            title={`Data ${terms.mentorSingularTitle}`}
+            placeholder={`Masukkan nama ${terms.mentorSingularLower} baru`}
+            items={guruList}
+            onAdd={handleAddGuru}
+            onEdit={(item) => openEditModal("guru", item)}
+            onDelete={(id) => openDeleteModal("guru", id)}
+          />
+
+          <MasterDataCard
+            title={`Data Tipe ${terms.studentSingularTitle}`}
+            placeholder="Contoh: Reguler, Akselerasi, Tahfidz"
+            items={santriTypeList}
+            onAdd={handleAddSantriType}
+            onEdit={(item) => openEditModal("santriType", item)}
+            onDelete={(id) => openDeleteModal("santriType", id)}
+          />
+        </div>
+      )}
 
       <InputModal
         isOpen={isEditModalOpen}

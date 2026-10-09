@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import type { Guru, Jilid, Santri, SantriType } from "@/types";
 import PaginationControls from "../common/PaginationControls";
 import { useTerms } from "@/config/organization";
-import { useSmoothMotion, springSnappy } from "@/lib/motion";
+import { useSmoothMotion, springSnappy, springSmooth } from "@/lib/motion";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { SearchInput } from "@/components/ui/search-input";
 
 export interface SantriListProps {
   santriList: Santri[];
@@ -204,7 +205,7 @@ export const SantriList: React.FC<SantriListProps> = ({
               <motion.div
                 layoutId="santri-status-filter"
                 className="absolute inset-0 bg-background rounded-md shadow-xs -z-10"
-                transition={springSnappy}
+                transition={springSmooth}
               />
             )}
             Aktif ({activeSantriCount})
@@ -222,19 +223,17 @@ export const SantriList: React.FC<SantriListProps> = ({
               <motion.div
                 layoutId="santri-status-filter"
                 className="absolute inset-0 bg-background rounded-md shadow-xs -z-10"
-                transition={springSnappy}
+                transition={springSmooth}
               />
             )}
             Non Aktif ({inactiveSantriCount})
           </button>
         </div>
 
-        <input
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          type="search"
+          onChange={handleSearchChange}
           placeholder={`Cari nama ${terms.studentSingularLower}, ${terms.mentorSingularLower}, atau ${terms.levelSingularLower}...`}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-[14px] text-foreground outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
         />
       </div>
 
