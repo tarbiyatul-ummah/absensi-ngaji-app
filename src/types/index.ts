@@ -22,6 +22,8 @@ export interface Santri {
   guruId: string;
   tipeId?: string;
   tanggalLahir?: string; // Format: YYYY-MM-DD
+  tanggalMasuk?: string; // Format: YYYY-MM-DD (Tanggal masuk/terdaftar)
+  tanggalKeluar?: string; // Format: YYYY-MM-DD (Tanggal dinonaktifkan/keluar)
   isActive: boolean;
   createdAt: number;
 }

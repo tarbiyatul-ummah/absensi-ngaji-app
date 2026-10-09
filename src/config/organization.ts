@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { useSyncExternalStore } from "react";
 import {
   AccountSetting02Icon,
   AddMoneyCircleIcon,
@@ -86,7 +86,7 @@ const normalizeConfig = (
   };
 };
 
-const readStoredConfig = () => {
+const readStoredConfig = (): OrganizationConfig => {
   if (typeof window === "undefined") return cloneConfig(defaultOrganizationConfig);
 
   const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -100,26 +100,79 @@ const readStoredConfig = () => {
   }
 };
 
-export const organizationConfig = reactive<OrganizationConfig>(
-  readStoredConfig(),
-);
+let currentConfig: OrganizationConfig = readStoredConfig();
+const listeners = new Set<() => void>();
 
-export const terms = organizationConfig.terms;
+export const getOrganizationConfig = (): OrganizationConfig => currentConfig;
+
+export const subscribeOrganizationConfig = (callback: () => void): (() => void) => {
+  listeners.add(callback);
+  return () => {
+    listeners.delete(callback);
+  };
+};
+
+export const useOrganizationConfig = (): OrganizationConfig => {
+  return useSyncExternalStore(subscribeOrganizationConfig, getOrganizationConfig, () => defaultOrganizationConfig);
+};
+
+export const useTerms = (): OrganizationTerms => {
+  const config = useOrganizationConfig();
+  return config.terms;
+};
+
+export const organizationConfig = {
+  get name() {
+    return currentConfig.name;
+  },
+  get typeLabel() {
+    return currentConfig.typeLabel;
+  },
+  get appTitle() {
+    return currentConfig.appTitle;
+  },
+  get faviconUrl() {
+    return currentConfig.faviconUrl;
+  },
+  get terms() {
+    return currentConfig.terms;
+  },
+};
+
+export const terms = {
+  get studentSingularLower() {
+    return currentConfig.terms.studentSingularLower;
+  },
+  get studentSingularTitle() {
+    return currentConfig.terms.studentSingularTitle;
+  },
+  get mentorSingularLower() {
+    return currentConfig.terms.mentorSingularLower;
+  },
+  get mentorSingularTitle() {
+    return currentConfig.terms.mentorSingularTitle;
+  },
+  get levelSingularLower() {
+    return currentConfig.terms.levelSingularLower;
+  },
+  get levelSingularTitle() {
+    return currentConfig.terms.levelSingularTitle;
+  },
+  get paymentLabel() {
+    return currentConfig.terms.paymentLabel;
+  },
+};
 
 const writeStoredConfig = (config: OrganizationConfig) => {
   if (typeof window === "undefined") return;
-
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 };
 
 const applyOrganizationConfig = (nextConfig: OrganizationConfig) => {
-  organizationConfig.name = nextConfig.name;
-  organizationConfig.typeLabel = nextConfig.typeLabel;
-  organizationConfig.appTitle = nextConfig.appTitle;
-  organizationConfig.faviconUrl = nextConfig.faviconUrl;
-  Object.assign(organizationConfig.terms, nextConfig.terms);
+  currentConfig = nextConfig;
   writeStoredConfig(nextConfig);
   applyOrganizationMetadata();
+  listeners.forEach((listener) => listener());
 };
 
 const saveOrganizationConfigToCloud = async (nextConfig: OrganizationConfig) => {
@@ -157,7 +210,7 @@ export const loadOrganizationConfigFromCloud = async () => {
     return;
   }
 
-  await saveOrganizationConfigToCloud(normalizeConfig(organizationConfig));
+  await saveOrganizationConfigToCloud(normalizeConfig(currentConfig));
 };
 
 export const saveOrganizationConfig = async (nextConfig: OrganizationConfig) => {
@@ -174,10 +227,10 @@ export const applyOrganizationMetadata = () => {
   if (typeof document === "undefined") return;
 
   document.title =
-    organizationConfig.appTitle.trim() || defaultOrganizationConfig.appTitle;
+    currentConfig.appTitle.trim() || defaultOrganizationConfig.appTitle;
 
   const faviconUrl =
-    organizationConfig.faviconUrl.trim() || defaultOrganizationConfig.faviconUrl;
+    currentConfig.faviconUrl.trim() || defaultOrganizationConfig.faviconUrl;
   const iconType = faviconUrl.startsWith("data:image/png")
     ? "image/png"
     : faviconUrl.startsWith("data:image/jpeg")
@@ -199,6 +252,37 @@ export const applyOrganizationMetadata = () => {
   favicon.href = faviconUrl;
 };
 
+export const getMainNavigationItems = (t: OrganizationTerms = currentConfig.terms) => [
+  {
+    key: "attendance",
+    label: "Absensi",
+    to: "/",
+    icon: CheckListIcon,
+    enabled: true,
+  },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    to: "/dashboard",
+    icon: DashboardSquare01Icon,
+    enabled: true,
+  },
+  {
+    key: "student",
+    label: t.studentSingularTitle,
+    to: "/master",
+    icon: DatabaseIcon,
+    enabled: true,
+  },
+  {
+    key: "account",
+    label: "Akun",
+    to: "/akun",
+    icon: AccountSetting02Icon,
+    enabled: true,
+  },
+];
+
 export const mainNavigationItems = [
   {
     key: "attendance",
@@ -217,7 +301,7 @@ export const mainNavigationItems = [
   {
     key: "student",
     get label() {
-      return terms.studentSingularTitle;
+      return currentConfig.terms.studentSingularTitle;
     },
     to: "/master",
     icon: DatabaseIcon,
@@ -232,14 +316,44 @@ export const mainNavigationItems = [
   },
 ];
 
+export const getDashboardMenuItems = (t: OrganizationTerms = currentConfig.terms) => [
+  {
+    key: "payment",
+    label: t.paymentLabel,
+    description: `Tagihan dan pembayaran ${t.studentSingularLower}`,
+    to: "/keuangan",
+    icon: Wallet01Icon,
+    tone: "green",
+    enabled: true,
+  },
+  {
+    key: "savings",
+    label: "Tabungan",
+    description: `Saldo, setoran, dan penarikan ${t.studentSingularLower}`,
+    to: "/tabungan",
+    icon: AddMoneyCircleIcon,
+    tone: "blue",
+    enabled: true,
+  },
+  {
+    key: "assessment",
+    label: "Penilaian",
+    description: `Catatan perkembangan ${t.studentSingularLower}`,
+    to: "/penilaian",
+    icon: ChartEvaluationIcon,
+    tone: "amber",
+    enabled: true,
+  },
+];
+
 export const dashboardMenuItems = [
   {
     key: "payment",
     get label() {
-      return terms.paymentLabel;
+      return currentConfig.terms.paymentLabel;
     },
     get description() {
-      return `Tagihan dan pembayaran ${terms.studentSingularLower}`;
+      return `Tagihan dan pembayaran ${currentConfig.terms.studentSingularLower}`;
     },
     to: "/keuangan",
     icon: Wallet01Icon,
@@ -250,7 +364,7 @@ export const dashboardMenuItems = [
     key: "savings",
     label: "Tabungan",
     get description() {
-      return `Saldo, setoran, dan penarikan ${terms.studentSingularLower}`;
+      return `Saldo, setoran, dan penarikan ${currentConfig.terms.studentSingularLower}`;
     },
     to: "/tabungan",
     icon: AddMoneyCircleIcon,
@@ -261,7 +375,7 @@ export const dashboardMenuItems = [
     key: "assessment",
     label: "Penilaian",
     get description() {
-      return `Catatan perkembangan ${terms.studentSingularLower}`;
+      return `Catatan perkembangan ${currentConfig.terms.studentSingularLower}`;
     },
     to: "/penilaian",
     icon: ChartEvaluationIcon,

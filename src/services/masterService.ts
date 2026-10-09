@@ -36,6 +36,12 @@ const mapStudent = (row: any): Santri => ({
   guruId: row.guru_id,
   tipeId: row.tipe_id ?? undefined,
   tanggalLahir: row.tanggal_lahir ?? undefined,
+  tanggalMasuk:
+    row.tanggal_masuk ??
+    (row.created_at
+      ? new Date(row.created_at).toISOString().slice(0, 10)
+      : undefined),
+  tanggalKeluar: row.tanggal_keluar ?? undefined,
   isActive: row.is_active,
   createdAt: row.created_at,
 });
@@ -83,9 +89,7 @@ export const getSantri = async () => {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from(TABLES.students)
-    .select(
-      "id,nama,jilid_id,guru_id,tipe_id,tanggal_lahir,is_active,created_at",
-    )
+    .select("*")
     .eq("user_id", userId);
 
   throwIfError(error);
@@ -98,6 +102,8 @@ export interface SantriBulkItem {
   guruId: string;
   tipeId?: string;
   tanggalLahir?: string;
+  tanggalMasuk?: string;
+  tanggalKeluar?: string;
   isActive?: boolean;
 }
 
@@ -107,9 +113,12 @@ export const addSantriBulk = async (
   guruId: string,
   tipeId?: string,
   tanggalLahir?: string,
+  tanggalMasuk?: string,
 ) => {
   const userId = await getCurrentUserId();
   const createdAt = Date.now();
+  const defaultTanggalMasuk =
+    tanggalMasuk || new Date().toISOString().slice(0, 10);
   const rows = namaInput
     .split(",")
     .map((n) => n.trim())
@@ -121,6 +130,8 @@ export const addSantriBulk = async (
       guru_id: guruId,
       tipe_id: tipeId || null,
       tanggal_lahir: tanggalLahir || null,
+      tanggal_masuk: defaultTanggalMasuk,
+      tanggal_keluar: null,
       is_active: true,
       created_at: createdAt,
     }));
@@ -128,12 +139,28 @@ export const addSantriBulk = async (
   if (rows.length === 0) return;
 
   const { error } = await supabase.from(TABLES.students).insert(rows);
-  throwIfError(error);
+  if (error) {
+    if (
+      error.message.includes("tanggal_masuk") ||
+      error.message.includes("tanggal_keluar")
+    ) {
+      const fallbackRows = rows.map(
+        ({ tanggal_masuk, tanggal_keluar, ...rest }) => rest,
+      );
+      const fallback = await supabase
+        .from(TABLES.students)
+        .insert(fallbackRows);
+      throwIfError(fallback.error);
+      return;
+    }
+    throwIfError(error);
+  }
 };
 
 export const addSantriItems = async (items: SantriBulkItem[]) => {
   const userId = await getCurrentUserId();
   const createdAt = Date.now();
+  const todayStr = new Date().toISOString().slice(0, 10);
   const rows = items.map((item) => ({
     user_id: userId,
     nama: item.nama,
@@ -141,6 +168,8 @@ export const addSantriItems = async (items: SantriBulkItem[]) => {
     guru_id: item.guruId,
     tipe_id: item.tipeId || null,
     tanggal_lahir: item.tanggalLahir || null,
+    tanggal_masuk: item.tanggalMasuk || todayStr,
+    tanggal_keluar: item.tanggalKeluar || null,
     is_active: item.isActive ?? true,
     created_at: createdAt,
   }));
@@ -148,7 +177,22 @@ export const addSantriItems = async (items: SantriBulkItem[]) => {
   if (rows.length === 0) return;
 
   const { error } = await supabase.from(TABLES.students).insert(rows);
-  throwIfError(error);
+  if (error) {
+    if (
+      error.message.includes("tanggal_masuk") ||
+      error.message.includes("tanggal_keluar")
+    ) {
+      const fallbackRows = rows.map(
+        ({ tanggal_masuk, tanggal_keluar, ...rest }) => rest,
+      );
+      const fallback = await supabase
+        .from(TABLES.students)
+        .insert(fallbackRows);
+      throwIfError(fallback.error);
+      return;
+    }
+    throwIfError(error);
+  }
 };
 
 export const updateSantri = async (id: string, data: Partial<Santri>) => {
@@ -162,6 +206,12 @@ export const updateSantri = async (id: string, data: Partial<Santri>) => {
   if ("tanggalLahir" in data) {
     payload.tanggal_lahir = data.tanggalLahir || null;
   }
+  if ("tanggalMasuk" in data) {
+    payload.tanggal_masuk = data.tanggalMasuk || null;
+  }
+  if ("tanggalKeluar" in data) {
+    payload.tanggal_keluar = data.tanggalKeluar || null;
+  }
   if ("isActive" in data) payload.is_active = data.isActive;
 
   const { error } = await supabase
@@ -170,11 +220,40 @@ export const updateSantri = async (id: string, data: Partial<Santri>) => {
     .eq("id", id)
     .eq("user_id", userId);
 
-  throwIfError(error);
+  if (error) {
+    if (
+      error.message.includes("tanggal_masuk") ||
+      error.message.includes("tanggal_keluar")
+    ) {
+      delete payload.tanggal_masuk;
+      delete payload.tanggal_keluar;
+      const retry = await supabase
+        .from(TABLES.students)
+        .update(payload)
+        .eq("id", id)
+        .eq("user_id", userId);
+      throwIfError(retry.error);
+      return;
+    }
+    throwIfError(error);
+  }
 };
 
-export const deleteSantri = async (id: string) => {
+export const softDeleteSantri = async (id: string) => {
+  const today = new Date().toISOString().slice(0, 10);
+  await updateSantri(id, {
+    isActive: false,
+    tanggalKeluar: today,
+  });
+};
+
+export const deleteSantri = async (id: string, permanent: boolean = false) => {
   const userId = await getCurrentUserId();
+  if (!permanent) {
+    await softDeleteSantri(id);
+    return;
+  }
+
   const { error } = await supabase
     .from(TABLES.students)
     .delete()

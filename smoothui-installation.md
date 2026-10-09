@@ -1,0 +1,80 @@
+# Installation (/docs/guides/installation)
+
+<FeatureCard title="Framework Integration Guides" variant="info">
+  SmoothUI works with any React-compatible framework. Check out the dedicated setup guides:
+
+- **[Vite + React](/docs/guides/vite)** — The simplest setup for client-side React apps
+- **[Astro](/docs/guides/astro)** — Islands architecture with selective hydration
+- **[Remix](/docs/guides/remix)** — Full-stack SSR with React Router v7
+- **[TanStack Start](/docs/guides/tanstack-start)** — Type-safe full-stack with streaming SSR
+  </FeatureCard>
+
+## Installation (SmoothUI CLI) [#installation-smoothui-cli]
+
+<BodyText>
+  The SmoothUI CLI provides an interactive way to browse and install components with automatic dependency resolution.
+</BodyText>
+
+### Add Components [#add-components]
+
+<PackageManagerTabs pnpm="pnpm dlx smoothui-cli@latest add siri-orb" npm="npx smoothui-cli@latest add siri-orb" yarn="yarn dlx smoothui-cli@latest add siri-orb" bun="bunx smoothui-cli@latest add siri-orb" />
+
+### Add Multiple Components [#add-multiple-components]
+
+<PackageManagerTabs pnpm="pnpm dlx smoothui-cli@latest add siri-orb rich-popover animated-input" npm="npx smoothui-cli@latest add siri-orb rich-popover animated-input" yarn="yarn dlx smoothui-cli@latest add siri-orb rich-popover animated-input" bun="bunx smoothui-cli@latest add siri-orb rich-popover animated-input" />
+
+### Interactive Mode [#interactive-mode]
+
+<PackageManagerTabs pnpm="pnpm dlx smoothui-cli@latest add" npm="npx smoothui-cli@latest add" yarn="yarn dlx smoothui-cli@latest add" bun="bunx smoothui-cli@latest add" />
+
+### List Available Components [#list-available-components]
+
+<PackageManagerTabs pnpm="pnpm dlx smoothui-cli@latest list" npm="npx smoothui-cli@latest list" yarn="yarn dlx smoothui-cli@latest list" bun="bunx smoothui-cli@latest list" />
+
+<FeatureCard title="Interactive Mode" variant="info">
+  Run the add command without arguments to launch an interactive picker. Search and browse components by category, then select multiple components to install at once.
+</FeatureCard>
+
+---
+
+## Installation (shadcn Registry) [#installation-shadcn-registry]
+
+<BodyText>
+  SmoothUI is an official shadcn registry, so you can install components directly without any configuration. Just use the `@smoothui{:js}` namespace.
+</BodyText>
+
+<FeatureCard title="No Configuration Required" variant="info">
+  Since SmoothUI is an official registry, you don't need to add anything to your `components.json{:js}` file. Just install components directly!
+</FeatureCard>
+
+### Install Components [#install-components]
+
+<BodyText>
+  Install SmoothUI components using the shadcn CLI with the `@smoothui{:js}` namespace:
+</BodyText>
+
+<PackageManagerTabs pnpm="pnpm dlx shadcn@latest add @smoothui/siri-orb" npm="npx shadcn@latest add @smoothui/siri-orb" yarn="yarn dlx shadcn@latest add @smoothui/siri-orb" bun="bunx shadcn@latest add @smoothui/siri-orb" />
+
+### Install Multiple Components [#install-multiple-components]
+
+<PackageManagerTabs pnpm="pnpm dlx shadcn@latest add @smoothui/rich-popover @smoothui/animated-input" npm="npx shadcn@latest add @smoothui/rich-popover @smoothui/animated-input" yarn="yarn dlx shadcn@latest add @smoothui/rich-popover @smoothui/animated-input" bun="bunx shadcn@latest add @smoothui/rich-popover @smoothui/animated-input" />
+
+### Use Components [#use-components]
+
+<BodyText>
+  Import and use the installed components in your React application:
+</BodyText>
+
+```tsx
+import { SiriOrb } from "@/components/smoothui/ui/SiriOrb";
+import { RichPopover } from "@/components/smoothui/ui/RichPopover";
+
+export default function App() {
+  return (
+    <div>
+      <SiriOrb size="200px" />
+      <RichPopover />
+    </div>
+  );
+}
+```
