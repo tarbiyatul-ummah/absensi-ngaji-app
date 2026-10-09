@@ -25,6 +25,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import StatisticListCard from "@/components/dashboard/StatisticListCard";
 import DailyAttendanceChart, {
   type TrackedDayOption,
@@ -548,51 +555,64 @@ export const DashboardView: React.FC = () => {
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <div className="min-w-[150px] sm:w-40">
                   <Label className="mb-1.5 text-xs">Tahun Ajaran</Label>
-                  <select
-                    value={selectedAcademicYearStart}
-                    onChange={(e) => handleAcademicYearChange(e.target.value)}
-                    className="ui-select h-9"
+                  <Select
+                    value={String(selectedAcademicYearStart)}
+                    onValueChange={(val) => handleAcademicYearChange(val)}
                   >
-                    {academicYearOptions.map((year) => (
-                      <option key={year.startYear} value={year.startYear}>
-                        {year.label}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-9 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {academicYearOptions.map((year) => (
+                        <SelectItem
+                          key={year.startYear}
+                          value={String(year.startYear)}
+                        >
+                          {year.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {selectedPeriodType === "semester" && (
                   <div className="min-w-[130px] sm:w-36">
                     <Label className="mb-1.5 text-xs">Semester</Label>
-                    <select
+                    <Select
                       value={selectedSemester}
-                      onChange={(e) =>
-                        setSelectedSemester(
-                          e.target.value as AcademicSemester,
-                        )
+                      onValueChange={(val) =>
+                        setSelectedSemester(val as AcademicSemester)
                       }
-                      className="ui-select h-9"
                     >
-                      <option value="ganjil">Ganjil</option>
-                      <option value="genap">Genap</option>
-                    </select>
+                      <SelectTrigger className="h-9 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ganjil">Ganjil</SelectItem>
+                        <SelectItem value="genap">Genap</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
                 {selectedPeriodType === "month" && (
                   <div className="min-w-[160px] sm:w-44">
                     <Label className="mb-1.5 text-xs">Bulan</Label>
-                    <select
+                    <Select
                       value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="ui-select h-9"
+                      onValueChange={(val) => setSelectedMonth(val)}
                     >
-                      {academicMonthOptions.map((month) => (
-                        <option key={month.value} value={month.value}>
-                          {month.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-9 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {academicMonthOptions.map((month) => (
+                          <SelectItem key={month.value} value={month.value}>
+                            {month.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
               </div>

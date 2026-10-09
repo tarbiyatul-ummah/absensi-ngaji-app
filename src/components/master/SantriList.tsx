@@ -263,7 +263,7 @@ export const SantriList: React.FC<SantriListProps> = ({
                     onChange={(e) =>
                       setEditForm({ ...editForm, jilidId: e.target.value })
                     }
-                    className="w-full rounded-md border border-input bg-background p-2 text-[14px] text-foreground outline-none"
+                    className="w-full ui-select text-xs"
                   >
                     {jilidList.map((jilid) => (
                       <option key={jilid.id} value={jilid.id}>
@@ -276,7 +276,7 @@ export const SantriList: React.FC<SantriListProps> = ({
                     onChange={(e) =>
                       setEditForm({ ...editForm, guruId: e.target.value })
                     }
-                    className="w-full rounded-md border border-input bg-background p-2 text-[14px] text-foreground outline-none"
+                    className="w-full ui-select text-xs"
                   >
                     {guruList.map((guru) => (
                       <option key={guru.id} value={guru.id}>
@@ -290,7 +290,7 @@ export const SantriList: React.FC<SantriListProps> = ({
                   onChange={(e) =>
                     setEditForm({ ...editForm, tipeId: e.target.value })
                   }
-                  className="w-full rounded-md border border-input bg-background p-2 text-[14px] text-foreground outline-none"
+                  className="w-full ui-select text-xs"
                 >
                   <option value="">Tanpa tipe</option>
                   {tipeList.map((tipe) => (

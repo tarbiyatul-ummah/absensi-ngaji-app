@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Guru, Jilid, SantriType } from "@/types";
 import { useTerms } from "@/config/organization";
 
@@ -84,42 +91,42 @@ export const SantriForm: React.FC<SantriFormProps> = ({
           <Label htmlFor="santri-jilid-select">
             {terms.levelSingularTitle}
           </Label>
-          <select
-            id="santri-jilid-select"
+          <Select
             value={selectedJilid}
-            onChange={(e) => setSelectedJilid(e.target.value)}
-            className="ui-select"
+            onValueChange={(val) => setSelectedJilid(val)}
           >
-            <option value="" disabled>
-              Pilih {terms.levelSingularTitle}
-            </option>
-            {jilidList.map((jilid) => (
-              <option key={jilid.id} value={jilid.id}>
-                {jilid.nama}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="santri-jilid-select" className="h-9 w-full">
+              <SelectValue placeholder={`Pilih ${terms.levelSingularTitle}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {jilidList.map((jilid) => (
+                <SelectItem key={jilid.id} value={jilid.id}>
+                  {jilid.nama}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="w-full">
           <Label htmlFor="santri-guru-select">
             {terms.mentorSingularTitle}
           </Label>
-          <select
-            id="santri-guru-select"
+          <Select
             value={selectedGuru}
-            onChange={(e) => setSelectedGuru(e.target.value)}
-            className="ui-select"
+            onValueChange={(val) => setSelectedGuru(val)}
           >
-            <option value="" disabled>
-              Pilih {terms.mentorSingularTitle}
-            </option>
-            {guruList.map((guru) => (
-              <option key={guru.id} value={guru.id}>
-                {guru.nama}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="santri-guru-select" className="h-9 w-full">
+              <SelectValue placeholder={`Pilih ${terms.mentorSingularTitle}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {guruList.map((guru) => (
+                <SelectItem key={guru.id} value={guru.id}>
+                  {guru.nama}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -127,19 +134,22 @@ export const SantriForm: React.FC<SantriFormProps> = ({
         <Label htmlFor="santri-tipe-select">
           Tipe {terms.studentSingularTitle}
         </Label>
-        <select
-          id="santri-tipe-select"
-          value={selectedTipe}
-          onChange={(e) => setSelectedTipe(e.target.value)}
-          className="ui-select"
+        <Select
+          value={selectedTipe || "none"}
+          onValueChange={(val) => setSelectedTipe(val === "none" ? "" : val)}
         >
-          <option value="">Tanpa tipe</option>
-          {tipeList.map((tipe) => (
-            <option key={tipe.id} value={tipe.id}>
-              {tipe.nama}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="santri-tipe-select" className="h-9 w-full">
+            <SelectValue placeholder="Tanpa tipe" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Tanpa tipe</SelectItem>
+            {tipeList.map((tipe) => (
+              <SelectItem key={tipe.id} value={tipe.id}>
+                {tipe.nama}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

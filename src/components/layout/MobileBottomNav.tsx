@@ -20,7 +20,7 @@ export const MobileBottomNav: React.FC = () => {
 
   const enabledNavigationItems = useMemo(
     () => getMainNavigationItems(terms).filter((item) => item.enabled),
-    [terms]
+    [terms],
   );
 
   const shouldShow = useMemo(() => {
@@ -68,7 +68,7 @@ export const MobileBottomNav: React.FC = () => {
               to={item.to}
               end={item.to === "/"}
               className={`
-                relative flex min-h-[54px] flex-col items-center justify-center gap-1 rounded-xl px-1 transition-colors
+                relative flex min-h-13.5 flex-col items-center justify-center gap-1 rounded-xl px-1 transition-colors
                 ${active ? "text-foreground font-semibold" : "text-muted-foreground hover:text-foreground"}
               `}
             >
@@ -81,7 +81,9 @@ export const MobileBottomNav: React.FC = () => {
                     <motion.span
                       layoutId="mobile-nav-indicator"
                       className="absolute inset-0 rounded-lg bg-neutral-100 dark:bg-neutral-800"
-                      transition={shouldReduceMotion ? { duration: 0 } : springDefault}
+                      transition={
+                        shouldReduceMotion ? { duration: 0 } : springDefault
+                      }
                     />
                   )}
                   <span
@@ -100,7 +102,9 @@ export const MobileBottomNav: React.FC = () => {
                 </span>
                 <span
                   className={`max-w-full truncate text-[11px] leading-tight ${
-                    active ? "text-foreground font-semibold" : "text-muted-foreground"
+                    active
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {item.label}
@@ -115,4 +119,3 @@ export const MobileBottomNav: React.FC = () => {
 };
 
 export default MobileBottomNav;
-

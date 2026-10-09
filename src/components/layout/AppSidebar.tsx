@@ -63,7 +63,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
   // Only the 4 configured navigation items
   const navigationItems = useMemo(
     () => getMainNavigationItems(terms).filter((item) => item.enabled),
-    [terms]
+    [terms],
   );
 
   // Determine active state including nested routes
@@ -115,7 +115,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
     <aside
       className={`
         hidden lg:flex flex-col h-screen sticky top-0 shrink-0 border-r border-border/80 bg-neutral-50/70 dark:bg-neutral-900/60 backdrop-blur-md select-none transition-[width] duration-200 z-30
-        ${isCollapsed ? "w-[68px]" : "w-64"}
+        ${isCollapsed ? "w-17" : "w-64"}
         ${className}
       `}
     >
@@ -128,7 +128,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
               title={orgConfig.name}
               className="size-9 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-[#7F56D9] dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200/50 dark:border-purple-900/50 shadow-2xs"
             >
-              {orgConfig.faviconUrl && !orgConfig.faviconUrl.includes("placeholder") ? (
+              {orgConfig.faviconUrl &&
+              !orgConfig.faviconUrl.includes("placeholder") ? (
                 <img
                   src={orgConfig.faviconUrl}
                   alt={orgConfig.name}
@@ -154,7 +155,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               <div className="size-8.5 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-[#7F56D9] dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-200/50 dark:border-purple-900/50 shadow-2xs">
-                {orgConfig.faviconUrl && !orgConfig.faviconUrl.includes("placeholder") ? (
+                {orgConfig.faviconUrl &&
+                !orgConfig.faviconUrl.includes("placeholder") ? (
                   <img
                     src={orgConfig.faviconUrl}
                     alt={orgConfig.name}
@@ -258,7 +260,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
           aria-label="Menu Profil Pengguna"
           title={isCollapsed ? `${userDisplayName} (${userEmail})` : undefined}
         >
-          <div className={`flex items-center min-w-0 ${isCollapsed ? "justify-center" : "gap-2.5"}`}>
+          <div
+            className={`flex items-center min-w-0 ${isCollapsed ? "justify-center" : "gap-2.5"}`}
+          >
             {/* Avatar */}
             <div className="size-8.5 rounded-full overflow-hidden bg-neutral-200 dark:bg-neutral-800 border border-border shrink-0 flex items-center justify-center font-semibold text-xs text-foreground shadow-2xs">
               {userAvatar ? (
@@ -304,7 +308,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
                   ? { opacity: 0 }
                   : { opacity: 0, scale: 0.96, x: -4 }
               }
-              transition={shouldReduceMotion ? { duration: 0.1 } : springDefault}
+              transition={
+                shouldReduceMotion ? { duration: 0.1 } : springDefault
+              }
               className="absolute left-[calc(100%+0.5rem)] bottom-2 z-50 rounded-xl border border-border bg-card p-2 shadow-xl min-w-[220px]"
             >
               {/* Account Status Card */}
@@ -330,7 +336,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
                     </p>
                   </div>
                 </div>
-                <div title="Akun Aktif" className="shrink-0 ml-1 text-foreground">
+                <div
+                  title="Akun Aktif"
+                  className="shrink-0 ml-1 text-foreground"
+                >
                   <CircleDot className="size-3.5" />
                 </div>
               </div>
@@ -360,7 +369,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
                     <LogOut className="size-3.5 shrink-0" />
                     <span>Keluar</span>
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Sign out</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Sign out
+                  </span>
                 </button>
               </div>
             </motion.div>

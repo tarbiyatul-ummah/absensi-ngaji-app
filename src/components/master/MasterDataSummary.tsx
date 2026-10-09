@@ -2,6 +2,13 @@ import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTerms } from "@/config/organization";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface MasterSummaryItem {
   nama: string;
@@ -69,7 +76,27 @@ export const MasterDataSummary: React.FC<MasterDataSummaryProps> = ({
 
       <Card className="min-w-0 gap-0 py-0">
         <CardHeader className="px-4 pt-4 pb-2">
-          <div className="inline-flex w-fit max-w-full justify-self-start rounded-md bg-muted p-1">
+          {/* Mobile dropdown kecil dengan style popover kartu */}
+          <div className="w-fit max-w-full sm:hidden">
+            <Select
+              value={activeTab}
+              onValueChange={(val) => setActiveTab(val as BreakdownTab)}
+            >
+              <SelectTrigger className="h-7 w-auto min-w-[105px] rounded-lg border-border bg-muted/60 px-2.5 text-xs font-medium shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {tabs.map((tab) => (
+                  <SelectItem key={tab.key} value={tab.key}>
+                    {tab.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop tabs */}
+          <div className="hidden sm:inline-flex w-fit max-w-full justify-self-start rounded-md bg-muted p-1">
             {tabs.map((tab) => (
               <Button
                 key={tab.key}

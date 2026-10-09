@@ -23,6 +23,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getGuru, getJilid, getSantri } from "../services/masterService";
 import {
   getSppPaymentId,
@@ -577,19 +584,26 @@ export const FinanceView: React.FC = () => {
             <div className="grid grid-cols-1 gap-3 border-b p-4 md:grid-cols-[220px_1fr]">
               <div>
                 <Label> Tahun Ajaran </Label>
-                <select
-                  value={selectedAcademicYearStart}
-                  onChange={(e) =>
-                    handleAcademicYearChange(Number(e.target.value))
+                <Select
+                  value={String(selectedAcademicYearStart)}
+                  onValueChange={(val) =>
+                    handleAcademicYearChange(Number(val))
                   }
-                  className="ui-select"
                 >
-                  {academicYearOptions.map((year) => (
-                    <option key={year.startYear} value={year.startYear}>
-                      {year.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicYearOptions.map((year) => (
+                      <SelectItem
+                        key={year.startYear}
+                        value={String(year.startYear)}
+                      >
+                        {year.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label> Cari {terms.studentSingularTitle} </Label>

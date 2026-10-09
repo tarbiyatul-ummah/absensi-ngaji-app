@@ -10,6 +10,13 @@ import type {
 } from "@/utils/academicPeriod";
 import { useTerms } from "@/config/organization";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface ExportFilterProps {
   startDate: string;
@@ -139,19 +146,26 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
                 <label className="block text-[11px] text-muted-foreground font-medium mb-1">
                   Tahun Ajaran
                 </label>
-                <select
-                  value={academicYearStart}
-                  onChange={(e) =>
-                    onUpdateAcademicYearStart(Number(e.target.value))
+                <Select
+                  value={String(academicYearStart)}
+                  onValueChange={(val) =>
+                    onUpdateAcademicYearStart(Number(val))
                   }
-                  className="ui-select"
                 >
-                  {academicYearOptions.map((year) => (
-                    <option key={year.startYear} value={year.startYear}>
-                      {year.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicYearOptions.map((year) => (
+                      <SelectItem
+                        key={year.startYear}
+                        value={String(year.startYear)}
+                      >
+                        {year.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -160,16 +174,20 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
                 <label className="block text-[11px] text-muted-foreground font-medium mb-1">
                   Semester
                 </label>
-                <select
+                <Select
                   value={semester}
-                  onChange={(e) =>
-                    onUpdateSemester(e.target.value as AcademicSemester)
+                  onValueChange={(val) =>
+                    onUpdateSemester(val as AcademicSemester)
                   }
-                  className="ui-select"
                 >
-                  <option value="ganjil">Ganjil</option>
-                  <option value="genap">Genap</option>
-                </select>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ganjil">Ganjil</SelectItem>
+                    <SelectItem value="genap">Genap</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
@@ -178,17 +196,21 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
                 <label className="block text-[11px] text-muted-foreground font-medium mb-1">
                   Bulan
                 </label>
-                <select
+                <Select
                   value={selectedMonth}
-                  onChange={(e) => onUpdateSelectedMonth(e.target.value)}
-                  className="ui-select"
+                  onValueChange={(val) => onUpdateSelectedMonth(val)}
                 >
-                  {academicMonthOptions.map((month) => (
-                    <option key={month.value} value={month.value}>
-                      {month.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicMonthOptions.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
@@ -234,19 +256,25 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
             <label className="block text-[13px] text-foreground font-medium mb-1.5">
               Filter Laporan
             </label>
-            <select
+            <Select
               value={filterType}
-              onChange={(e) => handleFilterTypeChange(e.target.value)}
-              className="ui-select"
+              onValueChange={(val) => handleFilterTypeChange(val)}
             >
-              <option value="semua">Semua {terms.studentSingularTitle}</option>
-              <option value="jilid">
-                Berdasarkan {terms.levelSingularTitle}
-              </option>
-              <option value="guru">
-                Berdasarkan {terms.mentorSingularTitle}
-              </option>
-            </select>
+              <SelectTrigger className="h-9 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semua">
+                  Semua {terms.studentSingularTitle}
+                </SelectItem>
+                <SelectItem value="jilid">
+                  Berdasarkan {terms.levelSingularTitle}
+                </SelectItem>
+                <SelectItem value="guru">
+                  Berdasarkan {terms.mentorSingularTitle}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {filterType !== "semua" && (
@@ -257,26 +285,27 @@ export const ExportFilter: React.FC<ExportFilterProps> = ({
                   ? terms.levelSingularTitle
                   : terms.mentorSingularTitle}
               </label>
-              <select
+              <Select
                 value={filterId}
-                onChange={(e) => onUpdateFilterId(e.target.value)}
-                className="ui-select"
+                onValueChange={(val) => onUpdateFilterId(val)}
               >
-                <option value="" disabled>
-                  Pilih spesifik...
-                </option>
-                {filterType === "jilid"
-                  ? jilidList.map((jilid) => (
-                      <option key={jilid.id} value={jilid.id}>
-                        {jilid.nama}
-                      </option>
-                    ))
-                  : guruList.map((guru) => (
-                      <option key={guru.id} value={guru.id}>
-                        {guru.nama}
-                      </option>
-                    ))}
-              </select>
+                <SelectTrigger className="h-9 w-full">
+                  <SelectValue placeholder="Pilih spesifik..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {filterType === "jilid"
+                    ? jilidList.map((jilid) => (
+                        <SelectItem key={jilid.id} value={jilid.id}>
+                          {jilid.nama}
+                        </SelectItem>
+                      ))
+                    : guruList.map((guru) => (
+                        <SelectItem key={guru.id} value={guru.id}>
+                          {guru.nama}
+                        </SelectItem>
+                      ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>

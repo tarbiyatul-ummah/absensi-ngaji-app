@@ -234,7 +234,6 @@
   }
 
   .ui-input,
-  .ui-select,
   .ui-textarea {
     background: var(--background);
     border: 1px solid var(--input);
@@ -245,6 +244,38 @@
     outline: none;
     padding: 0.5rem 0.75rem;
     width: 100%;
+  }
+
+  .ui-select {
+    appearance: none;
+    background-color: var(--background);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2371717a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.15rem 1.15rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--foreground);
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    min-height: 2.25rem;
+    outline: none;
+    padding: 0.45rem 2.25rem 0.45rem 0.75rem;
+    transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
+    width: 100%;
+  }
+
+  .ui-select:hover {
+    background-color: hsl(210 40% 98%);
+  }
+
+  .dark .ui-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+
+  .dark .ui-select:hover {
+    background-color: hsl(222.2 84% 8%);
   }
 
   .ui-input::placeholder,

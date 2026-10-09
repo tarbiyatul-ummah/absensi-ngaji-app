@@ -33,6 +33,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AssessmentFormDialog } from "../components/assessment/AssessmentFormDialog";
@@ -881,36 +888,45 @@ export const AssessmentView: React.FC = () => {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
                         <Label className="mb-1.5 text-xs">Tahun Ajaran</Label>
-                        <select
-                          value={selectedReportAcademicYearStart}
-                          onChange={(e) =>
-                            setSelectedReportAcademicYearStart(
-                              Number(e.target.value)
-                            )
+                        <Select
+                          value={String(selectedReportAcademicYearStart)}
+                          onValueChange={(val) =>
+                            setSelectedReportAcademicYearStart(Number(val))
                           }
-                          className="ui-select"
                         >
-                          {reportAcademicYearOptions.map((year) => (
-                            <option key={year.startYear} value={year.startYear}>
-                              {year.label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {reportAcademicYearOptions.map((year) => (
+                              <SelectItem
+                                key={year.startYear}
+                                value={String(year.startYear)}
+                              >
+                                {year.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label className="mb-1.5 text-xs">Semester</Label>
-                        <select
+                        <Select
                           value={selectedReportSemester}
-                          onChange={(e) =>
+                          onValueChange={(val) =>
                             setSelectedReportSemester(
-                              e.target.value as AcademicSemester
+                              val as AcademicSemester
                             )
                           }
-                          className="ui-select"
                         >
-                          <option value="ganjil">Ganjil</option>
-                          <option value="genap">Genap</option>
-                        </select>
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ganjil">Ganjil</SelectItem>
+                            <SelectItem value="genap">Genap</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   ) : (
