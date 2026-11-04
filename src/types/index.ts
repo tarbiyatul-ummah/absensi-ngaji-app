@@ -89,7 +89,7 @@ export interface SavingsPayment {
   updatedAt: number;
 }
 
-export type AssessmentItemType = "score" | "scale";
+export type AssessmentItemType = "score" | "scale" | "qualitative";
 
 export interface AssessmentItem {
   id: string;

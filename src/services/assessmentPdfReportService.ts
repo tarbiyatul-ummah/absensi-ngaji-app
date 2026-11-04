@@ -1,6 +1,7 @@
 import type { Template } from "@pdfme/common";
 import { generate } from "@pdfme/generator";
 import { image, line, rectangle, svg, table, text } from "@pdfme/schemas";
+import { getQualitativeGrade, getQualitativeLabel } from "@/utils/assessmentUtils";
 
 export interface AssessmentPdfScore {
   label: string;
@@ -479,7 +480,7 @@ const createRadarSvg = (scores: AssessmentPdfScore[], minimumScore: number) => {
       return `<text x="${point.x.toFixed(1)}" y="${point.y.toFixed(
         1,
       )}" text-anchor="${anchor}" dominant-baseline="middle" font-family="Arial, sans-serif">
-        <tspan x="${point.x.toFixed(1)}" dy="-14" font-size="36" font-weight="700" fill="${BLACK}">${item.score}/${item.maxScore}</tspan>
+        <tspan x="${point.x.toFixed(1)}" dy="-14" font-size="36" font-weight="700" fill="${BLACK}">${item.maxScore === 4 ? getQualitativeGrade(item.score) : `${item.score}/${item.maxScore}`}</tspan>
         <tspan x="${point.x.toFixed(1)}" dy="40" font-size="34" font-weight="600" fill="${MUTED}">${escapeXml(
           truncate(item.label, 18),
         )}</tspan>
@@ -679,7 +680,9 @@ const buildInput = (
     "tabel-nilai": JSON.stringify(
       row.scores.map((score) => [
         score.label,
-        `${score.score}/${score.maxScore}`,
+        score.maxScore === 4
+          ? getQualitativeLabel(score.score)
+          : `${score.score}/${score.maxScore}`,
       ]),
     ),
     "isi-catatan": row.notes || "Tidak ada catatan tambahan.",

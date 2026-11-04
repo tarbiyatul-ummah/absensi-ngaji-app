@@ -164,9 +164,9 @@ export const InvoiceLivePreview: React.FC<InvoiceLivePreviewProps> = ({
 
       {/* Informasi Pembayaran & Catatan */}
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 text-xs">
-          <p className="font-bold text-primary flex items-center gap-1.5">
-            💳 Rekening Transfer:
+        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 text-xs sm:order-last">
+          <p className="font-bold text-slate-800 tracking-wide text-[11px] uppercase">
+            Rekening Pembayaran:
           </p>
           <div className="mt-2 space-y-1 text-slate-700">
             {invoice.bankName && (
@@ -190,9 +190,11 @@ export const InvoiceLivePreview: React.FC<InvoiceLivePreviewProps> = ({
           </div>
         </div>
 
-        <div className="rounded-lg border bg-slate-50 p-3.5 text-xs flex flex-col justify-between">
+        <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 text-xs flex flex-col justify-between">
           <div>
-            <p className="font-bold text-slate-700">📌 Catatan:</p>
+            <p className="font-bold text-slate-800 tracking-wide text-[11px] uppercase">
+              Catatan:
+            </p>
             <p className="mt-1 text-slate-600 leading-relaxed italic text-[11px]">
               {invoice.notes || "Silakan melakukan konfirmasi setelah transfer."}
             </p>

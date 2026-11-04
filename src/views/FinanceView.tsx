@@ -652,7 +652,7 @@ export const FinanceView: React.FC = () => {
               {visibleSantriList.map((santri) => (
                 <article
                   key={santri.id}
-                  className="rounded-lg border bg-background p-3"
+                  className="rounded-xl border border-border bg-card p-4 shadow-2xs"
                 >
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -694,7 +694,7 @@ export const FinanceView: React.FC = () => {
                           <div
                             key={`${santri.id}-${month.value}`}
                             title={`Belum masuk (Masuk: ${formatDateDisplay(santri.tanggalMasuk)})`}
-                            className="flex h-12 flex-col items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/20 text-[11px] text-muted-foreground/40 cursor-not-allowed select-none"
+                            className="flex h-12 flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/20 text-[11px] text-muted-foreground/40 cursor-not-allowed select-none"
                           >
                             <span>{formatMonthShort(month.label)}</span>
                             <span className="mt-0.5 text-[9px] text-muted-foreground/50">
@@ -716,7 +716,7 @@ export const FinanceView: React.FC = () => {
                           transition={springSnappy}
                           onClick={() => togglePayment(santri, month.value)}
                           disabled={isItemSaving}
-                          className={`flex h-12 flex-col items-center justify-center rounded-md border text-[11px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 cursor-pointer ${
+                          className={`flex h-12 flex-col items-center justify-center rounded-lg border text-[11px] font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 cursor-pointer ${
                             paid
                               ? "border-success-border bg-success-subtle text-success shadow-2xs"
                               : "border-border bg-background text-muted-foreground active:bg-accent"
@@ -800,7 +800,7 @@ export const FinanceView: React.FC = () => {
                             >
                               <span
                                 title={`Belum masuk (Masuk: ${formatDateDisplay(santri.tanggalMasuk)})`}
-                                className="mx-auto flex h-8 w-8 items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/20 text-[11px] text-muted-foreground/40 cursor-not-allowed select-none"
+                                className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/20 text-[11px] text-muted-foreground/40 cursor-not-allowed select-none"
                               >
                                 -
                               </span>
@@ -823,7 +823,7 @@ export const FinanceView: React.FC = () => {
                               transition={springSnappy}
                               onClick={() => togglePayment(santri, month.value)}
                               disabled={isItemSaving}
-                              className={`mx-auto flex h-8 w-8 items-center justify-center rounded-md border text-[12px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 cursor-pointer ${
+                              className={`mx-auto flex h-8 w-8 items-center justify-center rounded-lg border text-[12px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 cursor-pointer ${
                                 paid
                                   ? "border-success-border bg-success-subtle text-success shadow-2xs"
                                   : "border-border bg-background text-muted-foreground hover:bg-accent"

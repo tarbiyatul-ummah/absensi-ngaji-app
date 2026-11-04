@@ -31,15 +31,15 @@ const withErrorContext = async <T>(
   }
 };
 
-const maxScoreByType = (type: AssessmentItemType) =>
-  type === "scale" ? 5 : 100;
+const maxScoreByType = (type: AssessmentItemType): number =>
+  type === "qualitative" ? 4 : type === "scale" ? 5 : 100;
 
 const mapItem = (row: any): AssessmentItem => ({
   id: row.id,
   assessmentId: row.assessment_id,
   label: row.label,
   assessmentType: row.assessment_type,
-  maxScore: Number(row.max_score ?? 100),
+  maxScore: Number(row.max_score ?? maxScoreByType(row.assessment_type)),
   sortOrder: row.sort_order ?? 0,
   createdAt: row.created_at,
   updatedAt: row.updated_at,

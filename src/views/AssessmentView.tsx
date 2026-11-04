@@ -7,16 +7,23 @@ import React, {
 } from "react";
 import * as XLSX from "xlsx";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
 import {
   FileSpreadsheet,
   FileText,
-  MoreVertical,
   Pencil,
   Printer,
   Trash2,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import {
+  springSnappy,
+  useSmoothMotion,
+  staggerContainerVariants,
+  staggerItemVariants,
+} from "@/lib/motion";
+import { getQualitativeGrade, getQualitativeLabel } from "@/utils/assessmentUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,6 +105,7 @@ export const AssessmentView: React.FC = () => {
   const navigate = useNavigate();
   const terms = useTerms();
   const organizationConfig = useOrganizationConfig();
+  const { shouldReduceMotion } = useSmoothMotion();
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [santriList, setSantriList] = useState<Santri[]>([]);
@@ -550,10 +558,15 @@ export const AssessmentView: React.FC = () => {
           Alfa: row.attendanceAbsent,
           "Total Absensi Tercatat": row.attendanceRecorded,
           ...Object.fromEntries(
-            selectedAssessment.items.map((item) => [
-              item.label,
-              scoreByItemId.get(item.id) ?? 0,
-            ])
+            selectedAssessment.items.map((item) => {
+              const rawScore = scoreByItemId.get(item.id) ?? 0;
+              return [
+                item.label,
+                selectedAssessment.assessmentType === "qualitative"
+                  ? getQualitativeLabel(rawScore)
+                  : rawScore,
+              ];
+            })
           ),
           Catatan: row.result.notes ?? "",
         };
@@ -663,10 +676,14 @@ export const AssessmentView: React.FC = () => {
           title={isDetailPage ? (selectedAssessment?.name || "Detail Penilaian") : "Penilaian"}
           subtitle={
             isDetailPage
-              ? `${selectedAssessment?.participants.length || 0} ${terms.studentSingularLower} • Nilai Minimum ${selectedAssessment?.minimumScore || 0}`
+              ? `${selectedAssessment?.participants.length || 0} ${terms.studentSingularLower} • Nilai Minimum ${
+                  selectedAssessment?.assessmentType === "qualitative"
+                    ? getQualitativeLabel(selectedAssessment.minimumScore)
+                    : selectedAssessment?.minimumScore || 0
+                }`
               : `Buat format penilaian, pilih ${terms.studentSingularLower}, lalu isi nilai dan catatan perkembangan.`
           }
-          backTo={isDetailPage ? "/penilaian" : undefined}
+          backTo={isDetailPage ? "/penilaian" : "/dashboard"}
           actions={
             !isDetailPage ? (
               <Button type="button" onClick={openCreateModal}>
@@ -743,28 +760,46 @@ export const AssessmentView: React.FC = () => {
               </CardHeader>
 
               {assessments.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+                <motion.div
+                  variants={staggerContainerVariants}
+                  initial={shouldReduceMotion ? false : "hidden"}
+                  animate="visible"
+                  className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-3"
+                >
                   {assessments.map((assessment) => (
-                    <Link
+                    <motion.div
                       key={assessment.id}
-                      to={`/penilaian/${assessment.id}`}
-                      className="rounded-xl border border-border bg-card p-4 text-left transition hover:bg-accent/60 shadow-2xs"
+                      variants={staggerItemVariants}
+                      whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+                      transition={springSnappy}
                     >
-                      <p className="text-sm font-semibold text-foreground">
-                        {assessment.name}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Badge variant="secondary">
-                          {assessment.items.length} butir
-                        </Badge>
-                        <Badge variant="secondary">
-                          {getResultCount(assessment)}/
-                          {assessment.participants.length} selesai
-                        </Badge>
-                      </div>
-                    </Link>
+                      <Link
+                        to={`/penilaian/${assessment.id}`}
+                        className="block rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 shadow-xs h-full"
+                      >
+                        <p className="text-sm font-semibold text-foreground">
+                          {assessment.name}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Badge variant="outline" className="text-[10px]">
+                            {assessment.assessmentType === "qualitative"
+                              ? "Kualitatif (A-D)"
+                              : assessment.assessmentType === "scale"
+                                ? "Skala 1-5"
+                                : "Nilai 0-100"}
+                          </Badge>
+                          <Badge variant="secondary">
+                            {assessment.items.length} butir
+                          </Badge>
+                          <Badge variant="secondary">
+                            {getResultCount(assessment)}/
+                            {assessment.participants.length} selesai
+                          </Badge>
+                        </div>
+                      </Link>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               ) : (
                 <div className="px-4 py-10 text-center">
                   <p className="text-sm font-medium text-foreground">
@@ -911,10 +946,14 @@ export const AssessmentView: React.FC = () => {
                       {filteredParticipants.map((santri) => {
                         const res = getResultBySantriId(santri.id);
                         return (
-                          <button
+                          <motion.button
                             key={santri.id}
                             type="button"
-                            className="rounded-xl border border-border bg-card p-4 text-left transition hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none shadow-2xs"
+                            whileTap={
+                              shouldReduceMotion ? undefined : { scale: 0.98 }
+                            }
+                            transition={springSnappy}
+                            className="rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none shadow-xs cursor-pointer"
                             onClick={() => openScoreModal(santri.id)}
                           >
                             <span className="flex items-start justify-between gap-3">
@@ -937,13 +976,30 @@ export const AssessmentView: React.FC = () => {
 
                             <span className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-2.5">
                               <span className="text-xs text-muted-foreground">
-                                {res ? "Nilai terisi" : "Belum dinilai"}
+                                {res ? (
+                                  selectedAssessment.assessmentType === "qualitative" &&
+                                  res.scores.length > 0 ? (
+                                    <span>
+                                      Predikat:{" "}
+                                      <strong className="font-semibold text-foreground">
+                                        {getQualitativeGrade(
+                                          res.scores.reduce((s, c) => s + c.score, 0) /
+                                            res.scores.length
+                                        )}
+                                      </strong>
+                                    </span>
+                                  ) : (
+                                    "Nilai terisi"
+                                  )
+                                ) : (
+                                  "Belum dinilai"
+                                )}
                               </span>
                               <span className="text-xs font-semibold text-primary">
                                 {res ? "Edit Nilai →" : "Mulai Menilai →"}
                               </span>
                             </span>
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>

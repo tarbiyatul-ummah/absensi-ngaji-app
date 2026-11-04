@@ -16,6 +16,7 @@ import type {
   AssessmentResult,
   Santri,
 } from "@/types";
+import { QUALITATIVE_GRADES } from "@/utils/assessmentUtils";
 import AssessmentRadarChart from "./AssessmentRadarChart";
 
 export interface AssessmentScoreDialogProps {
@@ -50,7 +51,11 @@ export const AssessmentScoreDialog: React.FC<AssessmentScoreDialogProps> = ({
   const [notesForm, setNotesForm] = useState("");
 
   const maxScoreLabel =
-    assessment?.assessmentType === "scale" ? "Skala 1-5" : "Nilai 0-100";
+    assessment?.assessmentType === "qualitative"
+      ? "Kualitatif (A - D)"
+      : assessment?.assessmentType === "scale"
+        ? "Skala 1-5"
+        : "Nilai 0-100";
 
   const scoreByItemId = useMemo(
     () =>
@@ -99,6 +104,10 @@ export const AssessmentScoreDialog: React.FC<AssessmentScoreDialogProps> = ({
 
     for (const item of assessment.items) {
       const score = Number(scoreForm[item.id] ?? 0);
+      if (assessment.assessmentType === "qualitative" && (score < 1 || score > 4)) {
+        onValidationError(`Pilih predikat nilai (A/B/C/D) untuk ${item.label}.`);
+        return;
+      }
       if (Number.isNaN(score) || score < 0 || score > item.maxScore) {
         onValidationError(
           `Nilai ${item.label} harus antara 0 dan ${item.maxScore}.`,
@@ -160,11 +169,47 @@ export const AssessmentScoreDialog: React.FC<AssessmentScoreDialogProps> = ({
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <Label htmlFor={`score-${item.id}`}>{item.label}</Label>
                       <span className="text-xs text-muted-foreground">
-                        Maks. {item.maxScore}
+                        {assessment.assessmentType === "qualitative"
+                          ? "Predikat (A - D)"
+                          : `Maks. ${item.maxScore}`}
                       </span>
                     </div>
 
-                    {assessment.assessmentType === "scale" ? (
+                    {assessment.assessmentType === "qualitative" ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {QUALITATIVE_GRADES.map((grade) => {
+                          const isSelected =
+                            Number(scoreForm[item.id] ?? 0) === grade.score;
+                          return (
+                            <Button
+                              key={`${item.id}-${grade.score}`}
+                              type="button"
+                              variant="outline"
+                              className={`h-12 flex flex-col items-center justify-center p-1 rounded-xl transition-all cursor-pointer ${
+                                isSelected
+                                  ? "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground shadow-2xs font-bold"
+                                  : "hover:bg-accent/70"
+                              }`}
+                              aria-pressed={isSelected}
+                              onClick={() => setScaleScore(item.id, grade.score)}
+                            >
+                              <span className="text-sm font-bold leading-tight">
+                                {grade.grade}
+                              </span>
+                              <span
+                                className={`text-[10px] leading-tight ${
+                                  isSelected
+                                    ? "text-primary-foreground/90 font-medium"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                {grade.desc}
+                              </span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    ) : assessment.assessmentType === "scale" ? (
                       <div className="grid grid-cols-5 gap-2">
                         {[1, 2, 3, 4, 5].map((score) => (
                           <Button

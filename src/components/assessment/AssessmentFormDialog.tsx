@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTerms } from "@/config/organization";
 import { useSantriSelection } from "@/hooks/useSantriSelection";
+import { QUALITATIVE_GRADES } from "@/utils/assessmentUtils";
 import type {
   AssessmentFormData,
   AssessmentFormItem,
@@ -92,7 +93,12 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
     santriIds: [],
   }));
 
-  const maxScore = form.assessmentType === "scale" ? 5 : 100;
+  const maxScore =
+    form.assessmentType === "qualitative"
+      ? 4
+      : form.assessmentType === "scale"
+        ? 5
+        : 100;
 
   const getDefaultValue = (): AssessmentFormData => ({
     name: "",
@@ -294,43 +300,78 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
                       value={form.assessmentType}
                       onChange={(e) => {
                         const newType = e.target.value as AssessmentItemType;
-                        const newMax = newType === "scale" ? 5 : 100;
+                        const newMax =
+                          newType === "qualitative"
+                            ? 4
+                            : newType === "scale"
+                              ? 5
+                              : 100;
+                        const defaultMin =
+                          newType === "qualitative"
+                            ? 3
+                            : newType === "scale"
+                              ? 3
+                              : 70;
                         setForm({
                           ...form,
                           assessmentType: newType,
                           minimumScore:
-                            form.minimumScore > newMax
-                              ? newMax
+                            form.minimumScore > newMax || form.minimumScore === 0
+                              ? defaultMin
                               : form.minimumScore,
                         });
                       }}
                       className="ui-select"
                     >
-                      <option value="score">Nilai 0-100</option>
-                      <option value="scale">Skala 1-5</option>
+                      <option value="score">Nilai Angka (0-100)</option>
+                      <option value="scale">Skala Rating (1-5)</option>
+                      <option value="qualitative">Kualitatif (A, B, C, D)</option>
                     </select>
                   </div>
 
                   <div>
-                    <Label className="text-xs">Nilai Minimum</Label>
-                    <Input
-                      value={form.minimumScore}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          minimumScore: Number(e.target.value),
-                        })
-                      }
-                      type="number"
-                      min={0}
-                      max={maxScore}
-                      step={1}
-                      placeholder={
-                        form.assessmentType === "scale"
-                          ? "Contoh: 3"
-                          : "Contoh: 70"
-                      }
-                    />
+                    <Label className="text-xs">
+                      {form.assessmentType === "qualitative"
+                        ? "Batas Minimal Kelulusan"
+                        : "Nilai Minimum"}
+                    </Label>
+                    {form.assessmentType === "qualitative" ? (
+                      <select
+                        value={form.minimumScore}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            minimumScore: Number(e.target.value),
+                          })
+                        }
+                        className="ui-select"
+                      >
+                        {QUALITATIVE_GRADES.map((g) => (
+                          <option key={g.score} value={g.score}>
+                            {g.fullLabel}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        value={form.minimumScore}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            minimumScore: Number(e.target.value),
+                          })
+                        }
+                        type="number"
+                        min={0}
+                        max={maxScore}
+                        step={1}
+                        placeholder={
+                          form.assessmentType === "scale"
+                            ? "Contoh: 3"
+                            : "Contoh: 70"
+                        }
+                      />
+                    )}
                   </div>
                 </div>
 

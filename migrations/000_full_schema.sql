@@ -165,6 +165,13 @@ CREATE TABLE IF NOT EXISTS assessment_items (
 
 CREATE INDEX IF NOT EXISTS idx_assessment_items_assessment_id ON assessment_items (assessment_id);
 
+-- Pastikan CHECK constraint mendukung 'qualitative'
+ALTER TABLE assessments DROP CONSTRAINT IF EXISTS assessments_assessment_type_check;
+ALTER TABLE assessments ADD CONSTRAINT assessments_assessment_type_check CHECK (assessment_type IN ('score', 'scale', 'qualitative'));
+ALTER TABLE assessment_items DROP CONSTRAINT IF EXISTS assessment_items_assessment_type_check;
+ALTER TABLE assessment_items DROP CONSTRAINT IF EXISTS assessment_items_max_score_check;
+ALTER TABLE assessment_items ADD CONSTRAINT assessment_items_assessment_type_check CHECK (assessment_type IN ('score', 'scale', 'qualitative'));
+
 -- 12. Tabel Peserta Penilaian (assessment_participants)
 CREATE TABLE IF NOT EXISTS assessment_participants (
   id TEXT PRIMARY KEY,

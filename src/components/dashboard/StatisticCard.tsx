@@ -19,7 +19,7 @@ export const StatisticCard: React.FC<StatisticCardProps> = ({
   className,
 }) => {
   return (
-    <Card className={`flex flex-row items-center justify-between p-4 sm:p-5 rounded-2xl border bg-card shadow-2xs ${className || ""}`}>
+    <Card className={`flex flex-row items-center justify-between p-4 sm:p-5 rounded-xl border border-border bg-card shadow-xs transition-shadow duration-200 hover:shadow-sm ${className || ""}`}>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">
           {title}

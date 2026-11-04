@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CheckListIcon,
@@ -9,6 +10,7 @@ import {
   AddMoneyCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { ChevronRight } from "lucide-react";
+import { springSnappy, useSmoothMotion } from "@/lib/motion";
 import { getSantri } from "@/services/masterService";
 import { getAttendanceByDateRange } from "@/services/attendanceService";
 import {
@@ -61,6 +63,7 @@ const trackedDayOptions: TrackedDayOption[] = [
 
 export const DashboardView: React.FC = () => {
   const terms = useTerms();
+  const { shouldReduceMotion } = useSmoothMotion();
 
   const [santriList, setSantriList] = useState<Santri[]>([]);
   const [attendanceList, setAttendanceList] = useState<Attendance[]>([]);
@@ -467,65 +470,83 @@ export const DashboardView: React.FC = () => {
               Modul Utama
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Link
-                to="/keuangan"
-                className="group flex items-center gap-3.5 p-4 rounded-2xl border bg-card hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer"
+              <motion.div
+                whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+                transition={springSnappy}
               >
-                <div className="size-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <HugeiconsIcon icon={Wallet01Icon} size={22} strokeWidth={2} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                      {terms.paymentLabel} (Keuangan)
-                    </h3>
-                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                <Link
+                  to="/keuangan"
+                  className="group flex items-center gap-3.5 p-4 rounded-xl border border-border bg-card shadow-xs hover:shadow-sm hover:border-success-border/60 transition-colors cursor-pointer h-full"
+                >
+                  <div className="size-11 rounded-xl bg-success-subtle text-success flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={Wallet01Icon} size={22} strokeWidth={2} />
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                    Tagihan, status bayar & invoice
-                  </p>
-                </div>
-              </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {terms.paymentLabel} (Keuangan)
+                      </h3>
+                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                      Tagihan, status bayar & invoice
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
 
-              <Link
-                to="/tabungan"
-                className="group flex items-center gap-3.5 p-4 rounded-2xl border bg-card hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer"
+              <motion.div
+                whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+                transition={springSnappy}
               >
-                <div className="size-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <HugeiconsIcon icon={AddMoneyCircleIcon} size={22} strokeWidth={2} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                      Tabungan {terms.studentSingularTitle}
-                    </h3>
-                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                <Link
+                  to="/tabungan"
+                  className="group flex items-center gap-3.5 p-4 rounded-xl border border-border bg-card shadow-xs hover:shadow-sm hover:border-primary/40 transition-colors cursor-pointer h-full"
+                >
+                  <div className="size-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={AddMoneyCircleIcon} size={22} strokeWidth={2} />
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                    Buku saldo, setoran & penarikan
-                  </p>
-                </div>
-              </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        Tabungan {terms.studentSingularTitle}
+                      </h3>
+                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                      Buku saldo, setoran & penarikan
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
 
-              <Link
-                to="/penilaian"
-                className="group flex items-center gap-3.5 p-4 rounded-2xl border bg-card hover:border-purple-500/50 hover:shadow-md transition-all cursor-pointer"
+              <motion.div
+                whileHover={shouldReduceMotion ? undefined : { y: -2 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+                transition={springSnappy}
               >
-                <div className="size-11 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <HugeiconsIcon icon={ChartEvaluationIcon} size={22} strokeWidth={2} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                      Penilaian & Raport
-                    </h3>
-                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                <Link
+                  to="/penilaian"
+                  className="group flex items-center gap-3.5 p-4 rounded-xl border border-border bg-card shadow-xs hover:shadow-sm hover:border-accent-foreground/30 transition-colors cursor-pointer h-full"
+                >
+                  <div className="size-11 rounded-xl bg-accent text-accent-foreground flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={ChartEvaluationIcon} size={22} strokeWidth={2} />
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                    Evaluasi hafalan & rapor santri
-                  </p>
-                </div>
-              </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        Penilaian & Raport
+                      </h3>
+                      <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                      Evaluasi hafalan & rapor santri
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
             </div>
           </div>
 

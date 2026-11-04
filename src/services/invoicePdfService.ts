@@ -273,36 +273,53 @@ export const generateInvoicePdf = async (invoice: InvoiceData): Promise<void> =>
           },
         },
 
-        // Kotak Informasi Transfer & Pembayaran (Kiri Bawah)
-        fieldRect("pay_box", leftMargin, 175, 110, 45, {
+        // Kotak Catatan (Kiri Bawah)
+        fieldRect("note_box", leftMargin, 175, 100, 45, {
           borderColor: "#E2E8F0",
           backgroundColor: "#F8FAFC",
           borderWidth: 0.5,
         }),
-        fieldText("pay_title", leftMargin + 4, 178, 102, 6, {
+        fieldText("note_title", leftMargin + 4, 178, 92, 6, {
           fontSize: 9,
           bold: true,
           fontColor: BLACK,
         }),
-        fieldText("pay_info", leftMargin + 4, 185, 102, 32, {
+        fieldText("note_info", leftMargin + 4, 185, 92, 32, {
           fontSize: 8,
           fontColor: MUTED,
           lineHeight: 1.35,
         }),
 
-        // Tanda Tangan / Footer Note (Kanan Bawah)
-        fieldText("sign_place", leftMargin + contentWidth - 65, 182, 60, 6, {
+        // Kotak Rekening Transfer (Kanan, tepat di bawah total tagihan)
+        fieldRect("pay_box", leftMargin + 105, 175, contentWidth - 105, 30, {
+          borderColor: "#E2E8F0",
+          backgroundColor: "#F8FAFC",
+          borderWidth: 0.5,
+        }),
+        fieldText("pay_title", leftMargin + 109, 178, contentWidth - 113, 6, {
+          fontSize: 9,
+          bold: true,
+          fontColor: BLACK,
+        }),
+        fieldText("pay_info", leftMargin + 109, 185, contentWidth - 113, 18, {
+          fontSize: 8,
+          fontColor: MUTED,
+          lineHeight: 1.35,
+        }),
+
+        // Tanda Tangan (Kanan Bawah, di bawah kotak rekening)
+        fieldText("sign_place", leftMargin + contentWidth - 65, 215, 60, 6, {
           fontSize: 8.5,
           alignment: "center",
           fontColor: MUTED,
         }),
-        fieldText("sign_role", leftMargin + contentWidth - 65, 188, 60, 6, {
+        fieldText("sign_role", leftMargin + contentWidth - 65, 221, 60, 6, {
           fontSize: 8.5,
           alignment: "center",
           fontColor: MUTED,
         }),
-        fieldLine("sign_line", leftMargin + contentWidth - 60, 212, 50, BORDER),
-        fieldText("sign_name", leftMargin + contentWidth - 65, 214, 60, 6, {
+        fieldLine("sign_line", leftMargin + contentWidth - 60, 245, 50, BORDER),
+        fieldText("sign_name", leftMargin + contentWidth - 65, 247, 60, 6, {
           fontSize: 9,
           bold: true,
           alignment: "center",
@@ -328,14 +345,14 @@ export const generateInvoicePdf = async (invoice: InvoiceData): Promise<void> =>
 
   const payLines: string[] = [];
   if (invoice.bankName || invoice.bankAccountNumber) {
-    payLines.push(`Bank/E-Wallet: ${invoice.bankName || "-"} (No: ${invoice.bankAccountNumber || "-"})`);
+    payLines.push(`${invoice.bankName || "-"}`);
+    payLines.push(`No. Rek: ${invoice.bankAccountNumber || "-"}`);
     if (invoice.bankAccountHolder) {
-      payLines.push(`Atas Nama: ${invoice.bankAccountHolder}`);
+      payLines.push(`a.n. ${invoice.bankAccountHolder}`);
     }
   }
-  if (invoice.notes?.trim()) {
-    payLines.push(`Catatan: ${invoice.notes.trim()}`);
-  }
+  const noteText =
+    invoice.notes?.trim() || "Silakan melakukan konfirmasi setelah transfer.";
 
   const inputs: Record<string, string>[] = [
     {
@@ -350,8 +367,10 @@ export const generateInvoicePdf = async (invoice: InvoiceData): Promise<void> =>
       balance_due_label: "Balance Due:",
       balance_due_val: formatRupiah(invoice.grandTotal),
       invoice_table: JSON.stringify(tableRows),
-      pay_title: "Catatan & Rekening Pembayaran:",
-      pay_info: payLines.join("\n"),
+      note_title: "Catatan:",
+      note_info: noteText,
+      pay_title: "Rekening Pembayaran:",
+      pay_info: payLines.join("\n") || "-",
       sign_place: invoice.issuedDate
         ? `Diterbitkan pada ${formatShortDate(invoice.issuedDate)}`
         : "",

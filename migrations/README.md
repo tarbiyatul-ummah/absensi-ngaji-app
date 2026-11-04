@@ -12,6 +12,7 @@ Folder ini berisi seluruh script migration dan skema database untuk aplikasi **A
 | **`001_initial_schema.sql`** | Skema awal tabel inti: master kelas/guru/santri, absensi, tahun ajaran, SPP, tabungan, penilaian santri, dan pengaturan organisasi. | Jika menjalankan migrasi secara bertahap / CI-CD step 1. |
 | **`002_add_student_entry_exit_dates.sql`** | Penambahan kolom `tanggal_masuk` dan `tanggal_keluar` pada tabel `students` beserta indeksnya. | Jalankan jika database lama belum memiliki kolom tanggal masuk/keluar santri. |
 | **`003_create_spp_invoices.sql`** | Pembuatan tabel `spp_invoices`, indeks nomor tagihan, dan RLS policy untuk fitur Invoice Tagihan SPP. | Jalankan jika database lama meng-upgrade ke fitur pembuatan invoice tagihan SPP. |
+| **`004_assessment_schema.sql`** (atau `supabase/assessment_schema.sql`) | Reparasi dan pembaruan 5 tabel modul Penilaian, Foreign Keys untuk query join, penambahan kolom kualitatif, dan reload schema cache. | Jalankan jika muncul error *"Schema penilaian belum terbaru"* saat membuka menu Penilaian. |
 
 ---
 

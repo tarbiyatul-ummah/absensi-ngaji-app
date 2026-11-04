@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { motion } from "motion/react";
 import {
   Card,
   CardContent,
@@ -7,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTerms } from "@/config/organization";
+import { springSnappy, useSmoothMotion } from "@/lib/motion";
 
 export interface DailyAttendancePoint {
   date: string;
@@ -38,6 +40,7 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
   onToggleTrackedWeekday,
 }) => {
   const terms = useTerms();
+  const { shouldReduceMotion } = useSmoothMotion();
 
   const maxCount = useMemo(() => {
     return Math.max(...items.map((item) => item.count), 1);
@@ -92,12 +95,18 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
               const isSelected = isTrackedDaySelected(day.value);
               const isOnly = isOnlySelectedDay(day.value);
               return (
-                <button
+                <motion.button
                   key={day.value}
                   type="button"
+                  whileTap={
+                    shouldReduceMotion || isOnly
+                      ? undefined
+                      : { scale: 0.94 }
+                  }
+                  transition={springSnappy}
                   disabled={isOnly}
                   onClick={() => onToggleTrackedWeekday(day.value)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer select-none ${
                     isSelected
                       ? "bg-primary text-primary-foreground shadow-2xs font-semibold"
                       : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -105,7 +114,7 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
                   title={isOnly ? "Minimal harus ada 1 hari aktif" : `Klik untuk ${isSelected ? "sembunyikan" : "tampilkan"} hari ${day.label}`}
                 >
                   {day.shortLabel}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -128,9 +137,15 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
                 className="flex h-32 w-full max-w-9 items-end rounded-t-lg bg-secondary/80 overflow-hidden"
                 aria-label={`${item.label}: ${item.count} ${terms.studentSingularLower} hadir`}
               >
-                <div
-                  className="w-full rounded-t-md bg-primary transition-all duration-300"
-                  style={{ height: barHeight(item.count) }}
+                <motion.div
+                  initial={shouldReduceMotion ? false : { height: 0 }}
+                  animate={{ height: barHeight(item.count) }}
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : { type: "spring", duration: 0.35, bounce: 0.1 }
+                  }
+                  className="w-full rounded-t-md bg-primary"
                 />
               </div>
 

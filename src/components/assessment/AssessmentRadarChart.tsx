@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import type { AssessmentItem, AssessmentScore } from "@/types";
+import { getQualitativeGrade, getQualitativeLabel } from "@/utils/assessmentUtils";
 
 export interface AssessmentRadarChartProps {
   items: AssessmentItem[];
@@ -92,6 +93,7 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
         return {
           id: item.id,
           label: item.label,
+          assessmentType: item.assessmentType,
           score,
           maxScore: item.maxScore,
           x: point.x,
@@ -135,7 +137,10 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
           Radar Penilaian
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Minimum {minimumScore}
+          Minimum{" "}
+          {items[0]?.assessmentType === "qualitative"
+            ? getQualitativeLabel(minimumScore)
+            : minimumScore}
         </p>
       </div>
 
@@ -203,7 +208,9 @@ export const AssessmentRadarChart: React.FC<AssessmentRadarChartProps> = ({
                 className="fill-foreground text-[12px]"
               >
                 <tspan x={label.x} dy="-0.35em" className="font-semibold">
-                  {label.score}/{label.maxScore}
+                  {label.assessmentType === "qualitative" || label.maxScore === 4
+                    ? getQualitativeGrade(label.score)
+                    : `${label.score}/${label.maxScore}`}
                 </tspan>
                 <tspan
                   x={label.x}

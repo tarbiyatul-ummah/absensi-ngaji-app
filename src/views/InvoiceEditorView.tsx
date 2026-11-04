@@ -942,80 +942,23 @@ export const InvoiceEditorView: React.FC = () => {
                 </button>
               </div>
 
-              {/* Bottom Section: Notes & Bank (Left) vs Summary Totals (Right) */}
+              {/* Bottom Section: Notes (Left) vs Summary Totals + Bank (Right) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start border-t border-slate-100 pt-6">
-                {/* Left: Rekening Transfer & Catatan */}
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 text-xs">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <p className="font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wide text-[11px]">
-                        💳 Rekening Tujuan Transfer:
-                      </p>
-                      {organizationConfig.paymentAccounts &&
-                        organizationConfig.paymentAccounts.length > 0 && (
-                          <div className="w-full sm:w-56">
-                            <Select onValueChange={handleSelectSavedAccount}>
-                              <SelectTrigger className="h-7 text-xs bg-white border-slate-200">
-                                <SelectValue placeholder="Pilih Rekening..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {organizationConfig.paymentAccounts.map((acc) => (
-                                  <SelectItem key={acc.id} value={acc.id}>
-                                    {acc.bankName} - {acc.accountNumber}{" "}
-                                    {acc.accountHolder ? `(${acc.accountHolder})` : ""}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-[10px] text-slate-500">Bank / E-Wallet</Label>
-                        <Input
-                          value={bankName}
-                          onChange={(e) => setBankName(e.target.value)}
-                          placeholder="BSI / BCA / GoPay"
-                          className="h-7 text-xs bg-white"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-[10px] text-slate-500">Nomor Rekening</Label>
-                        <Input
-                          value={bankAccountNumber}
-                          onChange={(e) => setBankAccountNumber(e.target.value)}
-                          placeholder="1234567890"
-                          className="h-7 text-xs font-mono font-semibold bg-white"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Label className="text-[10px] text-slate-500">Atas Nama Rekening</Label>
-                        <Input
-                          value={bankAccountHolder}
-                          onChange={(e) => setBankAccountHolder(e.target.value)}
-                          placeholder="LPQ Tarbiyatul Ummah"
-                          className="h-7 text-xs bg-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                      Catatan Pembayaran:
-                    </Label>
-                    <Textarea
-                      rows={3}
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Mohon sertakan nama santri pada berita transfer dan konfirmasi bukti transfer via WhatsApp..."
-                      className="text-xs bg-white border-slate-200"
-                    />
-                  </div>
+                {/* Left: Catatan */}
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                    Catatan Pembayaran:
+                  </Label>
+                  <Textarea
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Mohon sertakan nama santri pada berita transfer dan konfirmasi bukti transfer via WhatsApp..."
+                    className="text-xs bg-white border-slate-200"
+                  />
                 </div>
 
-                {/* Right: Subtotal, Adjustments & Grand Total */}
+                {/* Right: Subtotal, Adjustments, Grand Total & Rekening */}
                 <div className="space-y-3 md:pl-6 text-right">
                   <div className="flex items-center justify-between py-1.5 text-xs text-slate-600 border-b border-slate-100">
                     <span className="font-medium">Subtotal SPP:</span>
@@ -1108,6 +1051,63 @@ export const InvoiceEditorView: React.FC = () => {
                     <span className="text-2xl sm:text-3xl font-black text-primary font-mono tracking-tight">
                       {formatRupiah(grandTotal)}
                     </span>
+                  </div>
+
+                  {/* Rekening Pembayaran */}
+                  <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-left">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                        Rekening Pembayaran:
+                      </Label>
+                      {organizationConfig.paymentAccounts &&
+                        organizationConfig.paymentAccounts.length > 0 && (
+                          <div className="w-48">
+                            <Select onValueChange={handleSelectSavedAccount}>
+                              <SelectTrigger className="h-7 text-xs bg-white border-slate-200">
+                                <SelectValue placeholder="Pilih Rekening..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {organizationConfig.paymentAccounts.map((acc) => (
+                                  <SelectItem key={acc.id} value={acc.id}>
+                                    {acc.bankName} - {acc.accountNumber}{" "}
+                                    {acc.accountHolder ? `(${acc.accountHolder})` : ""}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-slate-500 font-medium">Bank / E-Wallet</span>
+                        <Input
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          placeholder="BSI / BCA / GoPay"
+                          className="h-7 text-xs text-right w-48 border-slate-200 bg-white"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-slate-500 font-medium">No. Rekening</span>
+                        <Input
+                          value={bankAccountNumber}
+                          onChange={(e) => setBankAccountNumber(e.target.value)}
+                          placeholder="1234567890"
+                          className="h-7 text-xs font-mono font-semibold text-right w-48 border-slate-200 bg-white"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-slate-500 font-medium">Atas Nama</span>
+                        <Input
+                          value={bankAccountHolder}
+                          onChange={(e) => setBankAccountHolder(e.target.value)}
+                          placeholder="LPQ Tarbiyatul Ummah"
+                          className="h-7 text-xs text-right w-48 border-slate-200 bg-white"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
