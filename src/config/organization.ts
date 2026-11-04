@@ -20,12 +20,38 @@ export interface OrganizationTerms {
   paymentLabel: string;
 }
 
+export interface PaymentAccountItem {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  isDefault?: boolean;
+}
+
+export interface FeeCategoryItem {
+  id: string;
+  name: string;
+  amount: number;
+  santriTypeId?: string;
+  isDefault?: boolean;
+}
+
 export interface OrganizationConfig {
   name: string;
   typeLabel: string;
   appTitle: string;
   faviconUrl: string;
   terms: OrganizationTerms;
+  address?: string;
+  phone?: string;
+  defaultMonthlyFee?: number;
+  feeCategories?: FeeCategoryItem[];
+  paymentAccounts?: PaymentAccountItem[];
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountHolder?: string;
+  paymentInstructions?: string;
+  invoiceTitle?: string;
 }
 
 const STORAGE_KEY = "absensi-ngaji:organization-config";
@@ -35,7 +61,7 @@ export const DEFAULT_FAVICON_URL = "/app-favicon-placeholder.svg";
 export const defaultOrganizationConfig: OrganizationConfig = {
   name: "LPQ Tarbiyatul Ummah",
   typeLabel: "LPQ",
-  appTitle: "Sistem Absensi",
+  appTitle: "Sistem Absensi LPQ Tarbiyatul Ummah",
   faviconUrl: DEFAULT_FAVICON_URL,
   terms: {
     studentSingularLower: "siswa",
@@ -46,6 +72,19 @@ export const defaultOrganizationConfig: OrganizationConfig = {
     levelSingularTitle: "Kelas",
     paymentLabel: "SPP",
   },
+  address: "",
+  phone: "",
+  defaultMonthlyFee: 50000,
+  feeCategories: [
+    { id: "fee_reguler", name: "Reguler", amount: 50000, isDefault: true },
+    { id: "fee_tahfidz", name: "Tahfidz", amount: 100000, isDefault: false },
+  ],
+  paymentAccounts: [],
+  bankName: "",
+  bankAccountNumber: "",
+  bankAccountHolder: "",
+  paymentInstructions: "Mohon sertakan nama santri pada berita transfer dan konfirmasi bukti pembayaran ke WhatsApp pengurus.",
+  invoiceTitle: "INVOICE TAGIHAN SPP",
 };
 
 const cloneConfig = (config: OrganizationConfig): OrganizationConfig =>
@@ -56,11 +95,87 @@ const normalizeConfig = (
 ): OrganizationConfig => {
   const parsedTerms = (config?.terms ?? {}) as Partial<OrganizationTerms>;
 
+  let paymentAccounts: PaymentAccountItem[] = [];
+  if (Array.isArray(config?.paymentAccounts) && config.paymentAccounts.length > 0) {
+    paymentAccounts = config.paymentAccounts.map((acc, idx) => ({
+      id: acc.id || `acc_${idx}_${Date.now()}`,
+      bankName: (acc.bankName ?? "").trim(),
+      accountNumber: (acc.accountNumber ?? "").trim(),
+      accountHolder: (acc.accountHolder ?? "").trim(),
+      isDefault: Boolean(acc.isDefault),
+    }));
+  } else if (config?.bankName || config?.bankAccountNumber) {
+    paymentAccounts = [
+      {
+        id: "default_account",
+        bankName: (config.bankName ?? "").trim(),
+        accountNumber: (config.bankAccountNumber ?? "").trim(),
+        accountHolder: (config.bankAccountHolder ?? "").trim(),
+        isDefault: true,
+      },
+    ];
+  }
+
+  // Cari default account jika ada untuk legacy compatibility
+  const primaryAccount = paymentAccounts.find((a) => a.isDefault) || paymentAccounts[0];
+
+  let feeCategories: FeeCategoryItem[] = [];
+  if (Array.isArray(config?.feeCategories) && config.feeCategories.length > 0) {
+    feeCategories = config.feeCategories.map((f, idx) => ({
+      id: f.id || `fee_${idx}_${Date.now()}`,
+      name: (f.name ?? "").trim() || "Reguler",
+      amount: typeof f.amount === "number" ? f.amount : 50000,
+      santriTypeId: f.santriTypeId ? f.santriTypeId.trim() : undefined,
+      isDefault: Boolean(f.isDefault),
+    }));
+  } else {
+    const legacyFee =
+      typeof config?.defaultMonthlyFee === "number"
+        ? config.defaultMonthlyFee
+        : defaultOrganizationConfig.defaultMonthlyFee ?? 50000;
+    feeCategories = [
+      { id: "fee_reguler", name: "Reguler", amount: legacyFee, isDefault: true },
+      { id: "fee_tahfidz", name: "Tahfidz", amount: legacyFee * 2, isDefault: false },
+    ];
+  }
+
+  if (feeCategories.length > 0 && !feeCategories.some((f) => f.isDefault)) {
+    feeCategories[0].isDefault = true;
+  }
+
+  const primaryFee = feeCategories.find((f) => f.isDefault) || feeCategories[0];
+  const defaultMonthlyFee = primaryFee
+    ? primaryFee.amount
+    : typeof config?.defaultMonthlyFee === "number"
+      ? config.defaultMonthlyFee
+      : 50000;
+
+  const orgName = (config?.name ?? defaultOrganizationConfig.name).trim();
+  const appTitle = orgName ? `Sistem Absensi ${orgName}` : "Sistem Absensi";
+
   return {
     name: config?.name ?? defaultOrganizationConfig.name,
     typeLabel: config?.typeLabel ?? defaultOrganizationConfig.typeLabel,
-    appTitle: config?.appTitle ?? defaultOrganizationConfig.appTitle,
+    appTitle,
     faviconUrl: config?.faviconUrl ?? defaultOrganizationConfig.faviconUrl,
+    address: config?.address ?? defaultOrganizationConfig.address,
+    phone: config?.phone ?? defaultOrganizationConfig.phone,
+    defaultMonthlyFee,
+    feeCategories,
+    paymentAccounts,
+    bankName: primaryAccount?.bankName ?? config?.bankName ?? defaultOrganizationConfig.bankName,
+    bankAccountNumber:
+      primaryAccount?.accountNumber ??
+      config?.bankAccountNumber ??
+      defaultOrganizationConfig.bankAccountNumber,
+    bankAccountHolder:
+      primaryAccount?.accountHolder ??
+      config?.bankAccountHolder ??
+      defaultOrganizationConfig.bankAccountHolder,
+    paymentInstructions:
+      config?.paymentInstructions ??
+      defaultOrganizationConfig.paymentInstructions,
+    invoiceTitle: config?.invoiceTitle ?? defaultOrganizationConfig.invoiceTitle,
     terms: {
       studentSingularLower:
         parsedTerms.studentSingularLower ??
@@ -129,10 +244,41 @@ export const organizationConfig = {
     return currentConfig.typeLabel;
   },
   get appTitle() {
-    return currentConfig.appTitle;
+    const orgName = currentConfig.name?.trim();
+    return orgName ? `Sistem Absensi ${orgName}` : "Sistem Absensi";
   },
   get faviconUrl() {
     return currentConfig.faviconUrl;
+  },
+  get address() {
+    return currentConfig.address ?? "";
+  },
+  get phone() {
+    return currentConfig.phone ?? "";
+  },
+  get defaultMonthlyFee() {
+    return currentConfig.defaultMonthlyFee ?? 50000;
+  },
+  get feeCategories() {
+    return currentConfig.feeCategories ?? [];
+  },
+  get paymentAccounts() {
+    return currentConfig.paymentAccounts ?? [];
+  },
+  get bankName() {
+    return currentConfig.bankName ?? "";
+  },
+  get bankAccountNumber() {
+    return currentConfig.bankAccountNumber ?? "";
+  },
+  get bankAccountHolder() {
+    return currentConfig.bankAccountHolder ?? "";
+  },
+  get paymentInstructions() {
+    return currentConfig.paymentInstructions ?? "";
+  },
+  get invoiceTitle() {
+    return currentConfig.invoiceTitle ?? "INVOICE TAGIHAN SPP";
   },
   get terms() {
     return currentConfig.terms;
@@ -226,8 +372,8 @@ export const resetOrganizationConfig = () => {
 export const applyOrganizationMetadata = () => {
   if (typeof document === "undefined") return;
 
-  document.title =
-    currentConfig.appTitle.trim() || defaultOrganizationConfig.appTitle;
+  const orgName = currentConfig.name?.trim();
+  document.title = orgName ? `Sistem Absensi ${orgName}` : "Sistem Absensi";
 
   const faviconUrl =
     currentConfig.faviconUrl.trim() || defaultOrganizationConfig.faviconUrl;

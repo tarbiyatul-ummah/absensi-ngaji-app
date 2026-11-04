@@ -3,13 +3,12 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
-  useRef,
 } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { springSnappy, useSmoothMotion } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,8 +70,6 @@ export const SavingsDetailView: React.FC = () => {
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
@@ -253,28 +250,13 @@ export const SavingsDetailView: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Click outside to close actions dropdown
-  useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (!actionsMenuRef.current?.contains(event.target as Node)) {
-        setIsActionsMenuOpen(false);
-      }
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => {
-      document.removeEventListener("click", handleDocumentClick);
-    };
-  }, []);
-
   const openEditModal = () => {
     if (!account) return;
-    setIsActionsMenuOpen(false);
     setIsEditModalOpen(true);
   };
 
   const openDeleteModal = () => {
     if (!account) return;
-    setIsActionsMenuOpen(false);
     setIsDeleteModalOpen(true);
   };
 
@@ -383,55 +365,35 @@ export const SavingsDetailView: React.FC = () => {
               subtitle={`${getAcademicYearLabel(account.academicYearStart)} • Semester ${semesterLabel(account.semester)}`}
               backTo="/tabungan"
               actions={
-                <div ref={actionsMenuRef} className="relative">
+                <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsActionsMenuOpen((prev) => !prev);
-                    }}
+                    onClick={openEditModal}
+                    className="gap-1.5"
                   >
-                    <MoreVertical
-                      className="h-4 w-4"
+                    <Pencil
+                      className="h-3.5 w-3.5 text-muted-foreground"
                       strokeWidth={1.8}
                       aria-hidden="true"
                     />
-                    Lainnya
+                    Edit
                   </Button>
-
-                  {isActionsMenuOpen && (
-                    <div
-                      className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-44 overflow-hidden rounded-xl border border-border bg-card p-1.5 text-card-foreground shadow-xl"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-accent/70 hover:text-foreground"
-                        onClick={openEditModal}
-                      >
-                        <Pencil
-                          className="h-3.5 w-3.5 text-muted-foreground"
-                          strokeWidth={1.8}
-                          aria-hidden="true"
-                        />
-                        Edit Tabungan
-                      </button>
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-danger transition-colors hover:bg-danger-subtle"
-                        onClick={openDeleteModal}
-                      >
-                        <Trash2
-                          className="h-3.5 w-3.5 text-danger"
-                          strokeWidth={1.8}
-                          aria-hidden="true"
-                        />
-                        Hapus
-                      </button>
-                    </div>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={openDeleteModal}
+                    className="gap-1.5 text-danger hover:border-danger-border hover:bg-danger-subtle hover:text-danger"
+                  >
+                    <Trash2
+                      className="h-3.5 w-3.5"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                    Hapus
+                  </Button>
                 </div>
               }
             />

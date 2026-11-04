@@ -15,9 +15,18 @@ export const AppLayout: React.FC = () => {
   // If user is not logged in or on the login view, don't show navigation
   const isAuthPage = location.pathname === "/login" || !user;
 
-  if (isAuthPage) {
+  // Invoice creation & editing operates in distraction-free full-width mode (like invoice-generator.com)
+  const isInvoicePage = location.pathname.startsWith("/keuangan/invoice");
+
+  if (isAuthPage || isInvoicePage) {
     return (
-      <div className="min-h-screen text-foreground font-sans">
+      <div
+        className={`min-h-screen font-sans ${
+          isInvoicePage
+            ? "bg-slate-100/70 text-slate-900"
+            : "text-foreground"
+        }`}
+      >
         <ErrorBoundary>
           <AnimatePresence mode="wait">
             <motion.div
@@ -49,7 +58,7 @@ export const AppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col lg:flex-row font-sans">
-      {/* Desktop Sidebar (Docked Edge-to-Edge Untitled UI Style) */}
+      {/* Desktop Sidebar */}
       <AppSidebar />
 
       {/* Main Content View Area */}

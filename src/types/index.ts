@@ -154,3 +154,62 @@ export interface AssessmentFormData {
   items: AssessmentFormItem[];
   santriIds: string[];
 }
+
+
+export type InvoiceStatus = "unpaid" | "paid" | "cancelled";
+
+export interface InvoiceHeaderConfig {
+  title: string;
+  organizationName: string;
+  address?: string;
+  phone?: string;
+  showLogo: boolean;
+  logoUrl?: string;
+}
+
+export interface InvoiceStudentItem {
+  santriId: string;
+  santriNama: string;
+  jilidNama: string;
+  months: string[]; // Format: ["2026-07", "2026-08"]
+  monthlyFee: number;
+  subtotal: number;
+}
+
+export interface InvoiceAdjustment {
+  id: string;
+  label: string;
+  amount: number;
+}
+
+export interface InvoiceData {
+  header: InvoiceHeaderConfig;
+  invoiceNumber: string;
+  issuedDate: string; // YYYY-MM-DD
+  dueDate?: string; // YYYY-MM-DD
+  recipientName?: string;
+  students: InvoiceStudentItem[];
+  adjustments: InvoiceAdjustment[];
+  totalSpp: number;
+  totalAdjustments: number;
+  grandTotal: number;
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountHolder: string;
+  notes: string;
+}
+
+export interface SppInvoiceRecord {
+  id: string;
+  invoiceNumber: string;
+  issuedDate: string;
+  dueDate?: string | null;
+  recipientName?: string | null;
+  status: InvoiceStatus;
+  totalAmount: number;
+  data: InvoiceData;
+  paidAt?: number | null;
+  createdAt: number;
+  updatedAt: number;
+}
+export type { PaymentAccountItem, FeeCategoryItem } from "../config/organization";

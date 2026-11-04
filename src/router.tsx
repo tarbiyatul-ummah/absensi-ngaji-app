@@ -12,6 +12,7 @@ const MasterGuruJilid = lazy(() => import("./views/MasterGuruJilid"));
 const ExportView = lazy(() => import("./views/ExportView"));
 const DashboardView = lazy(() => import("./views/DashboardView"));
 const FinanceView = lazy(() => import("./views/FinanceView"));
+const InvoiceEditorView = lazy(() => import("./views/InvoiceEditorView"));
 const SavingsView = lazy(() => import("./views/SavingsView"));
 const SavingsDetailView = lazy(() => import("./views/SavingsDetailView"));
 const AssessmentView = lazy(() => import("./views/AssessmentView"));
@@ -89,6 +90,22 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={SuspenseFallback}>
                 <FinanceView />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/keuangan/invoice/buat",
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <InvoiceEditorView />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/keuangan/invoice/:id",
+            element: (
+              <Suspense fallback={SuspenseFallback}>
+                <InvoiceEditorView />
               </Suspense>
             ),
           },

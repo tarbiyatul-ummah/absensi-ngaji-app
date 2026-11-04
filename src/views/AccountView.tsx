@@ -31,7 +31,6 @@ import { Label } from "@/components/ui/label";
 import { ConfirmModal } from "../components/master/ConfirmModal";
 import { Toast } from "../components/master/Toast";
 import {
-  dashboardMenuItems,
   useOrganizationConfig,
   useTerms,
 } from "../config/organization";
@@ -58,11 +57,6 @@ export const AccountView: React.FC = () => {
   const location = useLocation();
   const organizationConfig = useOrganizationConfig();
   const terms = useTerms();
-
-  const activeFeatureItems = useMemo(
-    () => dashboardMenuItems.filter((item) => item.enabled),
-    []
-  );
 
   const [currentUserEmail, setCurrentUserEmail] = useState("");
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
@@ -261,49 +255,37 @@ export const AccountView: React.FC = () => {
           <CardHeader className="border-b py-4">
             <CardTitle>Pengaturan Organisasi</CardTitle>
             <CardDescription>
-              Identitas lembaga, tampilan browser, dan bahasa aplikasi.
+              Identitas lembaga, logo, tarif iuran, dan bahasa aplikasi.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="divide-y p-0">
             <section className="p-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Organisasi
+                Identitas Lembaga & Logo
               </p>
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
-                  <HugeiconsIcon icon={AccountSetting02Icon} size={24} strokeWidth={1.7} />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border bg-muted/30 p-1">
+                  <img
+                    src={organizationConfig.faviconUrl}
+                    alt={organizationConfig.name}
+                    className="h-full w-full object-contain"
+                  />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {organizationConfig.typeLabel}
-                  </p>
-                  <h2 className="truncate text-base font-bold text-foreground">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px] font-semibold uppercase px-1.5 py-0">
+                      {organizationConfig.typeLabel}
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground truncate">
+                      Tab: {organizationConfig.appTitle}
+                    </span>
+                  </div>
+                  <h2 className="truncate text-base font-bold text-foreground mt-0.5">
                     {organizationConfig.name}
                   </h2>
-                  <p className="mt-1 truncate text-[13px] text-muted-foreground">
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
                     Login sebagai {accountEmail}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="p-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Tampilan Web
-              </p>
-              <div className="flex items-center gap-3">
-                <img
-                  src={organizationConfig.faviconUrl}
-                  alt="Favicon aktif"
-                  className="h-12 w-12 rounded-lg border bg-muted object-contain p-1"
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {organizationConfig.appTitle}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Title dan favicon yang tampil di browser
                   </p>
                 </div>
               </div>
@@ -473,37 +455,6 @@ export const AccountView: React.FC = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
-
-        {/* Active Features */}
-        <Card className="gap-0 py-0">
-          <CardHeader className="border-b py-4">
-            <CardTitle>Menu Aktif</CardTitle>
-            <CardDescription>
-              Fitur yang tersedia di dashboard organisasi saat ini.
-            </CardDescription>
-          </CardHeader>
-
-          <div className="divide-y divide-border">
-            {activeFeatureItems.map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center gap-3 px-4 py-3"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-foreground">
-                  <HugeiconsIcon icon={item.icon} size={20} strokeWidth={1.7} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {item.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
         </Card>
 
         {/* Session / Logout */}

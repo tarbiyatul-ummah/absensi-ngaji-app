@@ -6,14 +6,20 @@ import React, {
   useRef,
 } from "react";
 import * as XLSX from "xlsx";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft02Icon, Download05Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft02Icon,
+  Download05Icon,
+  Invoice01Icon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 import { springSnappy, useSmoothMotion } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -44,6 +50,7 @@ import {
   getDefaultAcademicYearStart,
 } from "../services/academicYearService";
 import type { AcademicYear, Guru, Jilid, Santri, SppPayment } from "../types";
+import { InvoiceListDialog } from "@/components/finance/InvoiceListDialog";
 import {
   getAcademicMonthOptions,
   getAcademicYearLabel,
@@ -91,6 +98,7 @@ const formatPaymentDateTime = (timestamp?: number | null) => {
 };
 
 export const FinanceView: React.FC = () => {
+  const navigate = useNavigate();
   const terms = useTerms();
   const { shouldReduceMotion } = useSmoothMotion();
 
@@ -110,6 +118,8 @@ export const FinanceView: React.FC = () => {
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [selectedSantriDetail, setSelectedSantriDetail] =
     useState<Santri | null>(null);
+
+  const [isInvoiceListOpen, setIsInvoiceListOpen] = useState(false);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
@@ -514,36 +524,52 @@ export const FinanceView: React.FC = () => {
         />
       )}
 
-      <header className="app-container-wide space-y-4 pb-4">
-        <Button asChild variant="ghost" size="sm" className="w-fit px-2">
-          <Link to="/dashboard" className="flex items-center gap-1.5">
-            <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.7} />
-            Dashboard
-          </Link>
-        </Button>
-
-        <div className="app-header">
-          <div>
-            <h1 className="app-title">Keuangan {terms.paymentLabel}</h1>
-            <p className="app-subtitle">
-              Pantau pembayaran bulanan dan tunggakan {terms.studentSingularLower}.
-            </p>
-          </div>
-          <Button
-            type="button"
-            onClick={exportExcel}
-            disabled={isLoading || activeSantriList.length === 0}
-          >
-            <HugeiconsIcon icon={Download05Icon} size={17} strokeWidth={2} />
-            Export Excel
-          </Button>
-        </div>
-      </header>
+      <div className="app-container-wide">
+        <PageHeader
+          title={`Keuangan ${terms.paymentLabel}`}
+          subtitle={`Pantau pembayaran bulanan dan tunggakan ${terms.studentSingularLower}.`}
+          backTo="/dashboard"
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => navigate("/keuangan/invoice/buat")}
+                disabled={isLoading || activeSantriList.length === 0}
+                className="gap-1.5"
+              >
+                <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={2} />
+                Buat Invoice
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsInvoiceListOpen(true)}
+                disabled={isLoading}
+                className="gap-1.5"
+              >
+                <HugeiconsIcon icon={Invoice01Icon} size={16} strokeWidth={1.8} />
+                Daftar Invoice
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={exportExcel}
+                disabled={isLoading || activeSantriList.length === 0}
+                className="gap-1.5"
+              >
+                <HugeiconsIcon icon={Download05Icon} size={16} strokeWidth={2} />
+                Export Excel
+              </Button>
+            </>
+          }
+        />
+      </div>
 
       {isLoading ? (
         <LoadingState size="lg" text="Memuat Data" />
       ) : (
-        <main className="app-container-wide space-y-5 pb-28">
+        <main className="app-container-wide space-y-5 pb-20 md:pb-8">
           <Card className="grid grid-cols-1 sm:grid-cols-3">
             <div className="border-b p-4 sm:border-b-0 sm:border-r">
               <p className="text-xs leading-snug text-muted-foreground">
@@ -715,7 +741,7 @@ export const FinanceView: React.FC = () => {
             </div>
 
             {/* Desktop table */}
-            <div className="hidden overflow-x-auto pb-28 md:block">
+            <div className="hidden overflow-x-auto md:block">
               <table className="min-w-245 w-full border-collapse text-left text-[13px]">
                 <thead className="bg-muted text-muted-foreground">
                   <tr>
@@ -966,10 +992,43 @@ export const FinanceView: React.FC = () => {
                   </strong>
                 </span>
               </div>
+
+              <div className="pt-2 flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-1.5 text-xs w-full sm:w-auto"
+                  onClick={() => {
+                    const santri = selectedSantriDetail;
+                    setSelectedSantriDetail(null);
+                    navigate(`/keuangan/invoice/buat?santriId=${santri.id}`);
+                  }}
+                >
+                  <HugeiconsIcon icon={PlusSignIcon} size={15} />
+                  Buat Tagihan ({terms.paymentLabel}) Siswa Ini
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Daftar Riwayat Invoice */}
+      <InvoiceListDialog
+        open={isInvoiceListOpen}
+        onOpenChange={setIsInvoiceListOpen}
+        onEditInvoice={(record) => {
+          setIsInvoiceListOpen(false);
+          navigate(`/keuangan/invoice/${record.id}`);
+        }}
+        onCreateNewInvoice={() => {
+          setIsInvoiceListOpen(false);
+          navigate("/keuangan/invoice/buat");
+        }}
+        onPaymentsUpdated={() => {
+          void loadPayments(selectedAcademicYearStart);
+        }}
+      />
     </div>
   );
 };

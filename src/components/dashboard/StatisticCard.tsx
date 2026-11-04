@@ -1,15 +1,12 @@
 import React from "react";
-import { motion } from "motion/react";
 import { Card } from "@/components/ui/card";
-import { useSmoothMotion } from "@/lib/motion";
 
 export interface StatisticCardProps {
   title: string;
   value: number | string;
   subtitle?: string;
   icon?: React.ReactNode;
-  iconBgColor?: string;
-  iconColor?: string;
+  iconClassName?: string;
   className?: string;
 }
 
@@ -18,37 +15,33 @@ export const StatisticCard: React.FC<StatisticCardProps> = ({
   value,
   subtitle,
   icon,
-  iconBgColor,
-  iconColor,
+  iconClassName,
   className,
 }) => {
-  const { cardHoverProps } = useSmoothMotion();
-
   return (
-    <motion.div {...cardHoverProps}>
-      <Card className={`flex flex-row items-center justify-between p-5 ${className || ""}`}>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {title}
-          </p>
-          <h2 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
-            {value}
-          </h2>
-          {subtitle && (
-            <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
-          )}
-        </div>
-
-        {icon && (
-          <div
-            className={`p-3 rounded-xl ${iconBgColor ? "" : "bg-muted text-foreground"}`}
-            style={iconBgColor ? { backgroundColor: iconBgColor, color: iconColor } : undefined}
-          >
-            {icon}
-          </div>
+    <Card className={`flex flex-row items-center justify-between p-4 sm:p-5 rounded-2xl border bg-card shadow-2xs ${className || ""}`}>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">
+          {title}
+        </p>
+        <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-foreground truncate">
+          {value}
+        </h2>
+        {subtitle && (
+          <p className="mt-1 text-xs text-muted-foreground truncate">{subtitle}</p>
         )}
-      </Card>
-    </motion.div>
+      </div>
+
+      {icon && (
+        <div
+          className={`size-11 sm:size-12 rounded-xl flex items-center justify-center shrink-0 ml-3 ${
+            iconClassName || "bg-primary/10 text-primary"
+          }`}
+        >
+          {icon}
+        </div>
+      )}
+    </Card>
   );
 };
 

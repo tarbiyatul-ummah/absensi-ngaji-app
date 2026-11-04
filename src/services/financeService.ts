@@ -64,3 +64,24 @@ export const saveSppPayment = async (
 
   throwIfError(error);
 };
+
+export const saveSppPaymentsBatch = async (
+  payments: Array<Omit<SppPayment, "id" | "updatedAt">>,
+) => {
+  if (payments.length === 0) return;
+  const userId = await getCurrentUserId();
+  const now = Date.now();
+  const rows = payments.map((data) => ({
+    id: getSppPaymentId(data.academicYearStart, data.month, data.santriId),
+    user_id: userId,
+    santri_id: data.santriId,
+    academic_year_start: data.academicYearStart,
+    month: data.month,
+    is_paid: data.isPaid,
+    paid_at: data.paidAt ?? null,
+    updated_at: now,
+  }));
+
+  const { error } = await supabase.from(TABLE).upsert(rows, { onConflict: "id" });
+  throwIfError(error);
+};

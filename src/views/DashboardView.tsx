@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
 import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckListIcon,
+  ChartEvaluationIcon,
+  DatabaseIcon,
+  Wallet01Icon,
+  AddMoneyCircleIcon,
+} from "@hugeicons/core-free-icons";
 import { ChevronRight } from "lucide-react";
-import { springSnappy, useSmoothMotion } from "@/lib/motion";
 import { getSantri } from "@/services/masterService";
 import { getAttendanceByDateRange } from "@/services/attendanceService";
 import {
@@ -12,17 +17,8 @@ import {
   getDefaultAcademicYearStart,
 } from "@/services/academicYearService";
 import type { AcademicYear, Attendance, Santri } from "@/types";
-import {
-  getDashboardMenuItems,
-  useOrganizationConfig,
-  useTerms,
-} from "@/config/organization";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useTerms } from "@/config/organization";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import StatisticCard from "@/components/dashboard/StatisticCard";
 import StatisticListCard from "@/components/dashboard/StatisticListCard";
 import DailyAttendanceChart, {
   type TrackedDayOption,
@@ -63,9 +60,7 @@ const trackedDayOptions: TrackedDayOption[] = [
 ];
 
 export const DashboardView: React.FC = () => {
-  const orgConfig = useOrganizationConfig();
   const terms = useTerms();
-  const { shouldReduceMotion } = useSmoothMotion();
 
   const [santriList, setSantriList] = useState<Santri[]>([]);
   const [attendanceList, setAttendanceList] = useState<Attendance[]>([]);
@@ -92,11 +87,6 @@ export const DashboardView: React.FC = () => {
   const [selectedTrackedWeekdays, setSelectedTrackedWeekdays] = useState<
     number[]
   >([1, 2, 3, 4, 5]);
-
-  const activeDashboardMenuItems = useMemo(
-    () => getDashboardMenuItems(terms).filter((item) => item.enabled),
-    [terms],
-  );
 
   const triggerToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -419,6 +409,15 @@ export const DashboardView: React.FC = () => {
     totalSantri,
   ]);
 
+  const avgWeeklyPercentage = useMemo(() => {
+    if (weeklyAttendanceChart.length === 0) return 0;
+    const sum = weeklyAttendanceChart.reduce(
+      (acc, curr) => acc + curr.percentage,
+      0,
+    );
+    return Math.round(sum / weeklyAttendanceChart.length);
+  }, [weeklyAttendanceChart]);
+
   return (
     <div className="app-page">
       <Toast
@@ -437,52 +436,98 @@ export const DashboardView: React.FC = () => {
         <LoadingState size="lg" text="Memuat Data" />
       ) : (
         <div className="app-container space-y-6">
-          <Card className="gap-0 py-0">
-            <CardHeader className="border-b py-4">
-              <CardTitle>Menu {orgConfig.typeLabel}</CardTitle>
-              <CardDescription>
-                Fitur aktif sesuai kebutuhan organisasi
-              </CardDescription>
-            </CardHeader>
+          {/* Executive KPI Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatisticCard
+              title={`Total ${terms.studentSingularTitle}`}
+              value={totalSantri}
+              subtitle="Status aktif terdaftar"
+              icon={<HugeiconsIcon icon={DatabaseIcon} size={22} />}
+              iconClassName="bg-primary/10 text-primary"
+            />
+            <StatisticCard
+              title="Kehadiran Pekan Ini"
+              value={`${avgWeeklyPercentage}%`}
+              subtitle="Rata-rata 7 hari aktif"
+              icon={<HugeiconsIcon icon={CheckListIcon} size={22} />}
+              iconClassName="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            />
+            <StatisticCard
+              title="Sesi Presensi"
+              value={periodAttendanceDates.length}
+              subtitle={selectedPeriodLabel}
+              icon={<HugeiconsIcon icon={ChartEvaluationIcon} size={22} />}
+              iconClassName="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+            />
+          </div>
 
-            <div className="space-y-2.5 p-4">
-              {activeDashboardMenuItems.map((item) => (
-                <motion.div
-                  key={item.key}
-                  whileHover={shouldReduceMotion ? undefined : { x: 3 }}
-                  whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                  transition={springSnappy}
-                >
-                  <Link
-                    to={item.to}
-                    className="flex min-h-[76px] items-center gap-3 rounded-xl bg-muted/60 px-4 py-3 transition hover:bg-muted"
-                  >
-                    <div className="flex h-7 w-7 shrink-0 items-start justify-center pt-0.5 text-foreground">
-                      <HugeiconsIcon
-                        icon={item.icon}
-                        size={18}
-                        color="currentColor"
-                        strokeWidth={1.9}
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold leading-5 text-foreground">
-                        {item.label}
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {item.description}
-                      </p>
-                    </div>
-                    <ChevronRight
-                      className="h-4 w-4 shrink-0 text-muted-foreground"
-                      strokeWidth={1.8}
-                      aria-hidden="true"
-                    />
-                  </Link>
-                </motion.div>
-              ))}
+          {/* Akses Cepat Modul: SPP, Tabungan, Penilaian */}
+          <div className="space-y-2.5">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+              Modul Utama
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                to="/keuangan"
+                className="group flex items-center gap-3.5 p-4 rounded-2xl border bg-card hover:border-emerald-500/50 hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="size-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={Wallet01Icon} size={22} strokeWidth={2} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                      {terms.paymentLabel} (Keuangan)
+                    </h3>
+                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                    Tagihan, status bayar & invoice
+                  </p>
+                </div>
+              </Link>
+
+              <Link
+                to="/tabungan"
+                className="group flex items-center gap-3.5 p-4 rounded-2xl border bg-card hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="size-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={AddMoneyCircleIcon} size={22} strokeWidth={2} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                      Tabungan {terms.studentSingularTitle}
+                    </h3>
+                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                    Buku saldo, setoran & penarikan
+                  </p>
+                </div>
+              </Link>
+
+              <Link
+                to="/penilaian"
+                className="group flex items-center gap-3.5 p-4 rounded-2xl border bg-card hover:border-purple-500/50 hover:shadow-md transition-all cursor-pointer"
+              >
+                <div className="size-11 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HugeiconsIcon icon={ChartEvaluationIcon} size={22} strokeWidth={2} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                      Penilaian & Raport
+                    </h3>
+                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
+                    Evaluasi hafalan & rapor santri
+                  </p>
+                </div>
+              </Link>
             </div>
-          </Card>
+          </div>
 
           <DailyAttendanceChart
             items={weeklyAttendanceChart}

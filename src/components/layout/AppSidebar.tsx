@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import {
   getMainNavigationItems,
+  getDashboardMenuItems,
   useOrganizationConfig,
   useTerms,
 } from "../../config/organization";
@@ -60,9 +61,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Only the 4 configured navigation items
+  // Main navigation items + modules (SPP, Tabungan, Penilaian)
   const navigationItems = useMemo(
-    () => getMainNavigationItems(terms).filter((item) => item.enabled),
+    () => [
+      ...getMainNavigationItems(terms).filter((item) => item.key !== "account"),
+      ...getDashboardMenuItems(terms),
+      ...getMainNavigationItems(terms).filter((item) => item.key === "account"),
+    ],
     [terms],
   );
 
@@ -73,18 +78,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
       return pathname === "/";
     }
     if (to === "/dashboard") {
-      return (
-        pathname === "/dashboard" ||
-        pathname.startsWith("/keuangan") ||
-        pathname.startsWith("/tabungan") ||
-        pathname.startsWith("/penilaian")
-      );
+      return pathname === "/dashboard";
     }
     if (to === "/master") {
       return pathname === "/master" || pathname.startsWith("/master-guru");
     }
     if (to === "/akun") {
       return pathname === "/akun" || pathname.startsWith("/akun/");
+    }
+    if (to === "/keuangan") {
+      return pathname.startsWith("/keuangan");
+    }
+    if (to === "/tabungan") {
+      return pathname.startsWith("/tabungan");
+    }
+    if (to === "/penilaian") {
+      return pathname.startsWith("/penilaian");
     }
     return pathname.startsWith(to);
   };
@@ -169,10 +178,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
 
               <div className="min-w-0 flex-1">
                 <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate block tracking-tight leading-tight">
-                  {orgConfig.name || "Untitled UI"}
+                  {orgConfig.name || "Sistem Absensi"}
                 </span>
                 <span className="text-[11px] text-muted-foreground truncate block leading-tight mt-0.5">
-                  {orgConfig.appTitle}
+                  {orgConfig.typeLabel ? `${orgConfig.typeLabel} • ` : ""}Sistem Absensi
                 </span>
               </div>
             </div>
@@ -244,7 +253,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = "" }) => {
       {/* Flexible Spacer */}
       <div className="flex-1 min-h-6" />
 
-      {/* Footer User Profile Card (Lucy Bond style) */}
+      {/* Footer User Profile Card */}
       <div
         ref={profileMenuRef}
         className={`relative border-t border-border/80 ${isCollapsed ? "p-2" : "p-3"}`}

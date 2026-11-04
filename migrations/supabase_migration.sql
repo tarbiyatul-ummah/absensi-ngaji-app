@@ -20,3 +20,4 @@ WHERE tanggal_masuk IS NULL AND created_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_students_tanggal_masuk ON students (tanggal_masuk);
 CREATE INDEX IF NOT EXISTS idx_students_tanggal_keluar ON students (tanggal_keluar);
 
+

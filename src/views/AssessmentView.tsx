@@ -139,9 +139,6 @@ export const AssessmentView: React.FC = () => {
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
-  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
-
   const [pdfProgress, setPdfProgress] = useState<AssessmentPdfProgress>({
     current: 0,
     total: 0,
@@ -444,19 +441,6 @@ export const AssessmentView: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Click outside to close actions menu
-  useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (!actionsMenuRef.current?.contains(event.target as Node)) {
-        setIsActionsMenuOpen(false);
-      }
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => {
-      document.removeEventListener("click", handleDocumentClick);
-    };
-  }, []);
-
   const openCreateModal = () => {
     setModalMode("create");
     setIsAssessmentModalOpen(true);
@@ -464,14 +448,12 @@ export const AssessmentView: React.FC = () => {
 
   const openEditModal = () => {
     if (!selectedAssessment) return;
-    setIsActionsMenuOpen(false);
     setModalMode("edit");
     setIsAssessmentModalOpen(true);
   };
 
   const openDeleteModal = () => {
     if (!selectedAssessment) return;
-    setIsActionsMenuOpen(false);
     setIsDeleteModalOpen(true);
   };
 
@@ -689,8 +671,61 @@ export const AssessmentView: React.FC = () => {
             !isDetailPage ? (
               <Button type="button" onClick={openCreateModal}>
                 <HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2} />
-                Add Penilaian
+                Tambah Penilaian
               </Button>
+            ) : selectedAssessment ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    isSaving ||
+                    isPdfGenerating ||
+                    selectedAssessment.results.length === 0
+                  }
+                  onClick={handleExportExcel}
+                  className="gap-1.5"
+                >
+                  <FileSpreadsheet className="h-4 w-4" strokeWidth={1.8} />
+                  Export Excel
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    isSaving ||
+                    isPdfGenerating ||
+                    selectedAssessment.results.length === 0
+                  }
+                  onClick={handleGenerateReport}
+                  className="gap-1.5"
+                >
+                  <FileText className="h-4 w-4" strokeWidth={1.8} />
+                  {isPdfGenerating ? "Membuat PDF..." : "Cetak Raport"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={openEditModal}
+                  className="gap-1.5"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.8} />
+                  Edit
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={openDeleteModal}
+                  className="gap-1.5 text-danger hover:bg-danger-subtle hover:text-danger hover:border-danger-border"
+                >
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  Hapus
+                </Button>
+              </div>
             ) : undefined
           }
         />
@@ -736,7 +771,7 @@ export const AssessmentView: React.FC = () => {
                     Belum ada penilaian.
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Klik Add Penilaian untuk membuat format pertama.
+                    Klik Tambah Penilaian untuk membuat format pertama.
                   </p>
                 </div>
               )}
@@ -745,102 +780,8 @@ export const AssessmentView: React.FC = () => {
         ) : selectedAssessment ? (
           <main>
             <Card className="gap-0 py-0">
-              <CardHeader className="no-print border-b py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <CardTitle>{selectedAssessment.name}</CardTitle>
-                    <CardDescription>
-                      {selectedAssessment.participants.length}{" "}
-                      {terms.studentSingularLower} - Nilai Minimum{" "}
-                      {selectedAssessment.minimumScore}
-                    </CardDescription>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={
-                        isSaving ||
-                        isPdfGenerating ||
-                        selectedAssessment.results.length === 0
-                      }
-                      onClick={handleExportExcel}
-                    >
-                      <FileSpreadsheet className="h-4 w-4" strokeWidth={1.8} />
-                      Export Excel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={
-                        isSaving ||
-                        isPdfGenerating ||
-                        selectedAssessment.results.length === 0
-                      }
-                      onClick={handleGenerateReport}
-                    >
-                      <FileText className="h-4 w-4" strokeWidth={1.8} />
-                      {isPdfGenerating
-                        ? "Membuat PDF..."
-                        : "Generate Report"}
-                    </Button>
-                    <div ref={actionsMenuRef} className="relative w-full sm:w-auto">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-center sm:w-auto"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsActionsMenuOpen((prev) => !prev);
-                        }}
-                      >
-                        <MoreVertical
-                          className="h-4 w-4"
-                          strokeWidth={1.8}
-                          aria-hidden="true"
-                        />
-                        Lainnya
-                      </Button>
-
-                      {isActionsMenuOpen && (
-                        <div
-                          className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-44 overflow-hidden rounded-xl border border-border bg-card p-1.5 text-card-foreground shadow-xl"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors hover:bg-accent/70 hover:text-foreground"
-                            onClick={openEditModal}
-                          >
-                            <Pencil
-                              className="h-3.5 w-3.5 text-muted-foreground"
-                              strokeWidth={1.8}
-                              aria-hidden="true"
-                            />
-                            Edit Penilaian
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-danger transition-colors hover:bg-danger-subtle"
-                            onClick={openDeleteModal}
-                          >
-                            <Trash2
-                              className="h-3.5 w-3.5 text-danger"
-                              strokeWidth={1.8}
-                              aria-hidden="true"
-                            />
-                            Hapus
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4">
+              <CardHeader className="no-print border-b p-4">
+                <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -994,14 +935,12 @@ export const AssessmentView: React.FC = () => {
                               </Badge>
                             </span>
 
-                            <span className="mt-4 flex items-center justify-between gap-3">
+                            <span className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-2.5">
                               <span className="text-xs text-muted-foreground">
-                                {res
-                                  ? "Klik untuk edit nilai"
-                                  : "Klik untuk mulai menilai"}
+                                {res ? "Nilai terisi" : "Belum dinilai"}
                               </span>
-                              <span className="text-sm font-semibold text-foreground">
-                                {res ? "Edit Nilai" : "Nilai"}
+                              <span className="text-xs font-semibold text-primary">
+                                {res ? "Edit Nilai →" : "Mulai Menilai →"}
                               </span>
                             </span>
                           </button>

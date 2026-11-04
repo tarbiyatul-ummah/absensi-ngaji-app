@@ -82,39 +82,34 @@ export const DailyAttendanceChart: React.FC<DailyAttendanceChartProps> = ({
       </CardHeader>
 
       <CardContent className="p-4">
-        <details className="relative mb-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl border border-input bg-card px-3.5 py-2.5 text-xs font-medium text-foreground shadow-2xs transition hover:bg-accent/50 marker:hidden">
-            <span>Hari yang di-track</span>
-            <span className="truncate text-right text-xs font-semibold text-foreground">
-              {selectedDaySummary}
-            </span>
-          </summary>
-
-          <div
-            className="absolute left-0 right-0 z-20 mt-2 grid grid-cols-2 gap-2 rounded-xl border border-border bg-card p-2 shadow-xl sm:grid-cols-4"
-            aria-label="Hari yang di-track pada grafik"
-          >
-            {trackedDayOptions.map((day) => (
-              <label
-                key={day.value}
-                className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors hover:bg-accent/80 ${
-                  isTrackedDaySelected(day.value)
-                    ? "bg-secondary text-foreground font-semibold"
-                    : "text-muted-foreground"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 shrink-0 rounded accent-primary"
-                  checked={isTrackedDaySelected(day.value)}
-                  onChange={() => {}}
-                  onClick={(e) => handleTrackedDayClick(e, day.value)}
-                />
-                <span>{day.label}</span>
-              </label>
-            ))}
+        {/* Tracked Day Filter Chips */}
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Pilih hari yang di-track ({selectedTrackedWeekdays.length} hari):
+          </span>
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter hari kehadiran">
+            {trackedDayOptions.map((day) => {
+              const isSelected = isTrackedDaySelected(day.value);
+              const isOnly = isOnlySelectedDay(day.value);
+              return (
+                <button
+                  key={day.value}
+                  type="button"
+                  disabled={isOnly}
+                  onClick={() => onToggleTrackedWeekday(day.value)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground shadow-2xs font-semibold"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  } ${isOnly ? "opacity-60 cursor-not-allowed" : ""}`}
+                  title={isOnly ? "Minimal harus ada 1 hari aktif" : `Klik untuk ${isSelected ? "sembunyikan" : "tampilkan"} hari ${day.label}`}
+                >
+                  {day.shortLabel}
+                </button>
+              );
+            })}
           </div>
-        </details>
+        </div>
 
         <div className="flex h-56 items-end gap-2 rounded-xl border border-border bg-muted/50 px-3 pt-4 pb-3">
           {items.map((item) => (
