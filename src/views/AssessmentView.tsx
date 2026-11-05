@@ -16,14 +16,17 @@ import {
   Trash2,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { ArrowLeft02Icon, ArrowRight01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import {
   springSnappy,
   useSmoothMotion,
   staggerContainerVariants,
   staggerItemVariants,
 } from "@/lib/motion";
-import { getQualitativeGrade, getQualitativeLabel } from "@/utils/assessmentUtils";
+import {
+  getQualitativeGrade,
+  getQualitativeLabel,
+} from "@/utils/assessmentUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,6 +122,15 @@ export const AssessmentView: React.FC = () => {
   const [selectedSantriId, setSelectedSantriId] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
 
+  // Dua Tab Utama: "daily" (Penilaian Harian) dan "list" (Semua Penilaian)
+  const [activeTab, setActiveTab] = useState<"daily" | "list">("daily");
+  const [createIsDaily, setCreateIsDaily] = useState(false);
+
+  const dailyAssessmentsList = useMemo(
+    () => assessments.filter((a) => a.isDaily),
+    [assessments]
+  );
+
   const [selectedReportAcademicYearStart, setSelectedReportAcademicYearStart] =
     useState(getCurrentAcademicYearStart());
   const [selectedReportSemester, setSelectedReportSemester] =
@@ -174,7 +186,7 @@ export const AssessmentView: React.FC = () => {
       lowerMessage.includes("minimum_score") ||
       lowerMessage.includes("schema cache")
     ) {
-      return "Schema penilaian belum terbaru. Jalankan ulang supabase/assessment_schema.sql di Supabase, lalu refresh halaman.";
+      return "Schema penilaian belum terbaru. Jalankan skrip assessment_schema.sql di Supabase, lalu refresh halaman.";
     }
 
     return message;
@@ -226,11 +238,13 @@ export const AssessmentView: React.FC = () => {
     const keyword = studentSearch.trim().toLowerCase();
     if (!keyword) return selectedParticipants;
 
-    return selectedParticipants.filter((santri) =>
-      [santri.nama, getJilidName(santri.jilidId), getGuruName(santri.guruId)]
-        .join(" ")
-        .toLowerCase()
-        .includes(keyword)
+    return selectedParticipants.filter(
+      (santri) =>
+        santri.nama.toLowerCase().includes(keyword) ||
+        getJilidName(santri.jilidId).toLowerCase().includes(keyword) ||
+        getGuruName(santri.guruId)
+          .toLowerCase()
+          .includes(keyword)
     );
   }, [selectedParticipants, studentSearch, getJilidName, getGuruName]);
 
@@ -241,6 +255,15 @@ export const AssessmentView: React.FC = () => {
     );
   }, [selectedParticipants, selectedSantriId]);
 
+  const currentParticipantIndex = useMemo(() => {
+    if (!selectedSantriId) return -1;
+    return filteredParticipants.findIndex((s) => s.id === selectedSantriId);
+  }, [filteredParticipants, selectedSantriId]);
+
+  const hasNextParticipant =
+    currentParticipantIndex >= 0 &&
+    currentParticipantIndex < filteredParticipants.length - 1;
+
   const selectedResult = useMemo(() => {
     if (!selectedAssessment || !selectedSantriId) return null;
     return (
@@ -250,18 +273,29 @@ export const AssessmentView: React.FC = () => {
   }, [selectedAssessment, selectedSantriId]);
 
   const assessmentInitialValue = useMemo<AssessmentFormData | null>(() => {
+    if (modalMode === "create") {
+      return {
+        name: "",
+        assessmentType: "qualitative",
+        minimumScore: 3,
+        isDaily: createIsDaily,
+        items: [{ label: "" }],
+        santriIds: santriList.filter((s) => s.isActive !== false).map((s) => s.id),
+      };
+    }
     if (!selectedAssessment) return null;
     return {
       name: selectedAssessment.name,
       assessmentType: selectedAssessment.assessmentType,
       minimumScore: selectedAssessment.minimumScore,
+      isDaily: Boolean(selectedAssessment.isDaily),
       items: selectedAssessment.items.map((item) => ({
         id: item.id,
         label: item.label,
       })),
       santriIds: selectedAssessment.participants.map((p) => p.santriId),
     };
-  }, [selectedAssessment]);
+  }, [modalMode, createIsDaily, selectedAssessment, santriList]);
 
   const getSemesterLabel = (semester: AcademicSemester) =>
     semester === "ganjil" ? "Ganjil" : "Genap";
@@ -283,20 +317,22 @@ export const AssessmentView: React.FC = () => {
           label: getAcademicYearLabel(year.startYear),
         }));
     }
+
     return getAcademicYearOptions(selectedReportAcademicYearStart);
   }, [academicYearList, selectedReportAcademicYearStart]);
 
   const selectedReportRange = useMemo(() => {
-    if (reportRangeMode === "custom") {
-      return {
-        start: reportStartDate,
-        end: reportEndDate,
-      };
+    if (reportRangeMode === "semester") {
+      return getSemesterRange(
+        selectedReportAcademicYearStart,
+        selectedReportSemester
+      );
     }
-    return getSemesterRange(
-      selectedReportAcademicYearStart,
-      selectedReportSemester
-    );
+
+    return {
+      start: reportStartDate,
+      end: reportEndDate,
+    };
   }, [
     reportRangeMode,
     reportStartDate,
@@ -353,31 +389,30 @@ export const AssessmentView: React.FC = () => {
         present: 0,
         permission: 0,
         absent: 0,
-        recorded: 0,
       };
-      const status = getAttendanceStatus(attendance);
 
-      current.recorded += 1;
+      const status = getAttendanceStatus(attendance);
       if (status === "present") current.present += 1;
       if (status === "permission") current.permission += 1;
       if (status === "absent") current.absent += 1;
+
       acc.set(attendance.santriId, current);
       return acc;
-    }, new Map<string, { present: number; permission: number; absent: number; recorded: number }>());
+    }, new Map<string, { present: number; permission: number; absent: number }>());
 
-    const santriById = new Map(santriList.map((s) => [s.id, s]));
-
-    const rows = assessedResults
+    const rows: AssessmentReportRow[] = assessedResults
       .map((result) => {
-        const santri = santriById.get(result.santriId);
+        const santri = sortedSantriList.find((s) => s.id === result.santriId);
         if (!santri) return null;
 
         const attendance = attendanceBySantri.get(santri.id) ?? {
           present: 0,
           permission: 0,
           absent: 0,
-          recorded: 0,
         };
+
+        const totalRecorded =
+          attendance.present + attendance.permission + attendance.absent;
 
         return {
           santri,
@@ -385,17 +420,17 @@ export const AssessmentView: React.FC = () => {
           attendancePresent: attendance.present,
           attendancePermission: attendance.permission,
           attendanceAbsent: attendance.absent,
-          attendanceRecorded: attendance.recorded,
+          attendanceRecorded: totalRecorded,
         };
       })
-      .filter((row): row is AssessmentReportRow => Boolean(row))
-      .sort((a, b) => a.santri.nama.localeCompare(b.santri.nama));
+      .filter((row): row is AssessmentReportRow => row !== null);
 
     if (rows.length === 0) {
       triggerToast(
-        `Report belum bisa dibuat karena data ${terms.studentSingularLower} untuk hasil penilaian tidak ditemukan.`,
+        "Tidak ada data santri yang cocok untuk dicetak.",
         "error"
       );
+      return [];
     }
 
     return rows;
@@ -436,7 +471,7 @@ export const AssessmentView: React.FC = () => {
       triggerToast(
         formatAssessmentError(
           error,
-          "Data penilaian belum bisa dimuat. Pastikan assessment_schema.sql terbaru sudah dijalankan."
+          "Data penilaian belum bisa dimuat. Pastikan skrip migrasi database sudah dijalankan."
         ),
         "error"
       );
@@ -449,8 +484,9 @@ export const AssessmentView: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  const openCreateModal = () => {
+  const openCreateModal = (isDaily = false) => {
     setModalMode("create");
+    setCreateIsDaily(isDaily);
     setIsAssessmentModalOpen(true);
   };
 
@@ -516,7 +552,7 @@ export const AssessmentView: React.FC = () => {
 
   const handleSaveResult = async (data: {
     notes: string;
-    scores: Array<{ assessmentItemId: string; score: number }>;
+    scores: Array<{ assessmentItemId: string; score: number; note?: string }>;
   }) => {
     if (!selectedAssessment || !selectedSantriId) return;
 
@@ -531,6 +567,36 @@ export const AssessmentView: React.FC = () => {
       await loadData();
       setIsScoreModalOpen(false);
       triggerToast("Nilai berhasil disimpan.");
+    } catch (error) {
+      triggerToast("Nilai gagal disimpan.", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveResultAndNext = async (data: {
+    notes: string;
+    scores: Array<{ assessmentItemId: string; score: number; note?: string }>;
+  }) => {
+    if (!selectedAssessment || !selectedSantriId) return;
+
+    setIsSaving(true);
+    try {
+      await saveAssessmentResult({
+        assessmentId: selectedAssessment.id,
+        santriId: selectedSantriId,
+        notes: data.notes,
+        scores: data.scores,
+      });
+      await loadData();
+      triggerToast("Nilai berhasil disimpan.");
+
+      if (hasNextParticipant) {
+        const nextSantri = filteredParticipants[currentParticipantIndex + 1];
+        setSelectedSantriId(nextSantri.id);
+      } else {
+        setIsScoreModalOpen(false);
+      }
     } catch (error) {
       triggerToast("Nilai gagal disimpan.", "error");
     } finally {
@@ -629,35 +695,38 @@ export const AssessmentView: React.FC = () => {
             academicYearLabel: getAcademicYearLabel(
               selectedReportAcademicYearStart
             ),
-            semesterLabel: getSemesterLabel(selectedReportSemester),
+            semesterLabel:
+              selectedReportSemester === "ganjil" ? "Ganjil" : "Genap",
             minimumScore: selectedAssessment.minimumScore,
             attendancePresent: row.attendancePresent,
             attendancePermission: row.attendancePermission,
             attendanceAbsent: row.attendanceAbsent,
-            scores: selectedAssessment.items.map((item) => ({
-              label: item.label,
-              score: scoreByItemId.get(item.id) ?? 0,
-              maxScore: item.maxScore,
-            })),
-            notes: row.result.notes ?? "",
+            scores: selectedAssessment.items.map((item) => {
+              const score = scoreByItemId.get(item.id) ?? 0;
+              const matchingScoreObj = row.result.scores.find(
+                (s) => s.assessmentItemId === item.id
+              );
+              return {
+                label: item.label,
+                score,
+                maxScore: item.maxScore,
+                note: matchingScoreObj?.note,
+              };
+            }),
+            notes: row.result.notes || "Belum ada catatan.",
           };
         }),
         `report-${fileName}.pdf`,
-        (progress) => {
-          setPdfProgress(progress);
-        }
+        (progress) => setPdfProgress(progress)
       );
-      triggerToast("Report PDF berhasil dibuat.");
+
+      triggerToast("PDF Raport berhasil diunduh.");
     } catch (error) {
       console.error(error);
-      triggerToast("Report PDF gagal dibuat.", "error");
+      triggerToast("Gagal membuat PDF Raport.", "error");
     } finally {
       setIsPdfGenerating(false);
     }
-  };
-
-  const handlePrintReport = () => {
-    window.print();
   };
 
   return (
@@ -681,14 +750,19 @@ export const AssessmentView: React.FC = () => {
                     ? getQualitativeLabel(selectedAssessment.minimumScore)
                     : selectedAssessment?.minimumScore || 0
                 }`
-              : `Buat format penilaian, pilih ${terms.studentSingularLower}, lalu isi nilai dan catatan perkembangan.`
+              : activeTab === "daily"
+                ? "Daftar penilaian yang dijadikan penilaian harian (talaqqi, hafalan, doa, adab, dll)."
+                : "Daftar seluruh format penilaian aktif (harian, ujian berkala, raport semester)."
           }
           backTo={isDetailPage ? "/penilaian" : "/dashboard"}
           actions={
             !isDetailPage ? (
-              <Button type="button" onClick={openCreateModal}>
+              <Button
+                type="button"
+                onClick={() => openCreateModal(activeTab === "daily")}
+              >
                 <HugeiconsIcon icon={PlusSignIcon} size={17} strokeWidth={2} />
-                Tambah Penilaian
+                {activeTab === "daily" ? "Tambah Penilaian Harian" : "Tambah Penilaian"}
               </Button>
             ) : selectedAssessment ? (
               <div className="flex flex-wrap items-center gap-2">
@@ -750,194 +824,369 @@ export const AssessmentView: React.FC = () => {
         {isLoading ? (
           <LoadingState size="lg" text="Memuat Data" />
         ) : !isDetailPage ? (
-          <main>
-            <Card className="gap-0 py-0">
-              <CardHeader className="border-b py-4">
-                <CardTitle>Daftar Penilaian</CardTitle>
-                <CardDescription>
-                  {assessments.length} penilaian aktif
-                </CardDescription>
-              </CardHeader>
+          <div className="space-y-4">
+            {/* Tab Bar: Penilaian Harian & Semua Penilaian */}
+            <div className="flex items-center gap-1 rounded-lg bg-muted p-1 w-fit">
+              <button
+                type="button"
+                onClick={() => setActiveTab("daily")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                  activeTab === "daily"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Penilaian Harian
+                {dailyAssessmentsList.length > 0 && (
+                  <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                    {dailyAssessmentsList.length}
+                  </Badge>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("list")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                  activeTab === "list"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Semua Penilaian
+                <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                  {assessments.length}
+                </Badge>
+              </button>
+            </div>
 
-              {assessments.length > 0 ? (
-                <motion.div
-                  variants={staggerContainerVariants}
-                  initial={shouldReduceMotion ? false : "hidden"}
-                  animate="visible"
-                  className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-3"
-                >
-                  {assessments.map((assessment) => (
-                    <motion.div
-                      key={assessment.id}
-                      variants={staggerItemVariants}
-                      whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
-                      transition={springSnappy}
+            {activeTab === "daily" ? (
+              /* TAB: PENILAIAN HARIAN */
+              <main>
+                <Card className="gap-0 py-0">
+                  <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b py-4">
+                    <div>
+                      <CardTitle>Penilaian Harian</CardTitle>
+                      <CardDescription>
+                        Pilih penilaian harian di bawah ini untuk menilai santri pada sesi mengaji.
+                      </CardDescription>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => openCreateModal(true)}
                     >
-                      <Link
-                        to={`/penilaian/${assessment.id}`}
-                        className="block rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 shadow-xs h-full"
-                      >
-                        <p className="text-sm font-semibold text-foreground">
-                          {assessment.name}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Badge variant="outline" className="text-[10px]">
-                            {assessment.assessmentType === "qualitative"
-                              ? "Kualitatif (A-D)"
-                              : assessment.assessmentType === "scale"
-                                ? "Skala 1-5"
-                                : "Nilai 0-100"}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {assessment.items.length} butir
-                          </Badge>
-                          <Badge variant="secondary">
-                            {getResultCount(assessment)}/
-                            {assessment.participants.length} selesai
-                          </Badge>
-                        </div>
-                      </Link>
+                      <HugeiconsIcon icon={PlusSignIcon} size={15} strokeWidth={2} />
+                      Tambah Penilaian Harian
+                    </Button>
+                  </CardHeader>
+
+                  {dailyAssessmentsList.length > 0 ? (
+                    <motion.div
+                      variants={staggerContainerVariants}
+                      initial={shouldReduceMotion ? false : "hidden"}
+                      animate="visible"
+                      className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-3"
+                    >
+                      {dailyAssessmentsList.map((assessment) => (
+                        <motion.div
+                          key={assessment.id}
+                          variants={staggerItemVariants}
+                          whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+                          transition={springSnappy}
+                        >
+                          <Link
+                            to={`/penilaian/${assessment.id}`}
+                            className="group flex flex-col justify-between rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 shadow-xs h-full"
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
+                                  {assessment.name}
+                                </h4>
+                                <Badge variant="secondary" className="shrink-0 text-[11px]">
+                                  Harian
+                                </Badge>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                                <Badge variant="outline" className="text-[11px]">
+                                  {assessment.assessmentType === "qualitative"
+                                    ? "Kualitatif (A-D)"
+                                    : assessment.assessmentType === "scale"
+                                      ? "Skala 1-5"
+                                      : "Nilai 0-100"}
+                                </Badge>
+                                <span className="text-[11px] text-muted-foreground">
+                                  {assessment.items.length} butir aspek
+                                </span>
+                              </div>
+
+                              {/* Preview butir aspek penilaian */}
+                              <div className="flex flex-wrap gap-1 pt-0.5">
+                                {assessment.items.map((item, iIdx) => (
+                                  <Badge
+                                    key={iIdx}
+                                    variant="outline"
+                                    className="text-[10px] py-0 px-1.5"
+                                  >
+                                    {item.label}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="mt-3.5 flex items-center justify-between border-t border-border pt-2 text-xs">
+                              <span className="text-muted-foreground">
+                                <strong className="font-semibold text-foreground">
+                                  {getResultCount(assessment)}
+                                </strong>{" "}
+                                / {assessment.participants.length} selesai
+                              </span>
+                              <span className="inline-flex items-center gap-1 font-medium text-primary group-hover:underline">
+                                <span>Pilih & Nilai</span>
+                                <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
+                              </span>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
                     </motion.div>
-                  ))}
-                </motion.div>
-              ) : (
-                <div className="px-4 py-10 text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    Belum ada penilaian.
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Klik Tambah Penilaian untuk membuat format pertama.
-                  </p>
-                </div>
-              )}
-            </Card>
-          </main>
+                  ) : (
+                    <div className="p-8 text-center space-y-2.5">
+                      <p className="text-sm font-semibold text-foreground">
+                        Belum Ada Penilaian Harian
+                      </p>
+                      <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+                        Penilaian harian digunakan guru untuk menilai setoran mengaji rutin (hafalan, tilawah, doa, adab, dll). Klik tombol di bawah untuk membuat format baru.
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={() => openCreateModal(true)}
+                        className="text-xs mt-1"
+                      >
+                        <HugeiconsIcon icon={PlusSignIcon} size={15} strokeWidth={2} />
+                        Buat Penilaian Harian
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              </main>
+            ) : (
+              /* TAB: SEMUA PENILAIAN */
+              <main>
+                <Card className="gap-0 py-0">
+                  <CardHeader className="border-b py-4">
+                    <CardTitle>Semua Penilaian</CardTitle>
+                    <CardDescription>
+                      {assessments.length} format penilaian terdaftar
+                    </CardDescription>
+                  </CardHeader>
+
+                  {assessments.length > 0 ? (
+                    <motion.div
+                      variants={staggerContainerVariants}
+                      initial={shouldReduceMotion ? false : "hidden"}
+                      animate="visible"
+                      className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 xl:grid-cols-3"
+                    >
+                      {assessments.map((assessment) => (
+                        <motion.div
+                          key={assessment.id}
+                          variants={staggerItemVariants}
+                          whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
+                          transition={springSnappy}
+                        >
+                          <Link
+                            to={`/penilaian/${assessment.id}`}
+                            className="block rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 shadow-xs h-full"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-semibold text-foreground leading-snug">
+                                {assessment.name}
+                              </p>
+                              {assessment.isDaily && (
+                                <Badge variant="secondary" className="shrink-0 text-[11px]">
+                                  Harian
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              <Badge variant="outline" className="text-[11px]">
+                                {assessment.assessmentType === "qualitative"
+                                  ? "Kualitatif (A-D)"
+                                  : assessment.assessmentType === "scale"
+                                    ? "Skala 1-5"
+                                    : "Nilai 0-100"}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px]">
+                                {assessment.items.length} butir
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px]">
+                                {getResultCount(assessment)}/
+                                {assessment.participants.length} selesai
+                              </Badge>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  ) : (
+                    <div className="p-8 text-center space-y-2.5">
+                      <p className="text-sm font-semibold text-foreground">
+                        Belum ada penilaian yang dibuat.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Klik Tambah Penilaian untuk membuat format penilaian pertama.
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={() => openCreateModal(false)}
+                        className="text-xs mt-1"
+                      >
+                        <HugeiconsIcon icon={PlusSignIcon} size={15} strokeWidth={2} />
+                        Tambah Penilaian
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              </main>
+            )}
+          </div>
         ) : selectedAssessment ? (
+          /* DETAIL PENILAIAN (/penilaian/:id): TEMPAT GURU MENILAI SANTRI */
           <main>
             <Card className="gap-0 py-0">
               <CardHeader className="no-print border-b p-4">
-                <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Periode Kehadiran Report
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {reportDateRangeLabel}
-                      </p>
+                {!selectedAssessment.isDaily && (
+                  <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3.5 mb-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Periode Kehadiran Report
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {reportDateRangeLabel}
+                        </p>
+                      </div>
+
+                      <div className="inline-flex rounded-lg bg-muted p-1 gap-1 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          className={`rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
+                            reportRangeMode === "semester"
+                              ? "bg-background text-foreground shadow-xs font-semibold"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => setReportRangeMode("semester")}
+                        >
+                          Semester
+                        </button>
+                        <button
+                          type="button"
+                          className={`rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer ${
+                            reportRangeMode === "custom"
+                              ? "bg-background text-foreground shadow-xs font-semibold"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => setReportRangeMode("custom")}
+                        >
+                          Custom
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="grid w-full grid-cols-2 rounded-xl bg-muted p-1 sm:w-auto">
-                      <button
-                        type="button"
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                          reportRangeMode === "semester"
-                            ? "bg-card text-foreground shadow-xs font-semibold"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        onClick={() => setReportRangeMode("semester")}
-                      >
-                        Semester
-                      </button>
-                      <button
-                        type="button"
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                          reportRangeMode === "custom"
-                            ? "bg-card text-foreground shadow-xs font-semibold"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        onClick={() => setReportRangeMode("custom")}
-                      >
-                        Custom
-                      </button>
-                    </div>
+                    {reportRangeMode === "semester" ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="mb-1 text-xs text-muted-foreground">Tahun Ajaran</Label>
+                          <Select
+                            value={String(selectedReportAcademicYearStart)}
+                            onValueChange={(val) =>
+                              setSelectedReportAcademicYearStart(Number(val))
+                            }
+                          >
+                            <SelectTrigger className="h-8.5 w-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {reportAcademicYearOptions.map((year) => (
+                                <SelectItem
+                                  key={year.startYear}
+                                  value={String(year.startYear)}
+                                >
+                                  {year.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="mb-1 text-xs text-muted-foreground">Semester</Label>
+                          <Select
+                            value={selectedReportSemester}
+                            onValueChange={(val) =>
+                              setSelectedReportSemester(
+                                val as AcademicSemester
+                              )
+                            }
+                          >
+                            <SelectTrigger className="h-8.5 w-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ganjil">Ganjil</SelectItem>
+                              <SelectItem value="genap">Genap</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label className="mb-1 text-xs text-muted-foreground">Awal Absensi Report</Label>
+                          <Input
+                            value={reportStartDate}
+                            onChange={(e) => setReportStartDate(e.target.value)}
+                            type="date"
+                            className="h-8.5 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="mb-1 text-xs text-muted-foreground">Akhir Absensi Report</Label>
+                          <Input
+                            value={reportEndDate}
+                            onChange={(e) => setReportEndDate(e.target.value)}
+                            type="date"
+                            className="h-8.5 text-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
+                )}
 
-                  {reportRangeMode === "semester" ? (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <Label className="mb-1.5 text-xs">Tahun Ajaran</Label>
-                        <Select
-                          value={String(selectedReportAcademicYearStart)}
-                          onValueChange={(val) =>
-                            setSelectedReportAcademicYearStart(Number(val))
-                          }
-                        >
-                          <SelectTrigger className="h-9 w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {reportAcademicYearOptions.map((year) => (
-                              <SelectItem
-                                key={year.startYear}
-                                value={String(year.startYear)}
-                              >
-                                {year.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="mb-1.5 text-xs">Semester</Label>
-                        <Select
-                          value={selectedReportSemester}
-                          onValueChange={(val) =>
-                            setSelectedReportSemester(
-                              val as AcademicSemester
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-9 w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="ganjil">Ganjil</SelectItem>
-                            <SelectItem value="genap">Genap</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <Label className="mb-1.5 text-xs">
-                          Awal Absensi Report
-                        </Label>
-                        <Input
-                          value={reportStartDate}
-                          onChange={(e) => setReportStartDate(e.target.value)}
-                          type="date"
-                        />
-                      </div>
-                      <div>
-                        <Label className="mb-1.5 text-xs">
-                          Akhir Absensi Report
-                        </Label>
-                        <Input
-                          value={reportEndDate}
-                          onChange={(e) => setReportEndDate(e.target.value)}
-                          type="date"
-                        />
-                      </div>
-                    </div>
-                  )}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base">
+                      Daftar {terms.studentSingularTitle}
+                    </CardTitle>
+                    <CardDescription>
+                      Pilih santri untuk memasukkan atau memperbarui nilai evaluasi.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="secondary">
+                    {selectedAssessment.results.length} / {selectedAssessment.participants.length} dinilai
+                  </Badge>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4 p-4">
+              <div className="space-y-3.5 p-4">
                 <section className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-center">
                   <SearchInput
                     value={studentSearch}
                     onChange={setStudentSearch}
                     placeholder={`Cari ${terms.studentSingularLower}...`}
                   />
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Badge variant="secondary">
-                      {selectedAssessment.results.length}/
-                      {selectedAssessment.participants.length} selesai
-                    </Badge>
-                  </div>
                 </section>
 
                 <section>
@@ -950,32 +1199,31 @@ export const AssessmentView: React.FC = () => {
                             key={santri.id}
                             type="button"
                             whileTap={
-                              shouldReduceMotion ? undefined : { scale: 0.98 }
+                              shouldReduceMotion ? undefined : { scale: 0.99 }
                             }
                             transition={springSnappy}
-                            className="rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 focus-visible:outline-none shadow-xs cursor-pointer"
+                            className="group rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent/60 shadow-xs cursor-pointer"
                             onClick={() => openScoreModal(santri.id)}
                           >
                             <span className="flex items-start justify-between gap-3">
                               <span className="min-w-0">
-                                <span className="block truncate text-sm font-semibold text-foreground">
+                                <span className="block truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug">
                                   {santri.nama}
                                 </span>
-                                <span className="mt-1 block truncate text-xs text-muted-foreground">
-                                  {getJilidName(santri.jilidId)} -{" "}
-                                  {getGuruName(santri.guruId)}
+                                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                                  {getJilidName(santri.jilidId)} · {getGuruName(santri.guruId)}
                                 </span>
                               </span>
                               <Badge
-                                variant={res ? "success" : "neutral"}
-                                className="shrink-0"
+                                variant={res ? "secondary" : "outline"}
+                                className={res ? "shrink-0 border-emerald-200 bg-emerald-50 text-emerald-700" : "shrink-0"}
                               >
                                 {res ? "Selesai" : "Belum"}
                               </Badge>
                             </span>
 
-                            <span className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-2.5">
-                              <span className="text-xs text-muted-foreground">
+                            <span className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-2 text-xs">
+                              <span className="text-muted-foreground">
                                 {res ? (
                                   selectedAssessment.assessmentType === "qualitative" &&
                                   res.scores.length > 0 ? (
@@ -995,8 +1243,9 @@ export const AssessmentView: React.FC = () => {
                                   "Belum dinilai"
                                 )}
                               </span>
-                              <span className="text-xs font-semibold text-primary">
-                                {res ? "Edit Nilai →" : "Mulai Menilai →"}
+                              <span className="inline-flex items-center gap-1 font-medium text-primary group-hover:underline">
+                                <span>{res ? "Edit Nilai" : "Mulai Menilai"}</span>
+                                <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
                               </span>
                             </span>
                           </motion.button>
@@ -1004,22 +1253,22 @@ export const AssessmentView: React.FC = () => {
                       })}
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-border px-4 py-12 text-center text-sm text-muted-foreground">
+                    <div className="rounded-lg border border-border px-4 py-10 text-center text-xs text-muted-foreground">
                       Tidak ada {terms.studentSingularLower} yang sesuai.
                     </div>
                   )}
                 </section>
-              </CardContent>
+              </div>
             </Card>
           </main>
         ) : (
           <main>
             <Card className="gap-0 py-0">
               <div className="px-4 py-16 text-center">
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   Penilaian tidak ditemukan.
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Kembali ke daftar penilaian untuk memilih data yang tersedia.
                 </p>
               </div>
@@ -1027,6 +1276,7 @@ export const AssessmentView: React.FC = () => {
           </main>
         )}
 
+        {/* Modal Beri Nilai Santri: Guru Tinggal Menilai & Bisa Lanjut ke Santri Berikutnya */}
         <AssessmentScoreDialog
           open={isScoreModalOpen}
           onOpenChange={setIsScoreModalOpen}
@@ -1040,7 +1290,11 @@ export const AssessmentView: React.FC = () => {
             selectedSantri ? getGuruName(selectedSantri.guruId) : "-"
           }
           saving={isSaving}
+          currentIndex={currentParticipantIndex}
+          totalSantri={filteredParticipants.length}
+          hasNextSantri={hasNextParticipant}
           onSubmit={handleSaveResult}
+          onSubmitAndNext={handleSaveResultAndNext}
           onValidationError={(message) => triggerToast(message, "error")}
         />
 
@@ -1077,37 +1331,36 @@ export const AssessmentView: React.FC = () => {
           </DialogContent>
         </Dialog>
 
+        {/* Preview Raport PDF Dialog */}
         <Dialog open={isReportVisible} onOpenChange={setIsReportVisible}>
-          <DialogContent className="gap-0 p-0 sm:max-w-5xl">
-            <DialogHeader className="no-print border-b px-5 py-4 text-left">
-              <div className="flex flex-col gap-3 pr-8 sm:flex-row sm:items-start sm:justify-between">
+          <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto p-4 sm:p-6">
+            <DialogHeader>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <DialogTitle>Report Penilaian</DialogTitle>
+                  <DialogTitle>Preview Report Penilaian</DialogTitle>
                   <DialogDescription>
-                    {selectedAssessment?.name} - Periode absensi:{" "}
-                    {reportDateRangeLabel}
+                    Hasil penilaian dan kehadiran santri
                   </DialogDescription>
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={handlePrintReport}
+                  onClick={() => window.print()}
+                  className="self-start sm:self-auto"
                 >
-                  <Printer className="h-4 w-4" strokeWidth={1.8} />
-                  Print / Save PDF
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print Halaman
                 </Button>
               </div>
             </DialogHeader>
 
             {selectedAssessment && (
-              <div className="assessment-report-print max-h-[78vh] space-y-4 overflow-y-auto p-5">
+              <div className="space-y-6">
                 {reportRows.map((row) => (
                   <article
-                    key={row.result.id}
-                    className="assessment-report-page space-y-4 rounded-lg border bg-background p-4"
+                    key={row.santri.id}
+                    className="assessment-report-page space-y-4 rounded-xl border p-4 sm:p-5"
                   >
-                    <div className="space-y-3 border-b pb-3">
+                    <div className="assessment-report-header space-y-3 border-b pb-4">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto] sm:items-start">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1216,18 +1469,19 @@ export const AssessmentView: React.FC = () => {
         </Dialog>
       </div>
 
+      {/* Modal Buat / Edit Penilaian: Tempat Menentukan Aspek (Hafalan, Doa, Adab, dll), Tipe, dan Jadikan Harian */}
       <AssessmentFormDialog
         open={isAssessmentModalOpen}
         onOpenChange={setIsAssessmentModalOpen}
-        title={modalMode === "create" ? "Add Penilaian" : "Edit Penilaian"}
+        title={modalMode === "create" ? (createIsDaily ? "Tambah Penilaian Harian" : "Tambah Penilaian") : "Edit Penilaian"}
         description={
           modalMode === "create"
-            ? "Buat format penilaian dan pilih peserta."
+            ? "Tentukan apa yang mau dinilai (hafalan, doa, adab, dll), tipe penilaian, dan peserta."
             : "Perbarui format penilaian dan peserta."
         }
         submitText={modalMode === "create" ? "Selesai" : "Simpan Perubahan"}
         saving={isSaving}
-        initialValue={modalMode === "edit" ? assessmentInitialValue : null}
+        initialValue={assessmentInitialValue}
         santriList={santriList}
         jilidList={jilidList}
         guruList={guruList}

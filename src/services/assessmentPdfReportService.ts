@@ -7,6 +7,7 @@ export interface AssessmentPdfScore {
   label: string;
   score: number;
   maxScore: number;
+  note?: string;
 }
 
 export interface AssessmentPdfReportRow {
@@ -579,8 +580,8 @@ const buildTemplate = (organizationName: string): Template => {
       96.12,
       82,
       56,
-      ["Butir Penilaian", "Nilai"],
-      [72, 28],
+      ["Butir Penilaian", "Nilai", "Catatan"],
+      [38, 26, 36],
       {
         columnStyles: {
           alignment: {
@@ -683,6 +684,7 @@ const buildInput = (
         score.maxScore === 4
           ? getQualitativeLabel(score.score)
           : `${score.score}/${score.maxScore}`,
+        score.note || "-",
       ]),
     ),
     "isi-catatan": row.notes || "Tidak ada catatan tambahan.",

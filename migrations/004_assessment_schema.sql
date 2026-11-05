@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS assessments (
   name TEXT NOT NULL,
   assessment_type TEXT NOT NULL DEFAULT 'score', -- 'score' | 'scale' | 'qualitative'
   minimum_score NUMERIC DEFAULT 0,
+  is_daily BOOLEAN NOT NULL DEFAULT false,
   is_archived BOOLEAN NOT NULL DEFAULT false,
   created_at BIGINT,
   updated_at BIGINT
@@ -72,6 +73,7 @@ CREATE TABLE IF NOT EXISTS assessment_scores (
 -- Patch assessments
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assessment_type TEXT DEFAULT 'score';
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS minimum_score NUMERIC DEFAULT 0;
+ALTER TABLE assessments ADD COLUMN IF NOT EXISTS is_daily BOOLEAN DEFAULT false;
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT false;
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS created_at BIGINT;
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS updated_at BIGINT;

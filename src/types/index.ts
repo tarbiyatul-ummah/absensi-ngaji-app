@@ -115,6 +115,7 @@ export interface AssessmentScore {
   santriId: string;
   assessmentItemId: string;
   score: number;
+  note?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -134,6 +135,7 @@ export interface Assessment {
   name: string;
   assessmentType: AssessmentItemType;
   minimumScore: number;
+  isDaily?: boolean;
   isArchived: boolean;
   createdAt: number;
   updatedAt: number;
@@ -151,10 +153,68 @@ export interface AssessmentFormData {
   name: string;
   assessmentType: AssessmentItemType;
   minimumScore: number;
+  isDaily?: boolean;
   items: AssessmentFormItem[];
   santriIds: string[];
 }
 
+// ==========================================
+// Daily Assessment Types (Penilaian Harian)
+// ==========================================
+
+export interface DailyAssessmentScore {
+  id: string;
+  dailyAssessmentId: string;
+  santriId: string;
+  itemLabel: string;
+  score: number;
+  scoreType: AssessmentItemType;
+  note?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface DailyAssessment {
+  id: string;
+  date: string; // YYYY-MM-DD
+  santriId: string;
+  jilidId?: string;
+  materi?: string;
+  generalNotes?: string;
+  createdAt: number;
+  updatedAt: number;
+  scores: DailyAssessmentScore[];
+}
+
+export interface DailyAssessmentFormData {
+  date: string;
+  santriId: string;
+  jilidId?: string;
+  materi?: string;
+  generalNotes?: string;
+  scores: Array<{
+    itemLabel: string;
+    score: number;
+    scoreType?: AssessmentItemType;
+    note?: string;
+  }>;
+}
+
+export interface DailySummaryAspect {
+  itemLabel: string;
+  averageScore: number;
+  qualitativeGrade: string;
+  count: number;
+  sampleNotes: string[];
+}
+
+export interface DailyAssessmentSummary {
+  santriId: string;
+  totalSessions: number;
+  dateRange: { start: string; end: string };
+  aspects: DailySummaryAspect[];
+  compiledGeneralNotes: string[];
+}
 
 export type InvoiceStatus = "unpaid" | "paid" | "cancelled";
 
@@ -212,4 +272,5 @@ export interface SppInvoiceRecord {
   createdAt: number;
   updatedAt: number;
 }
+
 export type { PaymentAccountItem, FeeCategoryItem } from "../config/organization";

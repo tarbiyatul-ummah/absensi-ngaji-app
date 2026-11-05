@@ -240,6 +240,40 @@ CREATE INDEX IF NOT EXISTS idx_spp_invoices_status ON spp_invoices (status);
 CREATE INDEX IF NOT EXISTS idx_spp_invoices_created_at ON spp_invoices (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_spp_invoices_invoice_number ON spp_invoices (invoice_number);
 
+-- 17. Tabel Penilaian Harian (Talaqqi / Setoran Ngaji)
+CREATE TABLE IF NOT EXISTS daily_assessments (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL,
+  date DATE NOT NULL,
+  santri_id TEXT NOT NULL,
+  jilid_id TEXT,
+  materi TEXT,
+  general_notes TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT uq_daily_assessment_date_santri UNIQUE (user_id, date, santri_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_assessments_user_date ON daily_assessments (user_id, date);
+CREATE INDEX IF NOT EXISTS idx_daily_assessments_santri ON daily_assessments (santri_id);
+
+CREATE TABLE IF NOT EXISTS daily_assessment_scores (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL,
+  daily_assessment_id TEXT NOT NULL REFERENCES daily_assessments(id) ON DELETE CASCADE,
+  santri_id TEXT NOT NULL,
+  item_label TEXT NOT NULL,
+  score NUMERIC NOT NULL,
+  score_type TEXT NOT NULL DEFAULT 'qualitative',
+  note TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT uq_daily_score_item UNIQUE (daily_assessment_id, item_label)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_scores_assessment ON daily_assessment_scores (daily_assessment_id);
+CREATE INDEX IF NOT EXISTS idx_daily_scores_santri ON daily_assessment_scores (santri_id);
+
 -- ==============================================================================
 -- PENGATURAN ROW LEVEL SECURITY (RLS) MULTI-TENANT
 -- ==============================================================================
@@ -260,6 +294,8 @@ ALTER TABLE assessment_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE spp_invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_assessment_scores ENABLE ROW LEVEL SECURITY;
 
 DO $$ 
 DECLARE
@@ -270,7 +306,8 @@ BEGIN
       'classes', 'teachers', 'student_types', 'students', 'attendances', 
       'academic_years', 'spp_payments', 'savings_accounts', 'savings_payments', 
       'assessments', 'assessment_items', 'assessment_participants', 
-      'assessment_results', 'assessment_scores', 'spp_invoices'
+      'assessment_results', 'assessment_scores', 'spp_invoices',
+      'daily_assessments', 'daily_assessment_scores'
     ])
   LOOP
     IF NOT EXISTS (

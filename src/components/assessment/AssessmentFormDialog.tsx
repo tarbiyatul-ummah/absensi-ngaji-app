@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -87,8 +89,9 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<AssessmentFormData>(() => ({
     name: "",
-    assessmentType: "score",
-    minimumScore: 0,
+    assessmentType: "qualitative",
+    minimumScore: 3,
+    isDaily: false,
     items: [{ label: "" }],
     santriIds: [],
   }));
@@ -102,8 +105,9 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
 
   const getDefaultValue = (): AssessmentFormData => ({
     name: "",
-    assessmentType: "score",
-    minimumScore: 0,
+    assessmentType: "qualitative",
+    minimumScore: 3,
+    isDaily: false,
     items: [{ label: "" }],
     santriIds: activeSantriList.map((s) => s.id),
   });
@@ -217,6 +221,7 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
       name: form.name.trim(),
       assessmentType: form.assessmentType,
       minimumScore: Number(form.minimumScore),
+      isDaily: Boolean(form.isDaily),
       items: form.items.map((it) => ({
         id: it.id,
         label: it.label.trim(),
@@ -241,10 +246,10 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
             <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
               <button
                 type="button"
-                className={`rounded px-3 py-2 text-[13px] font-semibold transition-colors ${
+                className={`rounded px-3 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
                   currentStep === 1
                     ? "bg-background text-foreground shadow-xs"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => setCurrentStep(1)}
               >
@@ -252,10 +257,10 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
               </button>
               <button
                 type="button"
-                className={`rounded px-3 py-2 text-[13px] font-semibold transition-colors ${
+                className={`rounded px-3 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
                   currentStep === 2
                     ? "bg-background text-foreground shadow-xs"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => goToStep(2)}
               >
@@ -263,10 +268,10 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
               </button>
               <button
                 type="button"
-                className={`rounded px-3 py-2 text-[13px] font-semibold transition-colors ${
+                className={`rounded px-3 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
                   currentStep === 3
                     ? "bg-background text-foreground shadow-xs"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => goToStep(3)}
               >
@@ -285,8 +290,32 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
                       setForm({ ...form, name: e.target.value })
                     }
                     type="text"
-                    placeholder="Contoh: Evaluasi Hafalan Pekanan"
+                    placeholder="Contoh: Setoran Hafalan Surat Pendek atau Raport Semester 1"
                   />
+                </div>
+
+                {/* Checkbox Jadikan Penilaian Harian */}
+                <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                  <input
+                    type="checkbox"
+                    id="is-daily-checkbox"
+                    checked={Boolean(form.isDaily)}
+                    onChange={(e) =>
+                      setForm({ ...form, isDaily: e.target.checked })
+                    }
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
+                  />
+                  <div className="space-y-0.5">
+                    <Label
+                      htmlFor="is-daily-checkbox"
+                      className="text-xs font-semibold cursor-pointer"
+                    >
+                      Jadikan Penilaian Harian
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Penilaian ini akan otomatis ditampilkan di tab <strong>Penilaian Harian</strong> sehingga guru tinggal memilihnya saat sesi mengaji harian.
+                    </p>
+                  </div>
                 </div>
               </section>
             )}
@@ -384,9 +413,10 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={addItem}
+                    className="flex items-center gap-1.5"
                   >
-                    <Plus className="h-4 w-4" />
-                    Tambah Butir
+                    <HugeiconsIcon icon={PlusSignIcon} size={15} strokeWidth={2} />
+                    <span>Tambah Butir</span>
                   </Button>
                 </div>
 
@@ -550,12 +580,18 @@ export const AssessmentFormDialog: React.FC<AssessmentFormDialogProps> = ({
               onClick={() =>
                 currentStep < 3 ? goToStep((currentStep + 1) as 2 | 3) : handleSubmit()
               }
+              className="flex items-center gap-1.5"
             >
-              {currentStep < 3
-                ? "Selanjutnya"
-                : saving
-                  ? "Menyimpan..."
-                  : submitText}
+              <span>
+                {currentStep < 3
+                  ? "Selanjutnya"
+                  : saving
+                    ? "Menyimpan..."
+                    : submitText}
+              </span>
+              {currentStep < 3 && (
+                <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
+              )}
             </Button>
           </div>
         </form>

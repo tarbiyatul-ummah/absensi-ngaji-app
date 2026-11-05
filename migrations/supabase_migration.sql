@@ -259,7 +259,8 @@ CREATE TABLE IF NOT EXISTS assessment_scores (
 
 CREATE INDEX IF NOT EXISTS idx_assessment_scores_assessment_id ON assessment_scores (assessment_id);
 
--- Patch & Update Constraint untuk Penilaian (Mendukung 'qualitative')
+-- Patch & Update Constraint untuk Penilaian (Mendukung 'qualitative' & Catatan Per Butir)
+ALTER TABLE assessment_scores ADD COLUMN IF NOT EXISTS note TEXT;
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assessment_type TEXT DEFAULT 'score';
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS minimum_score NUMERIC DEFAULT 0;
 ALTER TABLE assessments DROP CONSTRAINT IF EXISTS assessments_assessment_type_check;
@@ -270,6 +271,43 @@ ALTER TABLE assessment_items ADD COLUMN IF NOT EXISTS max_score NUMERIC DEFAULT 
 ALTER TABLE assessment_items DROP CONSTRAINT IF EXISTS assessment_items_assessment_type_check;
 ALTER TABLE assessment_items DROP CONSTRAINT IF EXISTS assessment_items_max_score_check;
 ALTER TABLE assessment_items ADD CONSTRAINT assessment_items_assessment_type_check CHECK (assessment_type IN ('score', 'scale', 'qualitative'));
+
+-- ------------------------------------------------------------------------------
+-- 4B. TABEL PENILAIAN HARIAN (TALAQQI / SETORAN NGAJI)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS daily_assessments (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL,
+  date DATE NOT NULL,
+  santri_id TEXT NOT NULL,
+  jilid_id TEXT,
+  materi TEXT,
+  general_notes TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT uq_daily_assessment_date_santri UNIQUE (user_id, date, santri_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_assessments_user_date ON daily_assessments (user_id, date);
+CREATE INDEX IF NOT EXISTS idx_daily_assessments_santri ON daily_assessments (santri_id);
+
+CREATE TABLE IF NOT EXISTS daily_assessment_scores (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL,
+  daily_assessment_id TEXT NOT NULL REFERENCES daily_assessments(id) ON DELETE CASCADE,
+  santri_id TEXT NOT NULL,
+  item_label TEXT NOT NULL,
+  score NUMERIC NOT NULL,
+  score_type TEXT NOT NULL DEFAULT 'qualitative',
+  note TEXT,
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT NOT NULL,
+  CONSTRAINT uq_daily_score_item UNIQUE (daily_assessment_id, item_label)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_scores_assessment ON daily_assessment_scores (daily_assessment_id);
+CREATE INDEX IF NOT EXISTS idx_daily_scores_santri ON daily_assessment_scores (santri_id);
 
 -- ------------------------------------------------------------------------------
 -- 5. TABEL PENGATURAN LEMBAGA / ORGANISASI
@@ -301,6 +339,8 @@ ALTER TABLE assessment_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_assessment_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_settings ENABLE ROW LEVEL SECURITY;
 
 -- Pasang RLS Policy (User hanya dapat mengelola data milik akunnya sendiri: auth.uid() = user_id)
@@ -313,7 +353,8 @@ BEGIN
       'classes', 'teachers', 'student_types', 'students', 'attendances', 
       'academic_years', 'spp_payments', 'spp_invoices', 'savings_accounts', 
       'savings_payments', 'assessments', 'assessment_items', 
-      'assessment_participants', 'assessment_results', 'assessment_scores'
+      'assessment_participants', 'assessment_results', 'assessment_scores',
+      'daily_assessments', 'daily_assessment_scores'
     ])
   LOOP
     IF NOT EXISTS (
